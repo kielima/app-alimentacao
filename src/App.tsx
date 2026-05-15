@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import TabBar from './components/TabBar';
 import ThemeToggle from './components/ThemeToggle';
 import PinScreen from './components/PinScreen';
+import LoadingSplash from './components/LoadingSplash';
 import Receitas from './pages/Receitas';
 import Dispensa from './pages/Dispensa';
 import Compras from './pages/Compras';
@@ -13,7 +14,11 @@ import { usePinAuth } from './hooks/usePinAuth';
 
 export default function App() {
   useTheme();
-  const { authenticated, hasPin, setPin, verifyPin } = usePinAuth();
+  const { loading, authenticated, hasPin, setPin, verifyPin } = usePinAuth();
+
+  if (loading) {
+    return <LoadingSplash />;
+  }
 
   if (!authenticated) {
     return (
