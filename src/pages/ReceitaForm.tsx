@@ -94,20 +94,34 @@ function recipeToForm(r: Recipe | undefined): FormState {
   };
 }
 
-function formIngredientsToRecipe(items: FormIngredient[]): RecipeIngredient[] {
+function formIngredientsToRecipe(
+  items: FormIngredient[],
+  ingredientMap: Map<string, Ingredient>,
+): RecipeIngredient[] {
   return items
-    .filter((i) => i.raw_text.trim())
-    .map((i) => ({
-      raw_text: i.raw_text.trim(),
-      ingredient_id: i.ingredient_id || null,
-      quantity: i.quantity ? Number(i.quantity) : null,
-      unit: i.unit || null,
-    }));
+    .filter((i) => i.ingredient_id)
+    .map((i) => {
+      const ing = ingredientMap.get(i.ingredient_id);
+      const qty = i.quantity ? Number(i.quantity) : null;
+      const unit = i.unit || null;
+      const namePart = ing ? (ing.brand ? `${ing.brand} — ${ing.name}` : ing.name) : i.raw_text;
+      const raw = qty != null ? `${qty}${unit ? ` ${unit}` : ''} de ${namePart}` : namePart;
+      return {
+        raw_text: raw || namePart,
+        ingredient_id: i.ingredient_id || null,
+        quantity: qty,
+        unit,
+      };
+    });
 }
 
-function formToRecipe(state: FormState, original: Recipe | undefined): Recipe {
-  const ingredients = formIngredientsToRecipe(state.ingredients);
-  const ingredients_molho = formIngredientsToRecipe(state.ingredients_molho);
+function formToRecipe(
+  state: FormState,
+  original: Recipe | undefined,
+  ingredientMap: Map<string, Ingredient>,
+): Recipe {
+  const ingredients = formIngredientsToRecipe(state.ingredients, ingredientMap);
+  const ingredients_molho = formIngredientsToRecipe(state.ingredients_molho, ingredientMap);
   const steps = state.steps.map((s) => s.trim()).filter(Boolean);
   const steps_natural = state.steps_natural.map((s) => s.trim()).filter(Boolean);
   const steps_congelada = state.steps_congelada.map((s) => s.trim()).filter(Boolean);
@@ -144,6 +158,7 @@ export default function ReceitaForm() {
     () => [...allIng].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
     [allIng],
   );
+  const ingredientMap = useMemo(() => new Map(allIng.map((i) => [i.id, i])), [allIng]);
 
   const [state, setState] = useState<FormState>(() => recipeToForm(original));
   const [error, setError] = useState<string | null>(null);
@@ -167,9 +182,9 @@ export default function ReceitaForm() {
       setError('Nome é obrigatório');
       return;
     }
-    const ingredients = state.ingredients.filter((i) => i.raw_text.trim());
+    const ingredients = state.ingredients.filter((i) => i.ingredient_id);
     if (ingredients.length === 0) {
-      setError('Adicione ao menos um ingrediente');
+      setError('Selecione ao menos um ingrediente');
       return;
     }
     const steps = state.steps.filter((s) => s.trim());
@@ -180,7 +195,7 @@ export default function ReceitaForm() {
 
     const recipeId =
       original?.id ?? uniqueSlug(state.name, new Set([...allRecipeIds()]));
-    const recipe = formToRecipe(state, original);
+    const recipe = formToRecipe(state, original, ingredientMap);
     recipe.id = recipeId;
     upsertUserRecipe(recipe);
     navigate(`/receitas/${recipeId}`);
@@ -423,33 +438,33 @@ function IngredientRow({
   onUpdate: (patch: Partial<FormIngredient>) => void;
   onRemove: () => void;
 }) {
+  const navigate = useNavigate();
   return (
     <li className="rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
-      <input
-        type="text"
-        value={ing.raw_text}
-        onChange={(e) => onUpdate({ raw_text: e.target.value })}
-        placeholder='Ex.: 500g de farinha de trigo'
-        className={`${inputClass} mb-2`}
-      />
-      <div className="grid grid-cols-[1fr,auto] gap-2">
+      <div className="mb-2 grid grid-cols-[1fr,auto] gap-2">
         <select
           value={ing.ingredient_id}
           onChange={(e) => {
-            const matched = sortedIngredients.find((i) => i.id === e.target.value);
+            const newId = e.target.value;
+            if (newId === '__new__') {
+              navigate('/ingredientes/novo');
+              return;
+            }
+            const matched = sortedIngredients.find((i) => i.id === newId);
             onUpdate({
-              ingredient_id: e.target.value,
+              ingredient_id: newId,
               unit: matched && !ing.unit ? matched.default_unit : ing.unit,
             });
           }}
           className={`${inputClass} text-sm`}
         >
-          <option value="">🔗 Sem vínculo</option>
+          <option value="">— Selecione um ingrediente —</option>
           {sortedIngredients.map((i) => (
             <option key={i.id} value={i.id}>
               {i.brand ? `${i.brand} — ${i.name}` : i.name}
             </option>
           ))}
+          <option value="__new__">➕ Criar novo ingrediente</option>
         </select>
         <button
           type="button"
@@ -460,7 +475,7 @@ function IngredientRow({
           🗑️
         </button>
       </div>
-      <div className="mt-2 grid grid-cols-[80px,1fr] gap-2">
+      <div className="grid grid-cols-[80px,1fr] gap-2">
         <input
           type="number"
           min={0}
