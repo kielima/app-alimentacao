@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
-import { getAllRecipes } from '../data/recipes';
-import { useUserRecipes } from '../data/userRecipes';
+import { useAllRecipes } from '../data/recipes';
 import { matches } from '../utils/search';
 import type { Recipe, RecipeCategoryId, Rating } from '../types/recipe';
 
@@ -26,11 +25,10 @@ export function useRecipes(): UseRecipesResult {
   const [completeness, setCompleteness] = useState<CompletenessFilter>('todas');
   const [minRating, setMinRating] = useState<RatingFilter>(0);
 
-  // Subscribe to user-recipes mutations to trigger re-render
-  const userRecipes = useUserRecipes();
+  const allRecipes = useAllRecipes();
 
   const list = useMemo(() => {
-    return getAllRecipes()
+    return allRecipes
       .filter((r) => category === 'todas' || r.category === category)
       .filter((r) => {
         if (completeness === 'completas') return !r.needs_review;
@@ -48,7 +46,7 @@ export function useRecipes(): UseRecipesResult {
         if (rDiff !== 0) return rDiff;
         return a.name.localeCompare(b.name, 'pt-BR');
       });
-  }, [query, category, completeness, minRating, userRecipes]);
+  }, [query, category, completeness, minRating, allRecipes]);
 
   return {
     list,
@@ -60,7 +58,7 @@ export function useRecipes(): UseRecipesResult {
     setCompleteness,
     minRating,
     setMinRating,
-    total: getAllRecipes().length,
+    total: allRecipes.length,
   };
 }
 
