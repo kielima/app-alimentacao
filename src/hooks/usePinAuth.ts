@@ -3,8 +3,6 @@ import { firebaseConfigured } from '../lib/firebase';
 import { readHousehold, writeHouseholdPin } from '../lib/household';
 
 const PIN_HASH_KEY = 'app-alimentacao:pin-hash';
-const SESSION_KEY = 'app-alimentacao:session-until';
-const SESSION_DAYS = 30;
 
 async function hashPin(pin: string): Promise<string> {
   const data = new TextEncoder().encode(pin);
@@ -12,20 +10,6 @@ async function hashPin(pin: string): Promise<string> {
   return Array.from(new Uint8Array(digest))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
-}
-
-function sessionValid(): boolean {
-  const until = Number(localStorage.getItem(SESSION_KEY));
-  return Number.isFinite(until) && until > Date.now();
-}
-
-function extendSession() {
-  const until = Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000;
-  localStorage.setItem(SESSION_KEY, String(until));
-}
-
-function clearSession() {
-  localStorage.removeItem(SESSION_KEY);
 }
 
 interface State {
@@ -44,7 +28,7 @@ export function usePinAuth() {
     return {
       loading: false,
       hasPin: !!stored,
-      authenticated: sessionValid() && !!stored,
+      authenticated: false,
       pinHash: stored,
     };
   });
@@ -55,11 +39,10 @@ export function usePinAuth() {
     readHousehold()
       .then((household) => {
         if (cancelled) return;
-        const hasPin = !!household?.pinHash;
         setState({
           loading: false,
-          hasPin,
-          authenticated: hasPin && sessionValid(),
+          hasPin: !!household?.pinHash,
+          authenticated: false,
           pinHash: household?.pinHash ?? null,
         });
       })
@@ -70,7 +53,7 @@ export function usePinAuth() {
         setState({
           loading: false,
           hasPin: !!stored,
-          authenticated: sessionValid() && !!stored,
+          authenticated: false,
           pinHash: stored,
         });
       });
@@ -90,7 +73,6 @@ export function usePinAuth() {
       }
     }
     localStorage.setItem(PIN_HASH_KEY, hash);
-    extendSession();
     setState({ loading: false, hasPin: true, authenticated: true, pinHash: hash });
     return true;
   }, []);
@@ -101,7 +83,6 @@ export function usePinAuth() {
       const expected = state.pinHash ?? localStorage.getItem(PIN_HASH_KEY);
       if (!expected) return false;
       if (hash === expected) {
-        extendSession();
         localStorage.setItem(PIN_HASH_KEY, expected);
         setState((s) => ({ ...s, authenticated: true }));
         return true;
@@ -112,7 +93,6 @@ export function usePinAuth() {
   );
 
   const signOut = useCallback(() => {
-    clearSession();
     setState((s) => ({ ...s, authenticated: false }));
   }, []);
 
