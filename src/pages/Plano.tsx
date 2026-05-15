@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import SearchableSelect from '../components/SearchableSelect';
 import {
@@ -24,11 +24,58 @@ import { findIngredientById } from '../data/ingredients';
 import { computePlanItemsNutrition, type NutritionBreakdown } from '../utils/nutrition';
 import type { Meal } from '../types/meal';
 
+// ── Done-tracking helpers ──────────────────────────────────────────────────
+
+function viewedDate(day: DayOfWeek): string {
+  const today = new Date();
+  const jsDow = today.getDay(); // 0=Sun..6=Sat
+  const todayMon = (jsDow + 6) % 7; // 0=Mon..6=Sun
+  const d = new Date(today);
+  d.setDate(today.getDate() + (day - todayMon));
+  return d.toISOString().slice(0, 10);
+}
+
+function doneKey(day: DayOfWeek, planType: PlanType) {
+  return `app-alimentacao:done:${viewedDate(day)}:${planType}`;
+}
+
+function loadDone(day: DayOfWeek, planType: PlanType): Set<MealType> {
+  try {
+    const raw = localStorage.getItem(doneKey(day, planType));
+    return raw ? new Set(JSON.parse(raw) as MealType[]) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function saveDone(day: DayOfWeek, planType: PlanType, done: Set<MealType>) {
+  localStorage.setItem(doneKey(day, planType), JSON.stringify([...done]));
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+
 export default function Plano() {
   const plans = useMealPlans();
   const [day, setDay] = useState<DayOfWeek>(todayDayOfWeek);
   const [planType, setPlanType] = useState<PlanType>('training_day');
   const [editing, setEditing] = useState(false);
+  const [doneMealTypes, setDoneMealTypes] = useState<Set<MealType>>(
+    () => loadDone(todayDayOfWeek(), 'training_day'),
+  );
+
+  useEffect(() => {
+    setDoneMealTypes(loadDone(day, planType));
+  }, [day, planType]);
+
+  const toggleDone = (mealType: MealType) => {
+    setDoneMealTypes((prev) => {
+      const next = new Set(prev);
+      if (next.has(mealType)) next.delete(mealType);
+      else next.add(mealType);
+      saveDone(day, planType, next);
+      return next;
+    });
+  };
 
   const allMeals = useAllMeals();
 
@@ -44,6 +91,27 @@ export default function Plano() {
   const dayNutrition = useMemo(
     () => (allItems.length > 0 ? computePlanItemsNutrition(allItems, allMeals) : null),
     [allItems, allMeals],
+  );
+
+  const consumedItems = useMemo(
+    () =>
+      dayPlan.meals
+        .filter((m) => m.items.length > 0 && doneMealTypes.has(m.meal_type))
+        .flatMap((m) => m.items),
+    [dayPlan, doneMealTypes],
+  );
+  const consumedNutrition = useMemo(
+    () => (consumedItems.length > 0 ? computePlanItemsNutrition(consumedItems, allMeals) : null),
+    [consumedItems, allMeals],
+  );
+
+  const totalMealsWithItems = useMemo(
+    () => dayPlan.meals.filter((m) => m.items.length > 0).length,
+    [dayPlan],
+  );
+  const doneCount = useMemo(
+    () => dayPlan.meals.filter((m) => m.items.length > 0 && doneMealTypes.has(m.meal_type)).length,
+    [dayPlan, doneMealTypes],
   );
 
   const updateMeal = (mealType: MealType, items: PlanMealItem[]) => {
@@ -139,7 +207,14 @@ export default function Plano() {
         </button>
       </div>
 
-      <DaySummary nutrition={dayNutrition} isToday={isToday} dayLabel={dayLabel} />
+      <DaySummary
+        nutrition={dayNutrition}
+        consumed={consumedNutrition}
+        doneCount={doneCount}
+        totalCount={totalMealsWithItems}
+        isToday={isToday}
+        dayLabel={dayLabel}
+      />
 
       <ul className="mt-4 space-y-3">
         {dayPlan.meals.map((meal) => (
@@ -149,6 +224,8 @@ export default function Plano() {
             editing={editing}
             allMeals={allMeals}
             onChange={(items) => updateMeal(meal.meal_type, items)}
+            isDone={doneMealTypes.has(meal.meal_type)}
+            onToggleDone={() => toggleDone(meal.meal_type)}
           />
         ))}
       </ul>
@@ -172,10 +249,16 @@ export default function Plano() {
 
 function DaySummary({
   nutrition,
+  consumed,
+  doneCount,
+  totalCount,
   isToday,
   dayLabel,
 }: {
   nutrition: NutritionBreakdown | null;
+  consumed: NutritionBreakdown | null;
+  doneCount: number;
+  totalCount: number;
   isToday: boolean;
   dayLabel: string;
 }) {
@@ -186,20 +269,93 @@ function DaySummary({
       </div>
     );
   }
+
   const fmt = (v: number | undefined, d = 0) =>
     v === undefined ? '—' : v.toLocaleString('pt-BR', { maximumFractionDigits: d });
+
+  const pct = (c: number | undefined, t: number | undefined) =>
+    c != null && t != null && t > 0 ? Math.min(100, Math.round((c / t) * 100)) : null;
+
+  const hasConsumed = consumed !== null && consumed.counted > 0;
+  const calPct = pct(consumed?.totals.calories, nutrition.totals.calories);
+
+  const macros = [
+    { key: 'protein' as const, label: 'P' },
+    { key: 'carbs' as const, label: 'C' },
+    { key: 'fat' as const, label: 'G' },
+  ];
+
   return (
     <div className="rounded-xl bg-zinc-100 px-4 py-3 dark:bg-zinc-800">
-      <p className="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
-        {isToday ? '🌟 Hoje' : dayLabel}
-      </p>
-      <div className="text-xl font-semibold">
-        {fmt(nutrition.totals.calories)} <span className="text-xs font-normal">kcal</span>
+      {/* Header row */}
+      <div className="mb-2 flex items-center justify-between">
+        <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          {isToday ? '🌟 Hoje' : dayLabel}
+        </p>
+        {totalCount > 0 && (
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+            {doneCount}/{totalCount} feitas
+          </span>
+        )}
       </div>
-      <div className="mt-1 grid grid-cols-3 gap-1 text-xs text-zinc-600 dark:text-zinc-300">
-        <div>P: {fmt(nutrition.totals.protein, 1)}g</div>
-        <div>C: {fmt(nutrition.totals.carbs, 1)}g</div>
-        <div>G: {fmt(nutrition.totals.fat, 1)}g</div>
+
+      {/* Calories */}
+      <div className="text-xl font-semibold">
+        {hasConsumed ? (
+          <>
+            <span>{fmt(consumed!.totals.calories)}</span>
+            <span className="text-sm font-normal text-zinc-400 dark:text-zinc-500">
+              {' '}/ {fmt(nutrition.totals.calories)} kcal
+            </span>
+          </>
+        ) : (
+          <>
+            {fmt(nutrition.totals.calories)}{' '}
+            <span className="text-xs font-normal">kcal</span>
+          </>
+        )}
+      </div>
+
+      {/* Progress bar */}
+      {calPct !== null && (
+        <div className="mt-2 flex items-center gap-2">
+          <div className="h-2 flex-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+            <div
+              className="h-2 rounded-full bg-brand-500 transition-all duration-300 dark:bg-brand-400"
+              style={{ width: `${calPct}%` }}
+            />
+          </div>
+          <span className="shrink-0 text-xs font-medium text-brand-600 dark:text-brand-400">
+            {calPct}%
+          </span>
+        </div>
+      )}
+
+      {/* Macros */}
+      <div className="mt-2 grid grid-cols-3 gap-1 text-xs text-zinc-600 dark:text-zinc-300">
+        {macros.map(({ key, label }) => {
+          const total = nutrition.totals[key];
+          const cons = consumed?.totals[key];
+          const p = pct(cons, total);
+          return (
+            <div key={key}>
+              {hasConsumed ? (
+                <>
+                  <div>
+                    {label}: {fmt(cons, 1)}/{fmt(total, 1)}g
+                  </div>
+                  {p !== null && (
+                    <div className="text-zinc-400 dark:text-zinc-500">{p}%</div>
+                  )}
+                </>
+              ) : (
+                <div>
+                  {label}: {fmt(total, 1)}g
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -210,11 +366,15 @@ function PlanMealCard({
   editing,
   allMeals,
   onChange,
+  isDone,
+  onToggleDone,
 }: {
   meal: PlanMeal;
   editing: boolean;
   allMeals: Meal[];
   onChange: (items: PlanMealItem[]) => void;
+  isDone: boolean;
+  onToggleDone: () => void;
 }) {
   const def = MEAL_TYPES.find((m) => m.value === meal.meal_type);
   const [expandedItemIds, setExpandedItemIds] = useState<Set<string>>(new Set());
@@ -253,12 +413,38 @@ function PlanMealCard({
   }
 
   return (
-    <li className="rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
+    <li
+      className={`rounded-xl border p-3 transition-colors ${
+        isDone
+          ? 'border-brand-200 bg-brand-50 dark:border-brand-900/50 dark:bg-brand-900/10'
+          : 'border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900'
+      }`}
+    >
       <div className="mb-2 flex items-center gap-2">
+        {!editing && (
+          <button
+            type="button"
+            onClick={onToggleDone}
+            aria-label={isDone ? 'Desmarcar refeição' : 'Marcar como feita'}
+            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 text-[10px] font-bold transition-colors ${
+              isDone
+                ? 'border-brand-500 bg-brand-500 text-white dark:border-brand-400 dark:bg-brand-400'
+                : 'border-zinc-300 text-transparent hover:border-brand-400 dark:border-zinc-600'
+            }`}
+          >
+            ✓
+          </button>
+        )}
         <span className="text-lg" aria-hidden>
           {def?.icon}
         </span>
-        <h3 className="text-sm font-semibold">{def?.label}</h3>
+        <h3
+          className={`text-sm font-semibold ${
+            isDone ? 'text-zinc-400 dark:text-zinc-500' : ''
+          }`}
+        >
+          {def?.label}
+        </h3>
         {nutrition && nutrition.counted > 0 && (
           <span className="ml-auto text-xs text-zinc-500 dark:text-zinc-400">
             {nutrition.totals.calories?.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} kcal
