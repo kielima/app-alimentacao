@@ -66,14 +66,22 @@ export default function DispensaForm() {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!state.raw_text.trim()) {
-      setError('Informe o nome do item');
+    if (!state.raw_text.trim() && !state.ingredient_id) {
+      setError('Informe o nome do item ou selecione um ingrediente');
       return;
     }
+    const linkedIngredient = sortedIngredients.find((i) => i.id === state.ingredient_id);
+    const rawText =
+      state.raw_text.trim() ||
+      (linkedIngredient
+        ? linkedIngredient.brand
+          ? `${linkedIngredient.brand} — ${linkedIngredient.name}`
+          : linkedIngredient.name
+        : '');
     const item: PantryItem = {
       id: original?.id ?? `pantry-${Date.now()}`,
       ingredient_id: state.ingredient_id || null,
-      raw_text: state.raw_text.trim(),
+      raw_text: rawText,
       quantity: state.quantity ? Number(state.quantity) : null,
       unit: state.unit || null,
       expiry_date: state.expiry_date || null,
@@ -144,11 +152,19 @@ export default function DispensaForm() {
           value={state.ingredient_id}
           onChange={(e) => {
             const matched = sortedIngredients.find((i) => i.id === e.target.value);
-            setState((s) => ({
-              ...s,
-              ingredient_id: e.target.value,
-              unit: matched && !s.unit ? matched.default_unit : s.unit,
-            }));
+            setState((s) => {
+              const autoName = matched
+                ? matched.brand
+                  ? `${matched.brand} — ${matched.name}`
+                  : matched.name
+                : s.raw_text;
+              return {
+                ...s,
+                ingredient_id: e.target.value,
+                raw_text: autoName,
+                unit: matched && !s.unit ? matched.default_unit : s.unit,
+              };
+            });
           }}
           className={inputClass}
         >
