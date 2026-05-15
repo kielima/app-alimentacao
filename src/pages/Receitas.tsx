@@ -41,68 +41,87 @@ export default function Receitas() {
     total,
   } = useRecipes();
 
+  const [showFilters, setShowFilters] = useState(false);
+  const hasActiveFilters = category !== 'todas' || completeness !== 'todas' || minRating !== 0;
+  const isFiltering = hasActiveFilters || !!query;
+
   return (
     <div className="mx-auto max-w-md px-4 pt-2">
-      <div className="mb-3 flex items-center gap-2">
-        <span className="text-2xl" aria-hidden>
-          🍳
-        </span>
-        <h1 className="text-lg font-semibold">Receitas</h1>
-        <span className="text-xs text-zinc-500 dark:text-zinc-400">
-          {list.length} de {total}
-        </span>
-        <Link
-          to="/receitas/nova"
-          className="ml-auto rounded-full bg-brand-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
-        >
-          + Nova
-        </Link>
-      </div>
-
-      <input
-        type="search"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="🔍 Buscar receita…"
-        className="mb-3 w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-base placeholder:text-zinc-400 focus:border-brand-500 focus:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
-      />
-
-      <FilterRow label="Categoria">
-        {categoryChips.map((c) => (
-          <Chip key={c.value} active={category === c.value} onClick={() => setCategory(c.value)}>
-            <span aria-hidden>{c.icon}</span> {c.label}
-          </Chip>
-        ))}
-      </FilterRow>
-
-      <FilterRow label="Status">
-        {completenessChips.map((c) => (
-          <Chip
-            key={c.value}
-            active={completeness === c.value}
-            onClick={() => setCompleteness(c.value)}
-          >
-            {c.label}
-          </Chip>
-        ))}
-      </FilterRow>
-
-      <FilterRow label="Avaliação">
-        {ratingChips.map((r) => (
-          <Chip key={r.value} active={minRating === r.value} onClick={() => setMinRating(r.value)}>
-            {r.label}
-          </Chip>
-        ))}
-      </FilterRow>
-
-      <div className="mt-2 mb-4">
+      {/* Linha única: 🥕 | busca | ⚙️ | + */}
+      <div className="mb-2 flex items-center gap-2">
         <Link
           to="/ingredientes"
-          className="text-xs text-brand-600 hover:underline dark:text-brand-400"
+          aria-label="Base de ingredientes"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-lg hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700"
         >
-          🥕 Ver base de ingredientes →
+          🥕
+        </Link>
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="🔍 Buscar receita…"
+          className="min-w-0 flex-1 rounded-xl border border-zinc-200 bg-white px-4 py-2 text-base placeholder:text-zinc-400 focus:border-brand-500 focus:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
+        />
+        <button
+          type="button"
+          onClick={() => setShowFilters((f) => !f)}
+          aria-label="Filtros"
+          className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg transition-colors ${
+            showFilters
+              ? 'bg-brand-500 dark:bg-brand-600'
+              : 'bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700'
+          }`}
+        >
+          ⚙️
+          {hasActiveFilters && !showFilters && (
+            <span className="absolute right-0.5 top-0.5 h-2.5 w-2.5 rounded-full bg-brand-500 ring-2 ring-white dark:ring-zinc-950" />
+          )}
+        </button>
+        <Link
+          to="/receitas/nova"
+          aria-label="Nova receita"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500 text-xl font-bold text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
+        >
+          +
         </Link>
       </div>
+
+      {isFiltering && (
+        <p className="mb-2 text-xs text-zinc-400 dark:text-zinc-500">
+          {list.length} de {total} receita{total !== 1 ? 's' : ''}
+        </p>
+      )}
+
+      {showFilters && (
+        <div className="mb-3">
+          <FilterRow label="Categoria">
+            {categoryChips.map((c) => (
+              <Chip key={c.value} active={category === c.value} onClick={() => setCategory(c.value)}>
+                <span aria-hidden>{c.icon}</span> {c.label}
+              </Chip>
+            ))}
+          </FilterRow>
+          <FilterRow label="Status">
+            {completenessChips.map((c) => (
+              <Chip
+                key={c.value}
+                active={completeness === c.value}
+                onClick={() => setCompleteness(c.value)}
+              >
+                {c.label}
+              </Chip>
+            ))}
+          </FilterRow>
+          <FilterRow label="Avaliação">
+            {ratingChips.map((r) => (
+              <Chip key={r.value} active={minRating === r.value} onClick={() => setMinRating(r.value)}>
+                {r.label}
+              </Chip>
+            ))}
+          </FilterRow>
+        </div>
+      )}
 
       {list.length === 0 ? (
         <p className="mt-12 text-center text-sm text-zinc-500 dark:text-zinc-400">
