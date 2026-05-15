@@ -1,7 +1,9 @@
 import { findIngredientById } from '../data/ingredients';
+import { findMealById } from '../data/meals';
 import { findRecipeById } from '../data/recipes';
 import type { NutritionPer100 } from '../types/ingredient';
-import type { MealItem } from '../types/mealPlan';
+import type { Meal, MealItem } from '../types/meal';
+import type { PlanMealItem } from '../types/mealPlan';
 import type { Recipe } from '../types/recipe';
 
 const NUTRIENT_KEYS: (keyof NutritionPer100)[] = [
@@ -117,52 +119,130 @@ export function recipeNutritionPer100g(
   return per100g;
 }
 
-export function computeMealNutrition(items: MealItem[]): NutritionBreakdown {
+function recipePer100g(recipe: Recipe): Partial<Record<keyof NutritionPer100, number>> | null {
+  if (recipe.nutrition_per_100g) {
+    const direct: Partial<Record<keyof NutritionPer100, number>> = {};
+    for (const key of NUTRIENT_KEYS) {
+      const v = recipe.nutrition_per_100g[key];
+      if (typeof v === 'number') direct[key] = v;
+    }
+    return direct;
+  }
+  return recipeNutritionPer100g(recipe);
+}
+
+/**
+ * Soma nutrição de um item dentro de uma Refeição.
+ * `kind === 'recipe'` usa nutrição por 100g da receita; `kind === 'ingredient'`
+ * usa nutrição por 100 do ingrediente. Quantity precisa ter unidade g/ml.
+ */
+function accumulateMealItem(
+  item: MealItem,
+  totals: Partial<Record<keyof NutritionPer100, number>>,
+  skipped: { raw: string; reason: string }[],
+): boolean {
+  if (item.quantity == null || !item.unit) {
+    skipped.push({ raw: `(item ${item.id})`, reason: 'quantidade não informada' });
+    return false;
+  }
+  const base = unitToBase(item.quantity, item.unit);
+  if (base === null) {
+    skipped.push({ raw: `(item ${item.id})`, reason: `unidade "${item.unit}" sem conversão` });
+    return false;
+  }
+  let per100: Partial<Record<keyof NutritionPer100, number>> | null = null;
+  let label = '(item)';
+  if (item.kind === 'recipe' && item.recipe_id) {
+    const recipe = findRecipeById(item.recipe_id);
+    if (!recipe) {
+      skipped.push({ raw: item.recipe_id, reason: 'receita não encontrada' });
+      return false;
+    }
+    label = recipe.name;
+    per100 = recipePer100g(recipe);
+  } else if (item.kind === 'ingredient' && item.ingredient_id) {
+    const ing = findIngredientById(item.ingredient_id);
+    if (!ing) {
+      skipped.push({ raw: item.ingredient_id, reason: 'ingrediente não encontrado' });
+      return false;
+    }
+    label = ing.name;
+    if (ing.nutrition_per_100) {
+      const cleaned: Partial<Record<keyof NutritionPer100, number>> = {};
+      for (const key of NUTRIENT_KEYS) {
+        const v = ing.nutrition_per_100[key];
+        if (typeof v === 'number') cleaned[key] = v;
+      }
+      per100 = cleaned;
+    }
+  } else {
+    skipped.push({ raw: `(item ${item.id})`, reason: 'sem vínculo' });
+    return false;
+  }
+  if (!per100) {
+    skipped.push({ raw: label, reason: 'sem dados nutricionais' });
+    return false;
+  }
+  const factor = base / 100;
+  for (const key of NUTRIENT_KEYS) {
+    const v = per100[key];
+    if (typeof v === 'number') {
+      totals[key] = (totals[key] ?? 0) + v * factor;
+    }
+  }
+  return true;
+}
+
+/**
+ * Soma nutrição de UMA Refeição (lista de items: receitas + ingredientes diretos).
+ */
+export function computeMealItemsNutrition(items: MealItem[]): NutritionBreakdown {
+  const totals: Partial<Record<keyof NutritionPer100, number>> = {};
+  let counted = 0;
+  let skipped = 0;
+  const skippedReasons: { raw: string; reason: string }[] = [];
+  for (const item of items) {
+    const ok = accumulateMealItem(item, totals, skippedReasons);
+    if (ok) counted++;
+    else skipped++;
+  }
+  return { totals, counted, skipped, skippedReasons };
+}
+
+/**
+ * Soma nutrição dos itens do plano do dia. Cada PlanMealItem aponta para uma
+ * Refeição (Meal); a função expande os itens da Refeição e soma.
+ *
+ * `meals` é o catálogo completo (seed + user) — passar via hook em React.
+ */
+export function computePlanItemsNutrition(
+  planItems: PlanMealItem[],
+  meals: Meal[],
+): NutritionBreakdown {
   const totals: Partial<Record<keyof NutritionPer100, number>> = {};
   let counted = 0;
   let skipped = 0;
   const skippedReasons: { raw: string; reason: string }[] = [];
 
-  for (const item of items) {
-    if (!item.recipe_id) {
+  const byId = new Map(meals.map((m) => [m.id, m]));
+
+  for (const planItem of planItems) {
+    if (!planItem.meal_id) {
       skipped++;
-      skippedReasons.push({ raw: '(item)', reason: 'sem receita selecionada' });
+      skippedReasons.push({ raw: '(slot)', reason: 'sem refeição selecionada' });
       continue;
     }
-    const recipe = findRecipeById(item.recipe_id);
-    if (!recipe) {
+    const meal = byId.get(planItem.meal_id) ?? findMealById(planItem.meal_id);
+    if (!meal) {
       skipped++;
-      skippedReasons.push({ raw: item.recipe_id, reason: 'receita não encontrada' });
+      skippedReasons.push({ raw: planItem.meal_id, reason: 'refeição não encontrada' });
       continue;
     }
-    if (item.quantity == null) {
-      skipped++;
-      skippedReasons.push({ raw: recipe.name, reason: 'quantidade não informada' });
-      continue;
+    for (const item of meal.items) {
+      const ok = accumulateMealItem(item, totals, skippedReasons);
+      if (ok) counted++;
+      else skipped++;
     }
-    let per100g: Partial<Record<keyof NutritionPer100, number>> | null = null;
-    if (recipe.nutrition_per_100g) {
-      per100g = {};
-      for (const key of NUTRIENT_KEYS) {
-        const v = recipe.nutrition_per_100g[key];
-        if (typeof v === 'number') per100g[key] = v;
-      }
-    } else {
-      per100g = recipeNutritionPer100g(recipe);
-    }
-    if (!per100g) {
-      skipped++;
-      skippedReasons.push({ raw: recipe.name, reason: 'sem dados nutricionais' });
-      continue;
-    }
-    const factor = item.quantity / 100;
-    for (const key of NUTRIENT_KEYS) {
-      const v = per100g[key];
-      if (typeof v === 'number') {
-        totals[key] = (totals[key] ?? 0) + v * factor;
-      }
-    }
-    counted++;
   }
 
   return { totals, counted, skipped, skippedReasons };

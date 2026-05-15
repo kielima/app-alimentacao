@@ -14,6 +14,9 @@ import ComprasItemForm from './pages/ComprasItemForm';
 import Ingredientes from './pages/Ingredientes';
 import IngredienteDetalhe from './pages/IngredienteDetalhe';
 import IngredienteForm from './pages/IngredienteForm';
+import Refeicoes from './pages/Refeicoes';
+import RefeicaoForm from './pages/RefeicaoForm';
+import RefeicaoDetalhe from './pages/RefeicaoDetalhe';
 import { useTheme } from './hooks/useTheme';
 import { usePinAuth } from './hooks/usePinAuth';
 
@@ -52,6 +55,10 @@ export default function App() {
           <Route path="/compras" element={<Compras />} />
           <Route path="/compras/:id" element={<ComprasItemForm />} />
           <Route path="/plano" element={<Plano />} />
+          <Route path="/refeicoes" element={<Refeicoes />} />
+          <Route path="/refeicoes/nova" element={<RefeicaoForm />} />
+          <Route path="/refeicoes/:id/editar" element={<RefeicaoForm />} />
+          <Route path="/refeicoes/:id" element={<RefeicaoDetalhe />} />
           <Route path="/ingredientes" element={<Ingredientes />} />
           <Route path="/ingredientes/novo" element={<IngredienteForm />} />
           <Route path="/ingredientes/:id" element={<IngredienteDetalhe />} />

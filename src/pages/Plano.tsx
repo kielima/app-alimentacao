@@ -5,21 +5,21 @@ import {
   MEAL_TYPES,
   todayDayOfWeek,
   type DayOfWeek,
-  type Meal,
-  type MealItem,
+  type PlanMeal,
+  type PlanMealItem,
   type MealType,
   type PlanType,
 } from '../types/mealPlan';
 import {
   ensureMealStructure,
   emptyDayPlan,
-  newMealItem,
+  newPlanMealItem,
   upsertMealPlan,
   useMealPlans,
 } from '../data/mealPlan';
-import { useAllRecipes } from '../data/recipes';
-import { computeMealNutrition, type NutritionBreakdown } from '../utils/nutrition';
-import type { Recipe } from '../types/recipe';
+import { useAllMeals } from '../data/meals';
+import { computePlanItemsNutrition, type NutritionBreakdown } from '../utils/nutrition';
+import type { Meal } from '../types/meal';
 
 export default function Plano() {
   const plans = useMealPlans();
@@ -27,11 +27,7 @@ export default function Plano() {
   const [planType, setPlanType] = useState<PlanType>('training_day');
   const [editing, setEditing] = useState(false);
 
-  const allRecipes = useAllRecipes();
-  const sortedRecipes = useMemo(
-    () => [...allRecipes].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
-    [allRecipes],
-  );
+  const allMeals = useAllMeals();
 
   const dayPlan = useMemo(() => {
     const found = plans.find((p) => p.day_of_week === day && p.plan_type === planType);
@@ -43,11 +39,11 @@ export default function Plano() {
 
   const allItems = useMemo(() => dayPlan.meals.flatMap((m) => m.items), [dayPlan]);
   const dayNutrition = useMemo(
-    () => (allItems.length > 0 ? computeMealNutrition(allItems) : null),
-    [allItems],
+    () => (allItems.length > 0 ? computePlanItemsNutrition(allItems, allMeals) : null),
+    [allItems, allMeals],
   );
 
-  const updateMeal = (mealType: MealType, items: MealItem[]) => {
+  const updateMeal = (mealType: MealType, items: PlanMealItem[]) => {
     const next = {
       ...dayPlan,
       meals: dayPlan.meals.map((m) => (m.meal_type === mealType ? { ...m, items } : m)),
@@ -73,6 +69,15 @@ export default function Plano() {
         >
           {editing ? '✓ Concluir' : '✏️ Editar'}
         </button>
+      </div>
+
+      <div className="mb-3">
+        <Link
+          to="/refeicoes"
+          className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-brand-50 hover:text-brand-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-brand-900/30 dark:hover:text-brand-300"
+        >
+          📋 Minhas Refeições
+        </Link>
       </div>
 
       <div className="mb-3 flex items-center gap-2">
@@ -135,11 +140,11 @@ export default function Plano() {
 
       <ul className="mt-4 space-y-3">
         {dayPlan.meals.map((meal) => (
-          <MealCard
+          <PlanMealCard
             key={meal.meal_type}
             meal={meal}
             editing={editing}
-            recipes={sortedRecipes}
+            allMeals={allMeals}
             onChange={(items) => updateMeal(meal.meal_type, items)}
           />
         ))}
@@ -197,28 +202,38 @@ function DaySummary({
   );
 }
 
-function MealCard({
+function PlanMealCard({
   meal,
   editing,
-  recipes,
+  allMeals,
   onChange,
 }: {
-  meal: Meal;
+  meal: PlanMeal;
   editing: boolean;
-  recipes: Recipe[];
-  onChange: (items: MealItem[]) => void;
+  allMeals: Meal[];
+  onChange: (items: PlanMealItem[]) => void;
 }) {
   const def = MEAL_TYPES.find((m) => m.value === meal.meal_type);
+
+  // Refeições deste slot (ou sem slot) — facilita seleção
+  const filteredMeals = useMemo(() => {
+    return [...allMeals]
+      .filter((m) => !m.meal_type || m.meal_type === meal.meal_type)
+      .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+  }, [allMeals, meal.meal_type]);
+
+  const mealById = useMemo(() => new Map(allMeals.map((m) => [m.id, m])), [allMeals]);
+
   const nutrition = useMemo(
-    () => (meal.items.length > 0 ? computeMealNutrition(meal.items) : null),
-    [meal.items],
+    () => (meal.items.length > 0 ? computePlanItemsNutrition(meal.items, allMeals) : null),
+    [meal.items, allMeals],
   );
 
-  const updateItem = (idx: number, patch: Partial<MealItem>) => {
+  const updateItem = (idx: number, patch: Partial<PlanMealItem>) => {
     onChange(meal.items.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
   };
 
-  const addItem = () => onChange([...meal.items, newMealItem()]);
+  const addItem = () => onChange([...meal.items, newPlanMealItem()]);
   const removeItem = (idx: number) => onChange(meal.items.filter((_, i) => i !== idx));
 
   if (!editing && meal.items.length === 0) {
@@ -242,24 +257,22 @@ function MealCard({
       {meal.items.length === 0 && !editing ? null : (
         <ul className={editing ? 'space-y-2' : 'space-y-1'}>
           {meal.items.map((item, idx) => {
-            const recipe = item.recipe_id ? recipes.find((r) => r.id === item.recipe_id) : undefined;
+            const refeicao = item.meal_id ? mealById.get(item.meal_id) : undefined;
             if (editing) {
               return (
                 <li key={item.id} className="rounded-lg bg-zinc-50 p-2 dark:bg-zinc-950">
                   <div className="grid grid-cols-[1fr,auto] gap-1.5">
                     <select
-                      value={item.recipe_id ?? ''}
-                      onChange={(e) =>
-                        updateItem(idx, { recipe_id: e.target.value || null })
-                      }
+                      value={item.meal_id ?? ''}
+                      onChange={(e) => updateItem(idx, { meal_id: e.target.value || null })}
                       className="min-w-0 rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm focus:border-brand-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
                     >
                       <option value="" disabled>
-                        Selecione uma receita…
+                        Selecione uma refeição…
                       </option>
-                      {recipes.map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {r.name}
+                      {filteredMeals.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.name}
                         </option>
                       ))}
                     </select>
@@ -272,39 +285,17 @@ function MealCard({
                       🗑️
                     </button>
                   </div>
-                  <div className="mt-1.5 flex items-center gap-1.5">
-                    <input
-                      type="number"
-                      min={0}
-                      step="any"
-                      inputMode="decimal"
-                      value={item.quantity ?? ''}
-                      onChange={(e) =>
-                        updateItem(idx, {
-                          quantity: e.target.value ? Number(e.target.value) : null,
-                        })
-                      }
-                      placeholder="Quantidade"
-                      className="w-32 rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs focus:border-brand-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
-                    />
-                    <span className="text-xs text-zinc-500 dark:text-zinc-400">g / ml</span>
-                  </div>
                 </li>
               );
             }
-            if (!recipe) return null;
+            if (!refeicao) return null;
             return (
               <li key={item.id} className="text-sm">
                 <Link
-                  to={`/receitas/${recipe.id}`}
+                  to={`/refeicoes/${refeicao.id}`}
                   className="text-zinc-900 hover:text-brand-600 dark:text-zinc-100 dark:hover:text-brand-400"
                 >
-                  {recipe.name}
-                  {item.quantity != null && (
-                    <span className="ml-1 text-xs text-zinc-500 dark:text-zinc-400">
-                      ({item.quantity} g)
-                    </span>
-                  )}
+                  {refeicao.name}
                 </Link>
               </li>
             );
@@ -318,7 +309,7 @@ function MealCard({
           onClick={addItem}
           className="mt-2 w-full rounded-lg border-2 border-dashed border-zinc-300 py-1.5 text-xs text-zinc-500 hover:border-brand-500 hover:text-brand-600 dark:border-zinc-700 dark:text-zinc-400"
         >
-          + Adicionar receita
+          + Adicionar refeição
         </button>
       )}
     </li>

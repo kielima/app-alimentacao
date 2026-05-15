@@ -9,22 +9,22 @@ export type MealType =
   | 'jantar'
   | 'ceia';
 
-export interface MealItem {
+export interface PlanMealItem {
   id: string;
-  recipe_id: string | null;
+  meal_id: string | null;
   quantity: number | null;
 }
 
-export interface Meal {
+export interface PlanMeal {
   meal_type: MealType;
-  items: MealItem[];
+  items: PlanMealItem[];
 }
 
 export interface DayPlan {
   id: string;
   day_of_week: DayOfWeek;
   plan_type: PlanType;
-  meals: Meal[];
+  meals: PlanMeal[];
 }
 
 export const DAYS_OF_WEEK: { value: DayOfWeek; label: string; short: string }[] = [
