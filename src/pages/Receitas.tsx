@@ -200,7 +200,9 @@ function FilterRow({ label, children }: { label: string; children: React.ReactNo
       <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
         {label}
       </p>
-      <div className="flex flex-wrap gap-1.5">{children}</div>
+      <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {children}
+      </div>
     </div>
   );
 }
@@ -218,7 +220,7 @@ function Chip({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+      className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
         active
           ? 'bg-brand-500 text-white dark:bg-brand-600'
           : 'bg-zinc-200/60 text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60'

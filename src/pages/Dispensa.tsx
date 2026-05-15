@@ -60,7 +60,7 @@ export default function Dispensa() {
         className="mb-3 w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-base placeholder:text-zinc-400 focus:border-brand-500 focus:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
       />
 
-      <div className="mb-4 flex flex-wrap gap-1.5">
+      <div className="-mx-4 mb-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {filterChips.map((c) => {
           const count =
             c.value === 'todos'
@@ -71,7 +71,7 @@ export default function Dispensa() {
               key={c.value}
               type="button"
               onClick={() => setFilter(c.value)}
-              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+              className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                 filter === c.value
                   ? 'bg-brand-500 text-white dark:bg-brand-600'
                   : 'bg-zinc-200/60 text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60'
