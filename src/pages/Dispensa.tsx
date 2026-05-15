@@ -1,9 +1,9 @@
-import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { usePantry, type PantryFilter } from '../hooks/usePantry';
 import { expiryStatus, expiryLabel, statusColor, statusIcon } from '../utils/expiry';
 import { unitLabel } from '../utils/units';
 import { upsertShoppingItem } from '../data/shoppingList';
+import { deletePantryItem } from '../data/pantry';
 import type { PantryItem } from '../types/pantry';
 
 const filterChips: { value: PantryFilter; label: string }[] = [
@@ -17,8 +17,6 @@ const filterChips: { value: PantryFilter; label: string }[] = [
 export default function Dispensa() {
   const navigate = useNavigate();
   const { list, query, setQuery, filter, setFilter, total, countsByStatus } = usePantry();
-  const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
-
   const sendToList = (item: PantryItem) => {
     upsertShoppingItem({
       id: `from-pantry-${item.id}-${Date.now()}`,
@@ -33,7 +31,7 @@ export default function Dispensa() {
       source_ref: item.id,
       added_at: new Date().toISOString(),
     });
-    setAddedIds((s) => new Set(s).add(item.id));
+    deletePantryItem(item.id);
   };
 
   return (
@@ -105,7 +103,6 @@ export default function Dispensa() {
         <ul className="space-y-2">
           {list.map((item) => {
             const status = expiryStatus(item.expiry_date);
-            const justAdded = addedIds.has(item.id);
             return (
               <li key={item.id}>
                 <div
@@ -135,14 +132,10 @@ export default function Dispensa() {
                         e.stopPropagation();
                         sendToList(item);
                       }}
-                      className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium transition-colors ${
-                        justAdded
-                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-                          : 'bg-zinc-100 text-zinc-500 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-brand-900/30 dark:hover:text-brand-400'
-                      }`}
+                      className="shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-500 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-brand-900/30 dark:hover:text-brand-400"
                       aria-label="Adicionar à lista de compras"
                     >
-                      {justAdded ? '✓' : '+ compras'}
+                      + compras
                     </button>
                   </div>
                 </div>
