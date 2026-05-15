@@ -1,6 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAllIngredients } from '../data/ingredients';
+import SearchableSelect from '../components/SearchableSelect';
 import { findRecipeById, recipeCategories, allRecipeIds } from '../data/recipes';
 import { upsertUserRecipe } from '../data/userRecipes';
 import { uniqueSlug } from '../utils/slug';
@@ -442,30 +443,23 @@ function IngredientRow({
   return (
     <li className="rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
       <div className="mb-2 grid grid-cols-[1fr,auto] gap-2">
-        <select
+        <SearchableSelect
           value={ing.ingredient_id}
-          onChange={(e) => {
-            const newId = e.target.value;
-            if (newId === '__new__') {
-              navigate('/ingredientes/novo');
-              return;
-            }
+          onChange={(newId) => {
             const matched = sortedIngredients.find((i) => i.id === newId);
             onUpdate({
               ingredient_id: newId,
               unit: matched && !ing.unit ? matched.default_unit : ing.unit,
             });
           }}
-          className={`${inputClass} text-sm`}
-        >
-          <option value="">— Selecione um ingrediente —</option>
-          {sortedIngredients.map((i) => (
-            <option key={i.id} value={i.id}>
-              {i.brand ? `${i.brand} — ${i.name}` : i.name}
-            </option>
-          ))}
-          <option value="__new__">➕ Criar novo ingrediente</option>
-        </select>
+          options={sortedIngredients.map((i) => ({
+            value: i.id,
+            label: i.brand ? `${i.brand} — ${i.name}` : i.name,
+          }))}
+          placeholder="— Selecione um ingrediente —"
+          createLabel="➕ Criar novo ingrediente"
+          onCreate={() => navigate('/ingredientes/novo')}
+        />
         <button
           type="button"
           onClick={onRemove}

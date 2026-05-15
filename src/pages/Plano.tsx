@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import SearchableSelect from '../components/SearchableSelect';
 import {
   DAYS_OF_WEEK,
   MEAL_TYPES,
@@ -273,20 +274,12 @@ function PlanMealCard({
               return (
                 <li key={item.id} className="rounded-lg bg-zinc-50 p-2 dark:bg-zinc-950">
                   <div className="grid grid-cols-[1fr,auto] gap-1.5">
-                    <select
+                    <SearchableSelect
                       value={item.meal_id ?? ''}
-                      onChange={(e) => updateItem(idx, { meal_id: e.target.value || null })}
-                      className="min-w-0 rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm focus:border-brand-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
-                    >
-                      <option value="" disabled>
-                        Selecione uma refeição…
-                      </option>
-                      {filteredMeals.map((m) => (
-                        <option key={m.id} value={m.id}>
-                          {m.name}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(val) => updateItem(idx, { meal_id: val || null })}
+                      options={filteredMeals.map((m) => ({ value: m.id, label: m.name }))}
+                      placeholder="Selecione uma refeição…"
+                    />
                     <button
                       type="button"
                       onClick={() => removeItem(idx)}

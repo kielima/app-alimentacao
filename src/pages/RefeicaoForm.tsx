@@ -1,5 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import SearchableSelect from '../components/SearchableSelect';
 import { useAllIngredients } from '../data/ingredients';
 import { useAllMeals, findMealById, allMealIds } from '../data/meals';
 import { useAllRecipes } from '../data/recipes';
@@ -267,18 +268,9 @@ export default function RefeicaoForm() {
                   🗑️
                 </button>
               </div>
-              <select
+              <SearchableSelect
                 value={it.ref_id}
-                onChange={(e) => {
-                  const newId = e.target.value;
-                  if (newId === '__new_recipe__') {
-                    navigate(`/receitas/nova?return=${encodeURIComponent(window.location.pathname)}`);
-                    return;
-                  }
-                  if (newId === '__new_ingredient__') {
-                    navigate(`/ingredientes/novo?return=${encodeURIComponent(window.location.pathname)}`);
-                    return;
-                  }
+                onChange={(newId) => {
                   if (it.kind === 'ingredient') {
                     const matched = sortedIngredients.find((i) => i.id === newId);
                     updateItem(idx, {
@@ -289,24 +281,26 @@ export default function RefeicaoForm() {
                     updateItem(idx, { ref_id: newId });
                   }
                 }}
-                className={`${inputClass} mb-2 text-sm`}
-              >
-                <option value="">— Selecione —</option>
-                {it.kind === 'recipe'
-                  ? sortedRecipes.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.name}
-                      </option>
-                    ))
-                  : sortedIngredients.map((i) => (
-                      <option key={i.id} value={i.id}>
-                        {i.brand ? `${i.brand} — ${i.name}` : i.name}
-                      </option>
-                    ))}
-                <option value={it.kind === 'recipe' ? '__new_recipe__' : '__new_ingredient__'}>
-                  ➕ Criar {it.kind === 'recipe' ? 'nova receita' : 'novo ingrediente'}
-                </option>
-              </select>
+                options={
+                  it.kind === 'recipe'
+                    ? sortedRecipes.map((r) => ({ value: r.id, label: r.name }))
+                    : sortedIngredients.map((i) => ({
+                        value: i.id,
+                        label: i.brand ? `${i.brand} — ${i.name}` : i.name,
+                      }))
+                }
+                placeholder="— Selecione —"
+                createLabel={`➕ Criar ${it.kind === 'recipe' ? 'nova receita' : 'novo ingrediente'}`}
+                onCreate={() => {
+                  const ret = encodeURIComponent(window.location.pathname);
+                  navigate(
+                    it.kind === 'recipe'
+                      ? `/receitas/nova?return=${ret}`
+                      : `/ingredientes/novo?return=${ret}`,
+                  );
+                }}
+                className="mb-2"
+              />
               <div className="grid grid-cols-[80px,1fr] gap-2">
                 <input
                   type="number"
