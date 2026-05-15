@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import SearchableSelect from '../components/SearchableSelect';
 import { useAllIngredients, getAllIngredients, findIngredientById } from '../data/ingredients';
 import { getShoppingItem, upsertShoppingItem, deleteShoppingItem, useShoppingItems } from '../data/shoppingList';
 import { usePantryItems } from '../data/pantry';
@@ -103,10 +104,6 @@ export default function ComprasItemForm() {
   const returnPath = `/compras/${id}`;
 
   const handleIngredientSelect = (value: string) => {
-    if (value === '__new__') {
-      navigate(`/ingredientes/novo?return=${encodeURIComponent(returnPath)}`);
-      return;
-    }
     setSelectValue(value);
     if (value === '') {
       setState((s) => ({ ...s, ingredient_id: '', unit: s.unit }));
@@ -207,21 +204,17 @@ export default function ComprasItemForm() {
       )}
 
       <Field label="Ingrediente">
-        <select
+        <SearchableSelect
           value={selectValue}
-          onChange={(e) => handleIngredientSelect(e.target.value)}
-          className={inputClass}
-        >
-          <option value="" disabled>
-            Selecione um ingrediente…
-          </option>
-          {sortedIngredients.map((i) => (
-            <option key={i.id} value={i.id}>
-              {i.brand ? `${i.brand} — ${i.name}` : i.name}
-            </option>
-          ))}
-          <option value="__new__">➕ Criar novo ingrediente</option>
-        </select>
+          onChange={handleIngredientSelect}
+          options={sortedIngredients.map((i) => ({
+            value: i.id,
+            label: i.brand ? `${i.brand} — ${i.name}` : i.name,
+          }))}
+          placeholder="Selecione um ingrediente…"
+          createLabel="➕ Criar novo ingrediente"
+          onCreate={() => navigate(`/ingredientes/novo?return=${encodeURIComponent(returnPath)}`)}
+        />
       </Field>
 
       <div className="grid grid-cols-[100px,1fr] gap-3">
