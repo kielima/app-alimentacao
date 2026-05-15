@@ -1,7 +1,8 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { allIngredients } from '../data/ingredients';
-import { getShoppingItem, upsertShoppingItem, deleteShoppingItem } from '../data/shoppingList';
+import { getShoppingItem, upsertShoppingItem, deleteShoppingItem, useShoppingItems } from '../data/shoppingList';
+import { usePantryItems } from '../data/pantry';
 import { UNIT_OPTIONS } from '../utils/units';
 import type { ShoppingItem } from '../types/shoppingList';
 
@@ -10,7 +11,6 @@ interface FormState {
   ingredient_id: string;
   quantity: string;
   unit: string;
-  store: string;
   price: string;
 }
 
@@ -21,7 +21,6 @@ function itemToForm(item: ShoppingItem | undefined): FormState {
       ingredient_id: '',
       quantity: '',
       unit: '',
-      store: '',
       price: '',
     };
   }
@@ -30,9 +29,14 @@ function itemToForm(item: ShoppingItem | undefined): FormState {
     ingredient_id: item.ingredient_id ?? '',
     quantity: item.quantity?.toString() ?? '',
     unit: item.unit ?? '',
-    store: item.store ?? '',
     price: item.price?.toString() ?? '',
   };
+}
+
+function initialSelectValue(state: FormState): string {
+  if (state.ingredient_id) return state.ingredient_id;
+  if (state.raw_text) return '__custom__';
+  return '';
 }
 
 export default function ComprasItemForm() {
@@ -56,13 +60,54 @@ export default function ComprasItemForm() {
     [],
   );
 
-  const [state, setState] = useState<FormState>(() => itemToForm(original));
+  const pantryItems = usePantryItems();
+  const shoppingItems = useShoppingItems();
+  const knownStores = useMemo(() => {
+    const all = [...pantryItems, ...shoppingItems]
+      .map((i) => i.store)
+      .filter((s): s is string => !!s && s.trim() !== '');
+    return [...new Set(all)].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  }, [pantryItems, shoppingItems]);
+
+  const initialState = itemToForm(original);
+  const [state, setState] = useState<FormState>(() => initialState);
+  const [selectValue, setSelectValue] = useState(() => initialSelectValue(initialState));
   const [error, setError] = useState<string | null>(null);
+
+  // Store state
+  const [storeSelect, setStoreSelect] = useState<string>(() => original?.store ?? '');
+  const [storeCustom, setStoreCustom] = useState('');
+
+  useEffect(() => {
+    if (storeSelect !== '' && storeSelect !== '__outro__' && !knownStores.includes(storeSelect)) {
+      setStoreCustom(storeSelect);
+      setStoreSelect('__outro__');
+    }
+  }, [knownStores]); // intentionally only runs when knownStores changes (first load)
+
+  const handleIngredientSelect = (value: string) => {
+    setSelectValue(value);
+    if (value === '__custom__' || value === '') {
+      setState((s) => ({ ...s, ingredient_id: '', unit: s.unit }));
+    } else {
+      const matched = sortedIngredients.find((i) => i.id === value);
+      setState((s) => ({
+        ...s,
+        ingredient_id: value,
+        raw_text: matched
+          ? matched.brand
+            ? `${matched.brand} — ${matched.name}`
+            : matched.name
+          : s.raw_text,
+        unit: matched && !s.unit ? matched.default_unit : s.unit,
+      }));
+    }
+  };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!state.raw_text.trim() && !state.ingredient_id) {
+    if (selectValue === '' || (selectValue === '__custom__' && !state.raw_text.trim())) {
       setError('Informe o nome do item ou selecione um ingrediente');
       return;
     }
@@ -74,13 +119,15 @@ export default function ComprasItemForm() {
           ? `${linkedIngredient.brand} — ${linkedIngredient.name}`
           : linkedIngredient.name
         : '');
+    const storeValue =
+      storeSelect === '__outro__' ? storeCustom.trim() || null : storeSelect || null;
     const item: ShoppingItem = {
       id: original?.id ?? `shopping-${Date.now()}`,
       ingredient_id: state.ingredient_id || null,
       raw_text: rawText,
       quantity: state.quantity ? Number(state.quantity) : null,
       unit: state.unit || null,
-      store: state.store.trim() || null,
+      store: storeValue,
       price: state.price ? Number(state.price) : null,
       checked: original?.checked ?? false,
       source: original?.source ?? 'manual',
@@ -97,6 +144,11 @@ export default function ComprasItemForm() {
     deleteShoppingItem(original.id);
     navigate('/compras');
   };
+
+  const selectDisplayValue =
+    storeSelect === '__outro__' || (!knownStores.includes(storeSelect) && storeSelect !== '')
+      ? '__outro__'
+      : storeSelect;
 
   return (
     <form onSubmit={handleSubmit} className="mx-auto max-w-md px-4 pb-6">
@@ -132,44 +184,32 @@ export default function ComprasItemForm() {
         </div>
       )}
 
-      <Field label="Nome">
-        <input
-          type="text"
-          value={state.raw_text}
-          onChange={(e) => setState((s) => ({ ...s, raw_text: e.target.value }))}
-          className={inputClass}
-          placeholder='Ex.: "Leite integral 1L"'
-        />
-      </Field>
-
-      <Field label="Vincular a ingrediente (opcional)">
+      <Field label="Ingrediente">
         <select
-          value={state.ingredient_id}
-          onChange={(e) => {
-            const matched = sortedIngredients.find((i) => i.id === e.target.value);
-            setState((s) => {
-              const autoName = matched
-                ? matched.brand
-                  ? `${matched.brand} — ${matched.name}`
-                  : matched.name
-                : s.raw_text;
-              return {
-                ...s,
-                ingredient_id: e.target.value,
-                raw_text: autoName,
-                unit: matched && !s.unit ? matched.default_unit : s.unit,
-              };
-            });
-          }}
+          value={selectValue}
+          onChange={(e) => handleIngredientSelect(e.target.value)}
           className={inputClass}
         >
-          <option value="">🔗 Sem vínculo</option>
+          <option value="" disabled>
+            Selecione ou escolha personalizado…
+          </option>
+          <option value="__custom__">✏️ Nome personalizado</option>
           {sortedIngredients.map((i) => (
             <option key={i.id} value={i.id}>
               {i.brand ? `${i.brand} — ${i.name}` : i.name}
             </option>
           ))}
         </select>
+        {selectValue === '__custom__' && (
+          <input
+            type="text"
+            value={state.raw_text}
+            onChange={(e) => setState((s) => ({ ...s, raw_text: e.target.value }))}
+            className={`${inputClass} mt-2`}
+            placeholder='Ex.: "1 galho de alecrim"'
+            autoFocus
+          />
+        )}
       </Field>
 
       <div className="grid grid-cols-[100px,1fr] gap-3">
@@ -201,13 +241,34 @@ export default function ComprasItemForm() {
       </div>
 
       <Field label="Mercado / loja (opcional)">
-        <input
-          type="text"
-          value={state.store}
-          onChange={(e) => setState((s) => ({ ...s, store: e.target.value }))}
+        <select
+          value={selectDisplayValue}
+          onChange={(e) => {
+            setStoreSelect(e.target.value);
+            if (e.target.value !== '__outro__') setStoreCustom('');
+          }}
           className={inputClass}
-          placeholder='Ex.: "Pão de Açúcar"'
-        />
+        >
+          <option value="">— Sem mercado</option>
+          {knownStores.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+          <option value="__outro__">➕ Outro...</option>
+        </select>
+        {storeSelect === '__outro__' && (
+          <input
+            type="text"
+            value={storeCustom}
+            onChange={(e) => {
+              setStoreCustom(e.target.value);
+            }}
+            className={`${inputClass} mt-2`}
+            placeholder='Ex.: "Pão de Açúcar"'
+            autoFocus
+          />
+        )}
       </Field>
 
       <Field label="Preço (opcional)">

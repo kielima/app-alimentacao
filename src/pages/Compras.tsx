@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   upsertShoppingItem,
@@ -6,7 +6,7 @@ import {
   useShoppingItems,
   replaceShoppingList,
 } from '../data/shoppingList';
-import { upsertPantryItem } from '../data/pantry';
+import { upsertPantryItem, usePantryItems } from '../data/pantry';
 import { allIngredients } from '../data/ingredients';
 import { findRecipeById } from '../data/recipes';
 import { UNIT_OPTIONS, unitLabel } from '../utils/units';
@@ -18,6 +18,7 @@ const UNGROUPED = '__sem-mercado__';
 export default function Compras() {
   const navigate = useNavigate();
   const items = useShoppingItems();
+  const pantryItems = usePantryItems();
   const [adding, setAdding] = useState(false);
   const [moveValidity, setMoveValidity] = useState('');
 
@@ -25,6 +26,13 @@ export default function Compras() {
     () => [...allIngredients].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
     [],
   );
+
+  const knownStores = useMemo(() => {
+    const all = [...pantryItems, ...items]
+      .map((i) => i.store)
+      .filter((s): s is string => !!s && s.trim() !== '');
+    return [...new Set(all)].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  }, [pantryItems, items]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, ShoppingItem[]>();
@@ -101,7 +109,13 @@ export default function Compras() {
         </div>
       )}
 
-      {adding && <QuickAdd onDone={() => setAdding(false)} ingredients={sortedIngredients} />}
+      {adding && (
+        <QuickAdd
+          onDone={() => setAdding(false)}
+          ingredients={sortedIngredients}
+          knownStores={knownStores}
+        />
+      )}
 
       {items.length === 0 ? (
         <div className="mt-12 text-center">
@@ -241,62 +255,121 @@ export default function Compras() {
   );
 }
 
-function QuickAdd({ onDone, ingredients }: { onDone: () => void; ingredients: Ingredient[] }) {
-  const [raw, setRaw] = useState('');
+function QuickAdd({
+  onDone,
+  ingredients,
+  knownStores,
+}: {
+  onDone: () => void;
+  ingredients: Ingredient[];
+  knownStores: string[];
+}) {
+  // Change A: unified ingredient field
+  const [selectValue, setSelectValue] = useState('');
+  const [rawText, setRawText] = useState('');
   const [ingredientId, setIngredientId] = useState('');
   const [quantity, setQuantity] = useState('');
   const [unit, setUnit] = useState('');
-  const [store, setStore] = useState('');
   const [price, setPrice] = useState('');
 
+  // Change B: store dropdown
+  const [storeSelect, setStoreSelect] = useState('');
+  const [storeCustom, setStoreCustom] = useState('');
+
+  const handleIngredientSelect = (value: string) => {
+    setSelectValue(value);
+    if (value === '__custom__' || value === '') {
+      setIngredientId('');
+    } else {
+      const matched = ingredients.find((i) => i.id === value);
+      setIngredientId(value);
+      if (matched) {
+        setRawText(matched.brand ? `${matched.brand} — ${matched.name}` : matched.name);
+        if (!unit) setUnit(matched.default_unit);
+      }
+    }
+  };
+
+  const storeSelectDisplayValue =
+    storeSelect === '__outro__' || (!knownStores.includes(storeSelect) && storeSelect !== '')
+      ? '__outro__'
+      : storeSelect;
+
+  useEffect(() => {
+    if (storeSelect !== '' && storeSelect !== '__outro__' && !knownStores.includes(storeSelect)) {
+      setStoreCustom(storeSelect);
+      setStoreSelect('__outro__');
+    }
+  }, [knownStores]);
+
+  const effectiveRaw =
+    selectValue !== '' && selectValue !== '__custom__'
+      ? rawText
+      : rawText.trim();
+
+  const canAdd = selectValue !== '' && (selectValue !== '__custom__' || rawText.trim() !== '');
+
   const handleAdd = () => {
-    if (!raw.trim()) return;
+    if (!canAdd) return;
+    const storeValue =
+      storeSelect === '__outro__' ? storeCustom.trim() || null : storeSelect || null;
     upsertShoppingItem({
       id: `shopping-${Date.now()}`,
       ingredient_id: ingredientId || null,
-      raw_text: raw.trim(),
+      raw_text: effectiveRaw || rawText.trim(),
       quantity: quantity ? Number(quantity) : null,
       unit: unit || null,
-      store: store.trim() || null,
+      store: storeValue,
       price: price ? Number(price) : null,
       checked: false,
       source: 'manual',
       added_at: new Date().toISOString(),
     });
-    setRaw('');
+    setSelectValue('');
+    setRawText('');
     setIngredientId('');
     setQuantity('');
     setUnit('');
+    setStoreSelect('');
+    setStoreCustom('');
     setPrice('');
     onDone();
   };
 
+  const quickAddInputClass =
+    'w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950';
+
   return (
     <div className="mb-4 rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
-      <input
-        type="text"
-        value={raw}
-        onChange={(e) => setRaw(e.target.value)}
-        placeholder='Ex.: "1 maço de couve"'
-        className="mb-2 w-full rounded-lg border border-zinc-300 px-3 py-2 text-base focus:border-brand-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
-        autoFocus
-      />
-      <select
-        value={ingredientId}
-        onChange={(e) => {
-          const matched = ingredients.find((i) => i.id === e.target.value);
-          setIngredientId(e.target.value);
-          if (matched && !unit) setUnit(matched.default_unit);
-        }}
-        className="mb-2 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
-      >
-        <option value="">🔗 Sem vínculo</option>
-        {ingredients.map((i) => (
-          <option key={i.id} value={i.id}>
-            {i.brand ? `${i.brand} — ${i.name}` : i.name}
+      {/* Ingrediente (unified) */}
+      <div className="mb-2">
+        <select
+          value={selectValue}
+          onChange={(e) => handleIngredientSelect(e.target.value)}
+          className={quickAddInputClass}
+          autoFocus
+        >
+          <option value="" disabled>
+            Selecione ou escolha personalizado…
           </option>
-        ))}
-      </select>
+          <option value="__custom__">✏️ Nome personalizado</option>
+          {ingredients.map((i) => (
+            <option key={i.id} value={i.id}>
+              {i.brand ? `${i.brand} — ${i.name}` : i.name}
+            </option>
+          ))}
+        </select>
+        {selectValue === '__custom__' && (
+          <input
+            type="text"
+            value={rawText}
+            onChange={(e) => setRawText(e.target.value)}
+            className={`${quickAddInputClass} mt-2`}
+            placeholder='Ex.: "1 galho de alecrim"'
+            autoFocus
+          />
+        )}
+      </div>
       <div className="mb-2 grid grid-cols-2 gap-2">
         <input
           type="number"
@@ -320,14 +393,36 @@ function QuickAdd({ onDone, ingredients }: { onDone: () => void; ingredients: In
           ))}
         </select>
       </div>
-      <div className="mb-2 grid grid-cols-2 gap-2">
-        <input
-          type="text"
-          value={store}
-          onChange={(e) => setStore(e.target.value)}
-          placeholder="Mercado"
-          className="rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
-        />
+      {/* Store dropdown (Change B) */}
+      <div className="mb-2">
+        <select
+          value={storeSelectDisplayValue}
+          onChange={(e) => {
+            setStoreSelect(e.target.value);
+            if (e.target.value !== '__outro__') setStoreCustom('');
+          }}
+          className={quickAddInputClass}
+        >
+          <option value="">— Sem mercado</option>
+          {knownStores.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+          <option value="__outro__">➕ Outro...</option>
+        </select>
+        {storeSelect === '__outro__' && (
+          <input
+            type="text"
+            value={storeCustom}
+            onChange={(e) => setStoreCustom(e.target.value)}
+            className={`${quickAddInputClass} mt-2`}
+            placeholder='Ex.: "Pão de Açúcar"'
+            autoFocus
+          />
+        )}
+      </div>
+      <div className="mb-2">
         <input
           type="number"
           min={0}
@@ -336,14 +431,14 @@ function QuickAdd({ onDone, ingredients }: { onDone: () => void; ingredients: In
           value={price}
           onChange={(e) => setPrice(e.target.value)}
           placeholder="Preço R$"
-          className="rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
+          className={quickAddInputClass}
         />
       </div>
       <div className="flex gap-2">
         <button
           type="button"
           onClick={handleAdd}
-          disabled={!raw.trim()}
+          disabled={!canAdd}
           className="flex-1 rounded-full bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50 dark:bg-brand-600 dark:hover:bg-brand-500"
         >
           Adicionar
