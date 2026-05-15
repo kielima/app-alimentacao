@@ -18,6 +18,8 @@ import {
   useMealPlans,
 } from '../data/mealPlan';
 import { useAllMeals } from '../data/meals';
+import { findRecipeById } from '../data/recipes';
+import { findIngredientById } from '../data/ingredients';
 import { computePlanItemsNutrition, type NutritionBreakdown } from '../utils/nutrition';
 import type { Meal } from '../types/meal';
 
@@ -214,8 +216,8 @@ function PlanMealCard({
   onChange: (items: PlanMealItem[]) => void;
 }) {
   const def = MEAL_TYPES.find((m) => m.value === meal.meal_type);
+  const [expandedItemIds, setExpandedItemIds] = useState<Set<string>>(new Set());
 
-  // Refeições deste slot (ou sem slot) — facilita seleção
   const filteredMeals = useMemo(() => {
     return [...allMeals]
       .filter((m) => !m.meal_type || m.meal_type === meal.meal_type)
@@ -228,6 +230,15 @@ function PlanMealCard({
     () => (meal.items.length > 0 ? computePlanItemsNutrition(meal.items, allMeals) : null),
     [meal.items, allMeals],
   );
+
+  const toggleExpanded = (itemId: string) => {
+    setExpandedItemIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(itemId)) next.delete(itemId);
+      else next.add(itemId);
+      return next;
+    });
+  };
 
   const updateItem = (idx: number, patch: Partial<PlanMealItem>) => {
     onChange(meal.items.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
@@ -289,14 +300,30 @@ function PlanMealCard({
               );
             }
             if (!refeicao) return null;
+            const isExpanded = expandedItemIds.has(item.id);
             return (
-              <li key={item.id} className="text-sm">
-                <Link
-                  to={`/refeicoes/${refeicao.id}`}
-                  className="text-zinc-900 hover:text-brand-600 dark:text-zinc-100 dark:hover:text-brand-400"
+              <li key={item.id} className="rounded-lg bg-zinc-50 dark:bg-zinc-950">
+                <button
+                  type="button"
+                  onClick={() => toggleExpanded(item.id)}
+                  className="flex w-full items-center gap-2 px-2 py-1.5 text-left text-sm"
                 >
-                  {refeicao.name}
-                </Link>
+                  <span className="flex-1 font-medium text-zinc-900 dark:text-zinc-100">
+                    {refeicao.name}
+                  </span>
+                  <Link
+                    to={`/refeicoes/${refeicao.id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="shrink-0 text-xs text-zinc-400 hover:text-brand-600 dark:text-zinc-500 dark:hover:text-brand-400"
+                    aria-label="Ver refeição"
+                  >
+                    ↗
+                  </Link>
+                  <span className="shrink-0 text-xs text-zinc-400 dark:text-zinc-500">
+                    {isExpanded ? '▲' : '▼'}
+                  </span>
+                </button>
+                {isExpanded && <MealItemsExpanded meal={refeicao} />}
               </li>
             );
           })}
@@ -313,5 +340,76 @@ function PlanMealCard({
         </button>
       )}
     </li>
+  );
+}
+
+function MealItemsExpanded({ meal }: { meal: Meal }) {
+  if (meal.items.length === 0) {
+    return (
+      <p className="px-2 pb-2 text-xs text-zinc-400 dark:text-zinc-500">Sem itens cadastrados.</p>
+    );
+  }
+  return (
+    <ul className="mx-2 mb-2 space-y-1 border-l-2 border-zinc-200 pl-2 dark:border-zinc-700">
+      {meal.items.map((item) => {
+        if (item.kind === 'recipe' && item.recipe_id) {
+          const recipe = findRecipeById(item.recipe_id);
+          return (
+            <li key={item.id} className="flex items-center gap-1.5">
+              <span className="text-xs" aria-hidden>
+                🍳
+              </span>
+              {recipe ? (
+                <Link
+                  to={`/receitas/${recipe.id}`}
+                  className="flex-1 truncate text-xs text-zinc-700 hover:text-brand-600 dark:text-zinc-300 dark:hover:text-brand-400"
+                >
+                  {recipe.name}
+                </Link>
+              ) : (
+                <span className="flex-1 text-xs text-zinc-400 line-through">
+                  Receita não encontrada
+                </span>
+              )}
+              {item.quantity != null && (
+                <span className="shrink-0 text-xs text-zinc-400 dark:text-zinc-500">
+                  {item.quantity}
+                  {item.unit ? ` ${item.unit}` : ''}
+                </span>
+              )}
+            </li>
+          );
+        }
+        if (item.kind === 'ingredient' && item.ingredient_id) {
+          const ing = findIngredientById(item.ingredient_id);
+          return (
+            <li key={item.id} className="flex items-center gap-1.5">
+              <span className="text-xs" aria-hidden>
+                🥕
+              </span>
+              {ing ? (
+                <Link
+                  to={`/ingredientes/${ing.id}`}
+                  className="flex-1 truncate text-xs text-zinc-700 hover:text-brand-600 dark:text-zinc-300 dark:hover:text-brand-400"
+                >
+                  {ing.brand ? `${ing.brand} — ${ing.name}` : ing.name}
+                </Link>
+              ) : (
+                <span className="flex-1 text-xs text-zinc-400 line-through">
+                  Ingrediente não encontrado
+                </span>
+              )}
+              {item.quantity != null && (
+                <span className="shrink-0 text-xs text-zinc-400 dark:text-zinc-500">
+                  {item.quantity}
+                  {item.unit ? ` ${item.unit}` : ''}
+                </span>
+              )}
+            </li>
+          );
+        }
+        return null;
+      })}
+    </ul>
   );
 }
