@@ -1,6 +1,9 @@
 # Node
 node_modules/
 dist/
+
+# TypeScript build info
+*.tsbuildinfo
 .env
 .env.local
 .env.*.local
