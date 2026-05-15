@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { findRecipeById, findCategory } from '../data/recipes';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { findRecipeById, findCategory, isSeedRecipe } from '../data/recipes';
 import { findIngredientById } from '../data/ingredients';
 import { useRecipeNutrition } from '../hooks/useRecipeNutrition';
+import { deleteUserRecipe, getUserRecipeById } from '../data/userRecipes';
 import type { RecipeIngredient } from '../types/recipe';
 
 function fmt(value: number | undefined, digits = 0): string {
@@ -12,9 +13,28 @@ function fmt(value: number | undefined, digits = 0): string {
 
 export default function ReceitaDetalhe() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const recipe = id ? findRecipeById(id) : undefined;
   const nutrition = useRecipeNutrition(recipe);
   const [showSkipped, setShowSkipped] = useState(false);
+
+  const isUserOverlay = id ? !!getUserRecipeById(id) : false;
+  const canDelete = id ? isUserOverlay && !isSeedRecipe(id) : false;
+  const canRevert = id ? isUserOverlay && isSeedRecipe(id) : false;
+
+  const handleDelete = () => {
+    if (!id) return;
+    if (!confirm('Excluir esta receita?')) return;
+    deleteUserRecipe(id);
+    navigate('/receitas');
+  };
+
+  const handleRevert = () => {
+    if (!id) return;
+    if (!confirm('Descartar suas edições e voltar à versão original?')) return;
+    deleteUserRecipe(id);
+    navigate(`/receitas/${id}`);
+  };
 
   if (!recipe) {
     return (
@@ -39,8 +59,41 @@ export default function ReceitaDetalhe() {
         >
           ←
         </Link>
-        <h1 className="truncate text-lg font-semibold">{recipe.name}</h1>
+        <h1 className="flex-1 truncate text-lg font-semibold">{recipe.name}</h1>
+        <Link
+          to={`/receitas/${recipe.id}/editar`}
+          className="rounded-full bg-zinc-200/60 px-3 py-1 text-sm text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60"
+          aria-label="Editar receita"
+        >
+          ✏️
+        </Link>
+        {canDelete && (
+          <button
+            type="button"
+            onClick={handleDelete}
+            className="rounded-full bg-zinc-200/60 px-3 py-1 text-sm text-zinc-700 hover:bg-red-100 hover:text-red-700 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-red-900/30 dark:hover:text-red-300"
+            aria-label="Excluir receita"
+          >
+            🗑️
+          </button>
+        )}
+        {canRevert && (
+          <button
+            type="button"
+            onClick={handleRevert}
+            className="rounded-full bg-zinc-200/60 px-3 py-1 text-sm text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60"
+            title="Descartar edições e voltar ao original"
+          >
+            ↺
+          </button>
+        )}
       </div>
+
+      {isUserOverlay && isSeedRecipe(recipe.id) && (
+        <div className="mb-3 rounded-lg bg-brand-50 px-3 py-1.5 text-[11px] text-brand-700 dark:bg-brand-900/30 dark:text-brand-300">
+          ✏️ Versão editada por você (sobrescreve o seed original)
+        </div>
+      )}
 
       <div
         className="mb-3 flex h-32 items-center justify-center rounded-xl bg-zinc-100 text-6xl dark:bg-zinc-800"
