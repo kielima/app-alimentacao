@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { findRecipeById, findCategory, isSeedRecipe } from '../data/recipes';
 import { findIngredientById } from '../data/ingredients';
 import { useRecipeNutrition } from '../hooks/useRecipeNutrition';
 import { deleteUserRecipe, getUserRecipeById } from '../data/userRecipes';
 import { upsertShoppingItem } from '../data/shoppingList';
-import { getPantry } from '../data/pantry';
+import { usePantryItems } from '../data/pantry';
 import type { Recipe, RecipeIngredient } from '../types/recipe';
 
 function fmt(value: number | undefined, digits = 0): string {
@@ -19,6 +19,11 @@ export default function ReceitaDetalhe() {
   const recipe = id ? findRecipeById(id) : undefined;
   const nutrition = useRecipeNutrition(recipe);
   const [showSkipped, setShowSkipped] = useState(false);
+  const pantryItems = usePantryItems();
+  const pantryIngredientIds = useMemo(
+    () => new Set(pantryItems.filter((p) => p.ingredient_id).map((p) => p.ingredient_id as string)),
+    [pantryItems],
+  );
 
   const isUserOverlay = id ? !!getUserRecipeById(id) : false;
   const canDelete = id ? isUserOverlay && !isSeedRecipe(id) : false;
@@ -45,11 +50,6 @@ export default function ReceitaDetalhe() {
       alert('Esta receita não tem ingredientes cadastrados.');
       return;
     }
-    const pantryIngredientIds = new Set(
-      getPantry()
-        .map((p) => p.ingredient_id)
-        .filter((x): x is string => !!x),
-    );
     const toAdd = onlyMissing
       ? items.filter((i) => !i.ingredient_id || !pantryIngredientIds.has(i.ingredient_id))
       : items;
@@ -75,6 +75,23 @@ export default function ReceitaDetalhe() {
     if (confirm(`${toAdd.length} item(ns) adicionado(s) à Lista de Compras. Ir para a lista agora?`)) {
       navigate('/compras');
     }
+  };
+
+  const handleAddSingleToCart = (item: RecipeIngredient) => {
+    if (!recipe) return;
+    upsertShoppingItem({
+      id: `from-recipe-${recipe.id}-${Math.random().toString(36).slice(2, 9)}`,
+      ingredient_id: item.ingredient_id,
+      raw_text: item.raw_text,
+      quantity: item.quantity,
+      unit: item.unit,
+      store: null,
+      price: null,
+      checked: false,
+      source: 'from_recipe',
+      source_ref: recipe.id,
+      added_at: new Date().toISOString(),
+    });
   };
 
   if (!recipe) {
@@ -172,7 +189,7 @@ export default function ReceitaDetalhe() {
 
       {(recipe.ingredients?.length ?? 0) > 0 && (
         <Section title="Ingredientes">
-          <IngredientList items={recipe.ingredients ?? []} />
+          <IngredientList items={recipe.ingredients ?? []} pantryIds={pantryIngredientIds} onAddToCart={handleAddSingleToCart} />
           <div className="mt-3 flex flex-wrap gap-2">
             <button
               type="button"
@@ -194,7 +211,7 @@ export default function ReceitaDetalhe() {
 
       {(recipe.ingredients_molho?.length ?? 0) > 0 && (
         <Section title="Ingredientes — molho">
-          <IngredientList items={recipe.ingredients_molho ?? []} />
+          <IngredientList items={recipe.ingredients_molho ?? []} pantryIds={pantryIngredientIds} onAddToCart={handleAddSingleToCart} />
         </Section>
       )}
 
@@ -291,17 +308,52 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function IngredientList({ items }: { items: RecipeIngredient[] }) {
+function IngredientList({
+  items,
+  pantryIds,
+  onAddToCart,
+}: {
+  items: RecipeIngredient[];
+  pantryIds: Set<string>;
+  onAddToCart: (item: RecipeIngredient) => void;
+}) {
+  const [addedIndices, setAddedIndices] = useState<Set<number>>(new Set());
   return (
     <ul className="space-y-1.5">
       {items.map((item, i) => {
         const ing = item.ingredient_id ? findIngredientById(item.ingredient_id) : undefined;
+        const inPantry = !!item.ingredient_id && pantryIds.has(item.ingredient_id);
+        const justAdded = addedIndices.has(i);
         const inner = (
-          <span className="flex items-baseline gap-2 text-sm">
+          <span className="flex w-full items-center gap-2 text-sm">
             <span className="text-zinc-900 dark:text-zinc-100">{item.raw_text}</span>
             {ing && (
-              <span className="ml-auto shrink-0 text-xs text-brand-600 dark:text-brand-400">›</span>
+              <span className="shrink-0 text-xs text-brand-600 dark:text-brand-400">›</span>
             )}
+            <span className="ml-auto">
+              {inPantry ? (
+                <span className="shrink-0 text-xs text-emerald-600 dark:text-emerald-400">
+                  ✓ dispensa
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onAddToCart(item);
+                    setAddedIndices((s) => new Set(s).add(i));
+                  }}
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium transition-colors ${
+                    justAdded
+                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                      : 'bg-zinc-100 text-zinc-500 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-brand-900/30 dark:hover:text-brand-400'
+                  }`}
+                >
+                  {justAdded ? '✓' : '+ compras'}
+                </button>
+              )}
+            </span>
           </span>
         );
         return (
