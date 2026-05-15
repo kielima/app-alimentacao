@@ -5,6 +5,7 @@ import { findRecipeById, recipeCategories, allRecipeIds } from '../data/recipes'
 import { upsertUserRecipe } from '../data/userRecipes';
 import { uniqueSlug } from '../utils/slug';
 import type { Difficulty, Rating, Recipe, RecipeCategoryId, RecipeIngredient } from '../types/recipe';
+import type { Ingredient } from '../types/ingredient';
 
 const UNIT_OPTIONS = [
   { value: '', label: '—' },
@@ -41,11 +42,23 @@ interface FormState {
   rating: Rating | 0;
   notes: string;
   ingredients: FormIngredient[];
+  ingredients_molho: FormIngredient[];
   steps: string[];
+  steps_natural: string[];
+  steps_congelada: string[];
 }
 
 function emptyIngredient(): FormIngredient {
   return { raw_text: '', ingredient_id: '', quantity: '', unit: '' };
+}
+
+function recipeIngredientToForm(i: RecipeIngredient): FormIngredient {
+  return {
+    raw_text: i.raw_text,
+    ingredient_id: i.ingredient_id ?? '',
+    quantity: i.quantity?.toString() ?? '',
+    unit: i.unit ?? '',
+  };
 }
 
 function recipeToForm(r: Recipe | undefined): FormState {
@@ -58,7 +71,10 @@ function recipeToForm(r: Recipe | undefined): FormState {
       rating: 0,
       notes: '',
       ingredients: [emptyIngredient()],
+      ingredients_molho: [],
       steps: [''],
+      steps_natural: [],
+      steps_congelada: [],
     };
   }
   return {
@@ -69,19 +85,17 @@ function recipeToForm(r: Recipe | undefined): FormState {
     rating: r.rating ?? 0,
     notes: r.notes ?? '',
     ingredients: (r.ingredients ?? []).length
-      ? (r.ingredients ?? []).map((i) => ({
-          raw_text: i.raw_text,
-          ingredient_id: i.ingredient_id ?? '',
-          quantity: i.quantity?.toString() ?? '',
-          unit: i.unit ?? '',
-        }))
+      ? (r.ingredients ?? []).map(recipeIngredientToForm)
       : [emptyIngredient()],
+    ingredients_molho: (r.ingredients_molho ?? []).map(recipeIngredientToForm),
     steps: (r.steps ?? []).length ? (r.steps ?? []) : [''],
+    steps_natural: r.steps_natural ?? [],
+    steps_congelada: r.steps_congelada ?? [],
   };
 }
 
-function formToRecipe(state: FormState, original: Recipe | undefined): Recipe {
-  const ingredients: RecipeIngredient[] = state.ingredients
+function formIngredientsToRecipe(items: FormIngredient[]): RecipeIngredient[] {
+  return items
     .filter((i) => i.raw_text.trim())
     .map((i) => ({
       raw_text: i.raw_text.trim(),
@@ -89,10 +103,15 @@ function formToRecipe(state: FormState, original: Recipe | undefined): Recipe {
       quantity: i.quantity ? Number(i.quantity) : null,
       unit: i.unit || null,
     }));
+}
 
+function formToRecipe(state: FormState, original: Recipe | undefined): Recipe {
+  const ingredients = formIngredientsToRecipe(state.ingredients);
+  const ingredients_molho = formIngredientsToRecipe(state.ingredients_molho);
   const steps = state.steps.map((s) => s.trim()).filter(Boolean);
+  const steps_natural = state.steps_natural.map((s) => s.trim()).filter(Boolean);
+  const steps_congelada = state.steps_congelada.map((s) => s.trim()).filter(Boolean);
 
-  // Preserva campos não editáveis no form (ingredients_molho, steps_natural, etc.)
   return {
     ...original,
     id: original?.id ?? '',
@@ -103,7 +122,10 @@ function formToRecipe(state: FormState, original: Recipe | undefined): Recipe {
     rating: state.rating || null,
     photos: original?.photos ?? [],
     ingredients,
+    ingredients_molho: ingredients_molho.length > 0 ? ingredients_molho : undefined,
     steps,
+    steps_natural: steps_natural.length > 0 ? steps_natural : undefined,
+    steps_congelada: steps_congelada.length > 0 ? steps_congelada : undefined,
     notes: state.notes.trim() || undefined,
     source_lines: original?.source_lines ?? [0, 0],
     needs_review: false,
@@ -117,6 +139,15 @@ export default function ReceitaForm() {
   const editing = id !== undefined;
   const original = editing ? findRecipeById(id) : undefined;
 
+  const allIng = useAllIngredients();
+  const sortedIngredients = useMemo(
+    () => [...allIng].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
+    [allIng],
+  );
+
+  const [state, setState] = useState<FormState>(() => recipeToForm(original));
+  const [error, setError] = useState<string | null>(null);
+
   if (editing && !original) {
     return (
       <div className="mx-auto max-w-md px-4 pt-12 text-center">
@@ -127,15 +158,6 @@ export default function ReceitaForm() {
       </div>
     );
   }
-
-  const allIng = useAllIngredients();
-  const sortedIngredients = useMemo(
-    () => [...allIng].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
-    [allIng],
-  );
-
-  const [state, setState] = useState<FormState>(() => recipeToForm(original));
-  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -164,48 +186,6 @@ export default function ReceitaForm() {
     navigate(`/receitas/${recipeId}`);
   };
 
-  const updateIngredient = (idx: number, patch: Partial<FormIngredient>) => {
-    setState((s) => ({
-      ...s,
-      ingredients: s.ingredients.map((ing, i) => (i === idx ? { ...ing, ...patch } : ing)),
-    }));
-  };
-
-  const addIngredient = () =>
-    setState((s) => ({ ...s, ingredients: [...s.ingredients, emptyIngredient()] }));
-
-  const removeIngredient = (idx: number) =>
-    setState((s) => ({
-      ...s,
-      ingredients: s.ingredients.length === 1 ? [emptyIngredient()] : s.ingredients.filter((_, i) => i !== idx),
-    }));
-
-  const updateStep = (idx: number, value: string) =>
-    setState((s) => ({ ...s, steps: s.steps.map((st, i) => (i === idx ? value : st)) }));
-
-  const moveStep = (idx: number, dir: -1 | 1) =>
-    setState((s) => {
-      const next = [...s.steps];
-      const target = idx + dir;
-      if (target < 0 || target >= next.length) return s;
-      [next[idx], next[target]] = [next[target], next[idx]];
-      return { ...s, steps: next };
-    });
-
-  const addStep = () => setState((s) => ({ ...s, steps: [...s.steps, ''] }));
-
-  const removeStep = (idx: number) =>
-    setState((s) => ({
-      ...s,
-      steps: s.steps.length === 1 ? [''] : s.steps.filter((_, i) => i !== idx),
-    }));
-
-  const hasComplexStructure =
-    !!original &&
-    ((original.ingredients_molho?.length ?? 0) > 0 ||
-      (original.steps_natural?.length ?? 0) > 0 ||
-      (original.steps_congelada?.length ?? 0) > 0);
-
   return (
     <form onSubmit={handleSubmit} className="mx-auto max-w-md px-4 pb-6">
       <div className="sticky top-0 z-10 -mx-4 mb-4 flex items-center gap-3 border-b border-zinc-200 bg-zinc-50/95 px-4 py-2 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/95">
@@ -229,13 +209,6 @@ export default function ReceitaForm() {
       {error && (
         <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
           {error}
-        </div>
-      )}
-
-      {hasComplexStructure && (
-        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-300">
-          ⚠️ Esta receita tem seções extras (molho separado ou variantes de preparo). Elas serão
-          preservadas ao salvar mas não são editáveis aqui ainda.
         </div>
       )}
 
@@ -328,147 +301,298 @@ export default function ReceitaForm() {
         />
       </Field>
 
-      <section className="mt-6 mb-4">
-        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-          Ingredientes
-        </h2>
-        <ul className="space-y-3">
-          {state.ingredients.map((ing, idx) => (
-            <li
-              key={idx}
-              className="rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900"
-            >
-              <input
-                type="text"
-                value={ing.raw_text}
-                onChange={(e) => updateIngredient(idx, { raw_text: e.target.value })}
-                placeholder='Ex.: 500g de farinha de trigo'
-                className={`${inputClass} mb-2`}
-              />
-              <div className="grid grid-cols-[1fr,auto] gap-2">
-                <select
-                  value={ing.ingredient_id}
-                  onChange={(e) => {
-                    const matched = sortedIngredients.find((i) => i.id === e.target.value);
-                    updateIngredient(idx, {
-                      ingredient_id: e.target.value,
-                      unit: matched && !ing.unit ? matched.default_unit : ing.unit,
-                    });
-                  }}
-                  className={`${inputClass} text-sm`}
-                >
-                  <option value="">🔗 Sem vínculo</option>
-                  {sortedIngredients.map((i) => (
-                    <option key={i.id} value={i.id}>
-                      {i.brand ? `${i.brand} — ${i.name}` : i.name}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={() => removeIngredient(idx)}
-                  className="rounded-md bg-zinc-100 px-2 text-zinc-500 hover:bg-red-100 hover:text-red-700 dark:bg-zinc-800 dark:hover:bg-red-900/30 dark:hover:text-red-300"
-                  aria-label="Remover ingrediente"
-                >
-                  🗑️
-                </button>
-              </div>
-              <div className="mt-2 grid grid-cols-[80px,1fr] gap-2">
-                <input
-                  type="number"
-                  min={0}
-                  step="any"
-                  inputMode="decimal"
-                  value={ing.quantity}
-                  onChange={(e) => updateIngredient(idx, { quantity: e.target.value })}
-                  placeholder="Qtd"
-                  className={`${inputClass} text-sm`}
-                />
-                <select
-                  value={ing.unit}
-                  onChange={(e) => updateIngredient(idx, { unit: e.target.value })}
-                  className={`${inputClass} text-sm`}
-                >
-                  {UNIT_OPTIONS.map((u) => (
-                    <option key={u.value} value={u.value}>
-                      {u.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </li>
-          ))}
-        </ul>
-        <button
-          type="button"
-          onClick={addIngredient}
-          className="mt-2 w-full rounded-xl border-2 border-dashed border-zinc-300 py-2.5 text-sm text-zinc-600 hover:border-brand-500 hover:text-brand-600 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-brand-400 dark:hover:text-brand-400"
-        >
-          + Adicionar ingrediente
-        </button>
-      </section>
+      <IngredientsSection
+        title="Ingredientes"
+        items={state.ingredients}
+        sortedIngredients={sortedIngredients}
+        onChange={(items) => setState((s) => ({ ...s, ingredients: items }))}
+      />
 
-      <section className="mt-6 mb-4">
-        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-          Modo de preparo
-        </h2>
-        <ul className="space-y-2">
-          {state.steps.map((step, idx) => (
-            <li
-              key={idx}
-              className="rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900"
-            >
-              <div className="mb-1.5 flex items-center gap-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-100 text-xs font-medium text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
-                  {idx + 1}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => moveStep(idx, -1)}
-                  disabled={idx === 0}
-                  className="text-zinc-400 disabled:opacity-30"
-                  aria-label="Mover para cima"
-                >
-                  ▲
-                </button>
-                <button
-                  type="button"
-                  onClick={() => moveStep(idx, 1)}
-                  disabled={idx === state.steps.length - 1}
-                  className="text-zinc-400 disabled:opacity-30"
-                  aria-label="Mover para baixo"
-                >
-                  ▼
-                </button>
-                <button
-                  type="button"
-                  onClick={() => removeStep(idx)}
-                  className="ml-auto text-zinc-400 hover:text-red-500"
-                  aria-label="Remover passo"
-                >
-                  🗑️
-                </button>
-              </div>
-              <textarea
-                value={step}
-                onChange={(e) => updateStep(idx, e.target.value)}
-                rows={2}
-                placeholder={`Passo ${idx + 1}…`}
-                className={`${inputClass} text-sm`}
-              />
-            </li>
-          ))}
-        </ul>
-        <button
-          type="button"
-          onClick={addStep}
-          className="mt-2 w-full rounded-xl border-2 border-dashed border-zinc-300 py-2.5 text-sm text-zinc-600 hover:border-brand-500 hover:text-brand-600 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-brand-400 dark:hover:text-brand-400"
-        >
-          + Adicionar passo
-        </button>
-      </section>
+      <ExtraIngredientsSection
+        title="Ingredientes — molho"
+        items={state.ingredients_molho}
+        sortedIngredients={sortedIngredients}
+        onChange={(items) => setState((s) => ({ ...s, ingredients_molho: items }))}
+      />
+
+      <StepsSection
+        title="Modo de preparo"
+        items={state.steps}
+        onChange={(items) => setState((s) => ({ ...s, steps: items }))}
+      />
+
+      <ExtraStepsSection
+        title="Modo de preparo — natural"
+        items={state.steps_natural}
+        onChange={(items) => setState((s) => ({ ...s, steps_natural: items }))}
+      />
+
+      <ExtraStepsSection
+        title="Modo de preparo — congelada"
+        items={state.steps_congelada}
+        onChange={(items) => setState((s) => ({ ...s, steps_congelada: items }))}
+      />
     </form>
   );
+}
+
+function IngredientsSection({
+  title,
+  items,
+  sortedIngredients,
+  onChange,
+}: {
+  title: string;
+  items: FormIngredient[];
+  sortedIngredients: Ingredient[];
+  onChange: (items: FormIngredient[]) => void;
+}) {
+  const updateItem = (idx: number, patch: Partial<FormIngredient>) =>
+    onChange(items.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
+  const addItem = () => onChange([...items, emptyIngredient()]);
+  const removeItem = (idx: number) =>
+    onChange(items.length === 1 ? [emptyIngredient()] : items.filter((_, i) => i !== idx));
+
+  return (
+    <section className="mt-6 mb-4">
+      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        {title}
+      </h2>
+      <ul className="space-y-3">
+        {items.map((ing, idx) => (
+          <IngredientRow
+            key={idx}
+            ing={ing}
+            sortedIngredients={sortedIngredients}
+            onUpdate={(patch) => updateItem(idx, patch)}
+            onRemove={() => removeItem(idx)}
+          />
+        ))}
+      </ul>
+      <button
+        type="button"
+        onClick={addItem}
+        className="mt-2 w-full rounded-xl border-2 border-dashed border-zinc-300 py-2.5 text-sm text-zinc-600 hover:border-brand-500 hover:text-brand-600 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-brand-400 dark:hover:text-brand-400"
+      >
+        + Adicionar ingrediente
+      </button>
+    </section>
+  );
+}
+
+function ExtraIngredientsSection({
+  title,
+  items,
+  sortedIngredients,
+  onChange,
+}: {
+  title: string;
+  items: FormIngredient[];
+  sortedIngredients: Ingredient[];
+  onChange: (items: FormIngredient[]) => void;
+}) {
+  if (items.length === 0) {
+    return (
+      <button
+        type="button"
+        onClick={() => onChange([emptyIngredient()])}
+        className="mt-2 mb-4 w-full rounded-xl border border-dashed border-zinc-300 py-2 text-xs text-zinc-500 hover:border-brand-500 hover:text-brand-600 dark:border-zinc-700 dark:text-zinc-400"
+      >
+        + {title}
+      </button>
+    );
+  }
+  return (
+    <IngredientsSection
+      title={title}
+      items={items}
+      sortedIngredients={sortedIngredients}
+      onChange={onChange}
+    />
+  );
+}
+
+function IngredientRow({
+  ing,
+  sortedIngredients,
+  onUpdate,
+  onRemove,
+}: {
+  ing: FormIngredient;
+  sortedIngredients: Ingredient[];
+  onUpdate: (patch: Partial<FormIngredient>) => void;
+  onRemove: () => void;
+}) {
+  return (
+    <li className="rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
+      <input
+        type="text"
+        value={ing.raw_text}
+        onChange={(e) => onUpdate({ raw_text: e.target.value })}
+        placeholder='Ex.: 500g de farinha de trigo'
+        className={`${inputClass} mb-2`}
+      />
+      <div className="grid grid-cols-[1fr,auto] gap-2">
+        <select
+          value={ing.ingredient_id}
+          onChange={(e) => {
+            const matched = sortedIngredients.find((i) => i.id === e.target.value);
+            onUpdate({
+              ingredient_id: e.target.value,
+              unit: matched && !ing.unit ? matched.default_unit : ing.unit,
+            });
+          }}
+          className={`${inputClass} text-sm`}
+        >
+          <option value="">🔗 Sem vínculo</option>
+          {sortedIngredients.map((i) => (
+            <option key={i.id} value={i.id}>
+              {i.brand ? `${i.brand} — ${i.name}` : i.name}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="rounded-md bg-zinc-100 px-2 text-zinc-500 hover:bg-red-100 hover:text-red-700 dark:bg-zinc-800 dark:hover:bg-red-900/30 dark:hover:text-red-300"
+          aria-label="Remover ingrediente"
+        >
+          🗑️
+        </button>
+      </div>
+      <div className="mt-2 grid grid-cols-[80px,1fr] gap-2">
+        <input
+          type="number"
+          min={0}
+          step="any"
+          inputMode="decimal"
+          value={ing.quantity}
+          onChange={(e) => onUpdate({ quantity: e.target.value })}
+          placeholder="Qtd"
+          className={`${inputClass} text-sm`}
+        />
+        <select
+          value={ing.unit}
+          onChange={(e) => onUpdate({ unit: e.target.value })}
+          className={`${inputClass} text-sm`}
+        >
+          {UNIT_OPTIONS.map((u) => (
+            <option key={u.value} value={u.value}>
+              {u.label}
+            </option>
+          ))}
+        </select>
+      </div>
+    </li>
+  );
+}
+
+function StepsSection({
+  title,
+  items,
+  onChange,
+}: {
+  title: string;
+  items: string[];
+  onChange: (items: string[]) => void;
+}) {
+  const updateStep = (idx: number, value: string) =>
+    onChange(items.map((st, i) => (i === idx ? value : st)));
+  const moveStep = (idx: number, dir: -1 | 1) => {
+    const next = [...items];
+    const target = idx + dir;
+    if (target < 0 || target >= next.length) return;
+    [next[idx], next[target]] = [next[target], next[idx]];
+    onChange(next);
+  };
+  const addStep = () => onChange([...items, '']);
+  const removeStep = (idx: number) =>
+    onChange(items.length === 1 ? [''] : items.filter((_, i) => i !== idx));
+
+  return (
+    <section className="mt-6 mb-4">
+      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        {title}
+      </h2>
+      <ul className="space-y-2">
+        {items.map((step, idx) => (
+          <li
+            key={idx}
+            className="rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900"
+          >
+            <div className="mb-1.5 flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-100 text-xs font-medium text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
+                {idx + 1}
+              </span>
+              <button
+                type="button"
+                onClick={() => moveStep(idx, -1)}
+                disabled={idx === 0}
+                className="text-zinc-400 disabled:opacity-30"
+                aria-label="Mover para cima"
+              >
+                ▲
+              </button>
+              <button
+                type="button"
+                onClick={() => moveStep(idx, 1)}
+                disabled={idx === items.length - 1}
+                className="text-zinc-400 disabled:opacity-30"
+                aria-label="Mover para baixo"
+              >
+                ▼
+              </button>
+              <button
+                type="button"
+                onClick={() => removeStep(idx)}
+                className="ml-auto text-zinc-400 hover:text-red-500"
+                aria-label="Remover passo"
+              >
+                🗑️
+              </button>
+            </div>
+            <textarea
+              value={step}
+              onChange={(e) => updateStep(idx, e.target.value)}
+              rows={2}
+              placeholder={`Passo ${idx + 1}…`}
+              className={`${inputClass} text-sm`}
+            />
+          </li>
+        ))}
+      </ul>
+      <button
+        type="button"
+        onClick={addStep}
+        className="mt-2 w-full rounded-xl border-2 border-dashed border-zinc-300 py-2.5 text-sm text-zinc-600 hover:border-brand-500 hover:text-brand-600 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-brand-400 dark:hover:text-brand-400"
+      >
+        + Adicionar passo
+      </button>
+    </section>
+  );
+}
+
+function ExtraStepsSection({
+  title,
+  items,
+  onChange,
+}: {
+  title: string;
+  items: string[];
+  onChange: (items: string[]) => void;
+}) {
+  if (items.length === 0) {
+    return (
+      <button
+        type="button"
+        onClick={() => onChange([''])}
+        className="mt-2 mb-4 w-full rounded-xl border border-dashed border-zinc-300 py-2 text-xs text-zinc-500 hover:border-brand-500 hover:text-brand-600 dark:border-zinc-700 dark:text-zinc-400"
+      >
+        + {title}
+      </button>
+    );
+  }
+  return <StepsSection title={title} items={items} onChange={onChange} />;
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {

@@ -188,19 +188,399 @@
       "allergens": "Contém glúten. Não contém lactose. Contém derivados de aveia, soja, cevada e trigo. Pode conter amêndoa, avelã, castanha-de-caju e castanha-do-pará.",
       "source_image": "TABELAS NUTRICIONAIS/WhatsApp Image 2026-05-10 at 15.34.46.jpeg"
     },
-
-    { "id": "couve-flor", "name": "Couve-flor", "default_unit": "unit", "nutrition_per_100": { "calories": 25, "protein": 1.9, "carbs": 5, "sugars": 1.9, "fat": 0.3, "saturated_fat": 0.1, "fiber": 2, "sodium": 30 }, "needs_review": true, "notes": "Valores de referência (USDA) — confirmar contra TACO" },
-    { "id": "cebola", "name": "Cebola", "default_unit": "unit", "nutrition_per_100": { "calories": 40, "protein": 1.1, "carbs": 9.3, "sugars": 4.2, "fat": 0.1, "saturated_fat": 0, "fiber": 1.7, "sodium": 4 }, "needs_review": true },
-    { "id": "alho", "name": "Alho", "default_unit": "unit", "nutrition_per_100": { "calories": 149, "protein": 6.4, "carbs": 33, "sugars": 1, "fat": 0.5, "saturated_fat": 0.1, "fiber": 2.1, "sodium": 17 }, "needs_review": true },
-    { "id": "sal", "name": "Sal", "default_unit": "g", "nutrition_per_100": { "calories": 0, "protein": 0, "carbs": 0, "sugars": 0, "fat": 0, "saturated_fat": 0, "fiber": 0, "sodium": 38758 }, "needs_review": true },
-    { "id": "pimenta-do-reino", "name": "Pimenta-do-reino", "default_unit": "g", "nutrition_per_100": null, "needs_review": true, "notes": "Quantidade nutricional desprezível em uso típico" },
-    { "id": "azeite-de-oliva-extra-virgem", "name": "Azeite de oliva extra virgem", "default_unit": "ml", "nutrition_per_100": { "calories": 884, "protein": 0, "carbs": 0, "sugars": 0, "fat": 100, "saturated_fat": 13.8, "fiber": 0, "sodium": 2 }, "needs_review": true },
-    { "id": "manteiga", "name": "Manteiga", "default_unit": "g", "nutrition_per_100": { "calories": 717, "protein": 0.9, "carbs": 0.1, "sugars": 0.1, "fat": 81, "saturated_fat": 51, "fiber": 0, "sodium": 11 }, "needs_review": true },
-    { "id": "arroz-integral", "name": "Arroz integral", "default_unit": "g", "nutrition_per_100": { "calories": 124, "protein": 2.6, "carbs": 25.8, "sugars": 0.2, "fat": 1, "saturated_fat": 0.3, "fiber": 2.7, "sodium": 1 }, "needs_review": true, "notes": "Cozido. Cru: 357 kcal/100g" },
-    { "id": "lentilha", "name": "Lentilha", "default_unit": "g", "nutrition_per_100": { "calories": 116, "protein": 9, "carbs": 20, "sugars": 1.8, "fat": 0.4, "saturated_fat": 0.1, "fiber": 7.9, "sodium": 2 }, "needs_review": true, "notes": "Cozida" },
-    { "id": "frango-peito", "name": "Peito de frango", "default_unit": "g", "nutrition_per_100": { "calories": 165, "protein": 31, "carbs": 0, "sugars": 0, "fat": 3.6, "saturated_fat": 1, "fiber": 0, "sodium": 74 }, "needs_review": true, "notes": "Grelhado, sem pele" },
-    { "id": "batata-doce", "name": "Batata-doce", "default_unit": "g", "nutrition_per_100": { "calories": 86, "protein": 1.6, "carbs": 20.1, "sugars": 4.2, "fat": 0.1, "saturated_fat": 0, "fiber": 3, "sodium": 55 }, "needs_review": true, "notes": "Cozida" },
-    { "id": "ovo", "name": "Ovo", "default_unit": "unit", "nutrition_per_100": { "calories": 155, "protein": 13, "carbs": 1.1, "sugars": 1.1, "fat": 11, "saturated_fat": 3.3, "fiber": 0, "sodium": 124 }, "needs_review": true, "notes": "Inteiro, cozido. ~50g por unidade" }
+    {
+      "id": "couve-flor",
+      "name": "Couve-flor",
+      "default_unit": "unit",
+      "nutrition_per_100": {
+        "calories": 25,
+        "protein": 1.9,
+        "carbs": 5,
+        "sugars": 1.9,
+        "fat": 0.3,
+        "saturated_fat": 0.1,
+        "fiber": 2,
+        "sodium": 30
+      },
+      "needs_review": true,
+      "notes": "Valores de referência (USDA) — confirmar contra TACO"
+    },
+    {
+      "id": "cebola",
+      "name": "Cebola",
+      "default_unit": "unit",
+      "nutrition_per_100": {
+        "calories": 40,
+        "protein": 1.1,
+        "carbs": 9.3,
+        "sugars": 4.2,
+        "fat": 0.1,
+        "saturated_fat": 0,
+        "fiber": 1.7,
+        "sodium": 4
+      },
+      "needs_review": true
+    },
+    {
+      "id": "alho",
+      "name": "Alho",
+      "default_unit": "unit",
+      "nutrition_per_100": {
+        "calories": 149,
+        "protein": 6.4,
+        "carbs": 33,
+        "sugars": 1,
+        "fat": 0.5,
+        "saturated_fat": 0.1,
+        "fiber": 2.1,
+        "sodium": 17
+      },
+      "needs_review": true
+    },
+    {
+      "id": "sal",
+      "name": "Sal",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 0,
+        "protein": 0,
+        "carbs": 0,
+        "sugars": 0,
+        "fat": 0,
+        "saturated_fat": 0,
+        "fiber": 0,
+        "sodium": 38758
+      },
+      "needs_review": true
+    },
+    {
+      "id": "pimenta-do-reino",
+      "name": "Pimenta-do-reino",
+      "default_unit": "g",
+      "nutrition_per_100": null,
+      "needs_review": true,
+      "notes": "Quantidade nutricional desprezível em uso típico"
+    },
+    {
+      "id": "azeite-de-oliva-extra-virgem",
+      "name": "Azeite de oliva extra virgem",
+      "default_unit": "ml",
+      "nutrition_per_100": {
+        "calories": 884,
+        "protein": 0,
+        "carbs": 0,
+        "sugars": 0,
+        "fat": 100,
+        "saturated_fat": 13.8,
+        "fiber": 0,
+        "sodium": 2
+      },
+      "needs_review": true
+    },
+    {
+      "id": "manteiga",
+      "name": "Manteiga",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 717,
+        "protein": 0.9,
+        "carbs": 0.1,
+        "sugars": 0.1,
+        "fat": 81,
+        "saturated_fat": 51,
+        "fiber": 0,
+        "sodium": 11
+      },
+      "needs_review": true
+    },
+    {
+      "id": "arroz-integral",
+      "name": "Arroz integral",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 124,
+        "protein": 2.6,
+        "carbs": 25.8,
+        "sugars": 0.2,
+        "fat": 1,
+        "saturated_fat": 0.3,
+        "fiber": 2.7,
+        "sodium": 1
+      },
+      "needs_review": true,
+      "notes": "Cozido. Cru: 357 kcal/100g"
+    },
+    {
+      "id": "lentilha",
+      "name": "Lentilha",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 116,
+        "protein": 9,
+        "carbs": 20,
+        "sugars": 1.8,
+        "fat": 0.4,
+        "saturated_fat": 0.1,
+        "fiber": 7.9,
+        "sodium": 2
+      },
+      "needs_review": true,
+      "notes": "Cozida"
+    },
+    {
+      "id": "frango-peito",
+      "name": "Peito de frango",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 165,
+        "protein": 31,
+        "carbs": 0,
+        "sugars": 0,
+        "fat": 3.6,
+        "saturated_fat": 1,
+        "fiber": 0,
+        "sodium": 74
+      },
+      "needs_review": true,
+      "notes": "Grelhado, sem pele"
+    },
+    {
+      "id": "batata-doce",
+      "name": "Batata-doce",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 86,
+        "protein": 1.6,
+        "carbs": 20.1,
+        "sugars": 4.2,
+        "fat": 0.1,
+        "saturated_fat": 0,
+        "fiber": 3,
+        "sodium": 55
+      },
+      "needs_review": true,
+      "notes": "Cozida"
+    },
+    {
+      "id": "ovo",
+      "name": "Ovo",
+      "default_unit": "unit",
+      "nutrition_per_100": {
+        "calories": 155,
+        "protein": 13,
+        "carbs": 1.1,
+        "sugars": 1.1,
+        "fat": 11,
+        "saturated_fat": 3.3,
+        "fiber": 0,
+        "sodium": 124
+      },
+      "needs_review": true,
+      "notes": "Inteiro, cozido. ~50g por unidade"
+    },
+    {
+      "id": "abobrinha",
+      "name": "Abobrinha",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
+      "id": "abobora-kabocha",
+      "name": "Abóbora Kabocha",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
+      "id": "alecrim",
+      "name": "Alecrim",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
+      "id": "batata-comum",
+      "name": "Batata comum",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
+      "id": "berinjela",
+      "name": "Berinjela",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
+      "id": "canela",
+      "name": "Canela",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
+      "id": "catupiry-ou-requeijao-cremoso",
+      "name": "Catupiry ou requeijão cremoso",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
+      "id": "cebola-roxa",
+      "name": "Cebola roxa",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
+      "id": "cenoura",
+      "name": "Cenoura",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
+      "id": "cheiro-verde",
+      "name": "Cheiro verde",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
+      "id": "chuchu",
+      "name": "Chuchu",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
+      "id": "cominho",
+      "name": "Cominho",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
+      "id": "farinha-de-trigo",
+      "name": "Farinha de trigo",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
+      "id": "limao",
+      "name": "Limão",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
+      "id": "linguica-calabresa",
+      "name": "Linguiça Calabresa",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
+      "id": "manga",
+      "name": "Manga",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
+      "id": "margarina",
+      "name": "Margarina",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
+      "id": "molho-de-tomate",
+      "name": "Molho de tomate",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
+      "id": "mussarela",
+      "name": "Mussarela",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
+      "id": "passata-de-tomate",
+      "name": "Passata de tomate",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
+      "id": "peixe",
+      "name": "Peixe",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
+      "id": "proteina-de-soja-texturizada",
+      "name": "Proteína de soja Texturizada",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
+      "id": "paprica",
+      "name": "Páprica",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
+      "id": "requeijao",
+      "name": "Requeijão",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
+      "id": "tempero",
+      "name": "Tempero",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
+      "id": "tomate",
+      "name": "Tomate",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
+      "id": "trigo-para-kibe",
+      "name": "Trigo para Kibe",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
+      "id": "agua",
+      "name": "Água",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
+      "id": "oleo-de-gergelim",
+      "name": "Óleo de gergelim",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    }
   ],
   "_metadata": {
     "products_from_photos": 7,
