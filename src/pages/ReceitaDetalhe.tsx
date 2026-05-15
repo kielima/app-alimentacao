@@ -4,6 +4,7 @@ import { findRecipeById, findCategory, isSeedRecipe } from '../data/recipes';
 import { findIngredientById } from '../data/ingredients';
 import { useRecipeNutrition } from '../hooks/useRecipeNutrition';
 import { deleteUserRecipe, getUserRecipeById } from '../data/userRecipes';
+import { hideRecipe } from '../data/hiddenRecipes';
 import { upsertShoppingItem } from '../data/shoppingList';
 import { usePantryItems } from '../data/pantry';
 import type { Recipe, RecipeIngredient } from '../types/recipe';
@@ -26,13 +27,17 @@ export default function ReceitaDetalhe() {
   );
 
   const isUserOverlay = id ? !!getUserRecipeById(id) : false;
-  const canDelete = id ? isUserOverlay && !isSeedRecipe(id) : false;
-  const canRevert = id ? isUserOverlay && isSeedRecipe(id) : false;
+  const isSeed = id ? isSeedRecipe(id) : false;
+  const canRevert = id ? isUserOverlay && isSeed : false;
 
   const handleDelete = () => {
     if (!id) return;
-    if (!confirm('Excluir esta receita?')) return;
-    deleteUserRecipe(id);
+    const msg = isSeed
+      ? 'Apagar esta receita? (Receitas do livro original podem ser restauradas depois no fim da lista.)'
+      : 'Apagar esta receita? Esta ação não pode ser desfeita.';
+    if (!confirm(msg)) return;
+    if (isUserOverlay) deleteUserRecipe(id);
+    if (isSeed) hideRecipe(id);
     navigate('/receitas');
   };
 
@@ -125,16 +130,14 @@ export default function ReceitaDetalhe() {
         >
           ✏️
         </Link>
-        {canDelete && (
-          <button
-            type="button"
-            onClick={handleDelete}
-            className="rounded-full bg-zinc-200/60 px-3 py-1 text-sm text-zinc-700 hover:bg-red-100 hover:text-red-700 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-red-900/30 dark:hover:text-red-300"
-            aria-label="Excluir receita"
-          >
-            🗑️
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={handleDelete}
+          className="rounded-full bg-zinc-200/60 px-3 py-1 text-sm text-zinc-700 hover:bg-red-100 hover:text-red-700 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-red-900/30 dark:hover:text-red-300"
+          aria-label="Excluir receita"
+        >
+          🗑️
+        </button>
         {canRevert && (
           <button
             type="button"
