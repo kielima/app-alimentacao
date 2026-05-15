@@ -22,9 +22,15 @@ jobs:
           node-version: '22'
 
       - name: Decode service account credentials
+        env:
+          SA_B64: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
-          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" | base64 -d > "$RUNNER_TEMP/sa.json"
-          echo "Bytes written: $(wc -c < $RUNNER_TEMP/sa.json)"
+          echo "Secret length (chars): ${#SA_B64}"
+          # Strip whitespace e decodifica ignorando caracteres não-alfabeto
+          printf '%s' "$SA_B64" | tr -d ' \t\r\n' | base64 -di > "$RUNNER_TEMP/sa.json"
+          echo "Decoded bytes: $(wc -c < $RUNNER_TEMP/sa.json)"
+          # Valida JSON e mostra apenas o client_email (não vaza a chave)
+          node -e "const sa=require('$RUNNER_TEMP/sa.json'); console.log('client_email:', sa.client_email); console.log('private_key bytes:', sa.private_key.length);"
 
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
