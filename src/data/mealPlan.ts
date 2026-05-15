@@ -23,21 +23,28 @@ export function emptyDayPlan(day: DayOfWeek, plan: PlanType): DayPlan {
   };
 }
 
+function isNewFormatItem(item: unknown): item is MealItem {
+  return typeof item === 'object' && item !== null && 'recipe_id' in item;
+}
+
 export function ensureMealStructure(dayPlan: DayPlan): DayPlan {
   // Garante que todas as meal_types estão presentes (mesmo vazias) na ordem correta.
+  // Filtra itens em formato antigo (com ingredient_id, sem recipe_id).
   const byType = new Map(dayPlan.meals.map((m) => [m.meal_type, m]));
   return {
     ...dayPlan,
-    meals: MEAL_TYPES.map((mt) => byType.get(mt.value) ?? emptyMeal(mt.value)),
+    meals: MEAL_TYPES.map((mt) => {
+      const existing = byType.get(mt.value);
+      if (!existing) return emptyMeal(mt.value);
+      return { ...existing, items: existing.items.filter(isNewFormatItem) };
+    }),
   };
 }
 
 export function newMealItem(): MealItem {
   return {
     id: `meal-item-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    ingredient_id: null,
-    raw_text: '',
+    recipe_id: null,
     quantity: null,
-    unit: null,
   };
 }

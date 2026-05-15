@@ -1,6 +1,7 @@
+import { useMemo } from 'react';
 import seed from '../../seed/recipes.json';
 import type { RecipesSeed, Recipe, RecipeCategoryDef } from '../types/recipe';
-import { getUserRecipes, getUserRecipeById } from './userRecipes';
+import { getUserRecipes, getUserRecipeById, useUserRecipes } from './userRecipes';
 
 const data = seed as unknown as RecipesSeed;
 
@@ -17,6 +18,16 @@ export function getAllRecipes(): Recipe[] {
   return seedRecipes.map((r) => userById.get(r.id) ?? r).concat(
     userRecipes.filter((r) => !seedRecipes.some((s) => s.id === r.id)),
   );
+}
+
+export function useAllRecipes(): Recipe[] {
+  const userRecipes = useUserRecipes();
+  return useMemo(() => {
+    const userById = new Map(userRecipes.map((r) => [r.id, r]));
+    return seedRecipes.map((r) => userById.get(r.id) ?? r).concat(
+      userRecipes.filter((r) => !seedRecipes.some((s) => s.id === r.id)),
+    );
+  }, [userRecipes]);
 }
 
 export function findRecipeById(id: string): Recipe | undefined {

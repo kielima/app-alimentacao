@@ -11,10 +11,8 @@ export type MealType =
 
 export interface MealItem {
   id: string;
-  ingredient_id: string | null;
-  raw_text: string;
+  recipe_id: string | null;
   quantity: number | null;
-  unit: string | null;
 }
 
 export interface Meal {

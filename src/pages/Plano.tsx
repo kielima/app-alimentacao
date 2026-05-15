@@ -17,10 +17,9 @@ import {
   upsertMealPlan,
   useMealPlans,
 } from '../data/mealPlan';
-import { useAllIngredients, findIngredientById } from '../data/ingredients';
-import { computeNutrition, type NutritionBreakdown } from '../utils/nutrition';
-import { UNIT_OPTIONS, unitLabel } from '../utils/units';
-import type { Ingredient } from '../types/ingredient';
+import { useAllRecipes } from '../data/recipes';
+import { computeMealNutrition, type NutritionBreakdown } from '../utils/nutrition';
+import type { Recipe } from '../types/recipe';
 
 export default function Plano() {
   const plans = useMealPlans();
@@ -28,10 +27,10 @@ export default function Plano() {
   const [planType, setPlanType] = useState<PlanType>('training_day');
   const [editing, setEditing] = useState(false);
 
-  const allIng = useAllIngredients();
-  const sortedIngredients = useMemo(
-    () => [...allIng].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
-    [allIng],
+  const allRecipes = useAllRecipes();
+  const sortedRecipes = useMemo(
+    () => [...allRecipes].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
+    [allRecipes],
   );
 
   const dayPlan = useMemo(() => {
@@ -44,7 +43,7 @@ export default function Plano() {
 
   const allItems = useMemo(() => dayPlan.meals.flatMap((m) => m.items), [dayPlan]);
   const dayNutrition = useMemo(
-    () => (allItems.length > 0 ? computeNutrition(allItems) : null),
+    () => (allItems.length > 0 ? computeMealNutrition(allItems) : null),
     [allItems],
   );
 
@@ -140,7 +139,7 @@ export default function Plano() {
             key={meal.meal_type}
             meal={meal}
             editing={editing}
-            ingredients={sortedIngredients}
+            recipes={sortedRecipes}
             onChange={(items) => updateMeal(meal.meal_type, items)}
           />
         ))}
@@ -201,17 +200,17 @@ function DaySummary({
 function MealCard({
   meal,
   editing,
-  ingredients,
+  recipes,
   onChange,
 }: {
   meal: Meal;
   editing: boolean;
-  ingredients: Ingredient[];
+  recipes: Recipe[];
   onChange: (items: MealItem[]) => void;
 }) {
   const def = MEAL_TYPES.find((m) => m.value === meal.meal_type);
   const nutrition = useMemo(
-    () => (meal.items.length > 0 ? computeNutrition(meal.items) : null),
+    () => (meal.items.length > 0 ? computeMealNutrition(meal.items) : null),
     [meal.items],
   );
 
@@ -241,35 +240,26 @@ function MealCard({
       </div>
 
       {meal.items.length === 0 && !editing ? null : (
-        <ul className={editing ? 'space-y-3' : 'space-y-1'}>
+        <ul className={editing ? 'space-y-2' : 'space-y-1'}>
           {meal.items.map((item, idx) => {
-            const ing = item.ingredient_id ? findIngredientById(item.ingredient_id) : undefined;
+            const recipe = item.recipe_id ? recipes.find((r) => r.id === item.recipe_id) : undefined;
             if (editing) {
               return (
                 <li key={item.id} className="rounded-lg bg-zinc-50 p-2 dark:bg-zinc-950">
-                  <input
-                    type="text"
-                    value={item.raw_text}
-                    onChange={(e) => updateItem(idx, { raw_text: e.target.value })}
-                    placeholder='Ex.: "1 banana"'
-                    className="mb-1.5 w-full rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm focus:border-brand-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
-                  />
                   <div className="grid grid-cols-[1fr,auto] gap-1.5">
                     <select
-                      value={item.ingredient_id ?? ''}
-                      onChange={(e) => {
-                        const matched = ingredients.find((i) => i.id === e.target.value);
-                        updateItem(idx, {
-                          ingredient_id: e.target.value || null,
-                          unit: matched && !item.unit ? matched.default_unit : item.unit,
-                        });
-                      }}
-                      className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs focus:border-brand-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
+                      value={item.recipe_id ?? ''}
+                      onChange={(e) =>
+                        updateItem(idx, { recipe_id: e.target.value || null })
+                      }
+                      className="min-w-0 rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm focus:border-brand-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
                     >
-                      <option value="">🔗 Sem vínculo</option>
-                      {ingredients.map((i) => (
-                        <option key={i.id} value={i.id}>
-                          {i.brand ? `${i.brand} — ${i.name}` : i.name}
+                      <option value="" disabled>
+                        Selecione uma receita…
+                      </option>
+                      {recipes.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.name}
                         </option>
                       ))}
                     </select>
@@ -282,7 +272,7 @@ function MealCard({
                       🗑️
                     </button>
                   </div>
-                  <div className="mt-1.5 grid grid-cols-[80px,1fr] gap-1.5">
+                  <div className="mt-1.5 flex items-center gap-1.5">
                     <input
                       type="number"
                       min={0}
@@ -294,48 +284,28 @@ function MealCard({
                           quantity: e.target.value ? Number(e.target.value) : null,
                         })
                       }
-                      placeholder="Qtd"
-                      className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs focus:border-brand-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
+                      placeholder="Quantidade"
+                      className="w-32 rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs focus:border-brand-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
                     />
-                    <select
-                      value={item.unit ?? ''}
-                      onChange={(e) => updateItem(idx, { unit: e.target.value || null })}
-                      className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs focus:border-brand-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
-                    >
-                      {UNIT_OPTIONS.map((u) => (
-                        <option key={u.value} value={u.value}>
-                          {u.label}
-                        </option>
-                      ))}
-                    </select>
+                    <span className="text-xs text-zinc-500 dark:text-zinc-400">g / ml</span>
                   </div>
                 </li>
               );
             }
+            if (!recipe) return null;
             return (
               <li key={item.id} className="text-sm">
-                {ing ? (
-                  <Link
-                    to={`/ingredientes/${ing.id}`}
-                    className="text-zinc-900 hover:text-brand-600 dark:text-zinc-100 dark:hover:text-brand-400"
-                  >
-                    {item.raw_text}
-                    {item.quantity != null && item.unit && (
-                      <span className="ml-1 text-xs text-zinc-500 dark:text-zinc-400">
-                        ({item.quantity} {unitLabel(item.unit)})
-                      </span>
-                    )}
-                  </Link>
-                ) : (
-                  <span>
-                    {item.raw_text}
-                    {item.quantity != null && item.unit && (
-                      <span className="ml-1 text-xs text-zinc-500 dark:text-zinc-400">
-                        ({item.quantity} {unitLabel(item.unit)})
-                      </span>
-                    )}
-                  </span>
-                )}
+                <Link
+                  to={`/receitas/${recipe.id}`}
+                  className="text-zinc-900 hover:text-brand-600 dark:text-zinc-100 dark:hover:text-brand-400"
+                >
+                  {recipe.name}
+                  {item.quantity != null && (
+                    <span className="ml-1 text-xs text-zinc-500 dark:text-zinc-400">
+                      ({item.quantity} g)
+                    </span>
+                  )}
+                </Link>
               </li>
             );
           })}
@@ -348,7 +318,7 @@ function MealCard({
           onClick={addItem}
           className="mt-2 w-full rounded-lg border-2 border-dashed border-zinc-300 py-1.5 text-xs text-zinc-500 hover:border-brand-500 hover:text-brand-600 dark:border-zinc-700 dark:text-zinc-400"
         >
-          + Adicionar alimento
+          + Adicionar receita
         </button>
       )}
     </li>
