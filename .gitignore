@@ -20,3 +20,5 @@ Thumbs.db
 .firebase/
 firebase-debug.log
 firestore-debug.log
+firestore-debug.*.log
+.firebaserc.local
