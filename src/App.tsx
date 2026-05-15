@@ -7,6 +7,7 @@ import Receitas from './pages/Receitas';
 import Dispensa from './pages/Dispensa';
 import Compras from './pages/Compras';
 import Plano from './pages/Plano';
+import ReceitaDetalhe from './pages/ReceitaDetalhe';
 import Ingredientes from './pages/Ingredientes';
 import IngredienteDetalhe from './pages/IngredienteDetalhe';
 import { useTheme } from './hooks/useTheme';
@@ -38,6 +39,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/receitas" replace />} />
           <Route path="/receitas" element={<Receitas />} />
+          <Route path="/receitas/:id" element={<ReceitaDetalhe />} />
           <Route path="/dispensa" element={<Dispensa />} />
           <Route path="/compras" element={<Compras />} />
           <Route path="/plano" element={<Plano />} />
