@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { allIngredients } from '../data/ingredients';
+import { allIngredients, findIngredientById } from '../data/ingredients';
 import { getPantryItem, upsertPantryItem, deletePantryItem, usePantryItems } from '../data/pantry';
 import { useShoppingItems } from '../data/shoppingList';
 import { UNIT_OPTIONS } from '../utils/units';
+import NutritionTable from '../components/NutritionTable';
 import type { PantryItem } from '../types/pantry';
 
 interface FormState {
@@ -292,6 +293,18 @@ export default function DispensaForm() {
           className={inputClass}
         />
       </Field>
+
+      {state.ingredient_id && (() => {
+        const ing = findIngredientById(state.ingredient_id);
+        return ing ? (
+          <section className="mt-2 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              Tabela Nutricional
+            </h2>
+            <NutritionTable ingredient={ing} />
+          </section>
+        ) : null;
+      })()}
     </form>
   );
 }
