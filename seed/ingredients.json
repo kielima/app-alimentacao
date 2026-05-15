@@ -580,6 +580,1102 @@
       "brand": null,
       "default_unit": "g",
       "nutrition_per_100": null
+    },
+    {
+      "id": "banana",
+      "name": "Banana",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 89,
+        "protein": 1.4,
+        "carbs": 22.8,
+        "sugars": 12.2,
+        "fat": 0.1,
+        "saturated_fat": 0.0,
+        "fiber": 2.0,
+        "sodium": 1
+      },
+      "notes": "TACO — banana prata"
+    },
+    {
+      "id": "maca",
+      "name": "Maçã",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 56,
+        "protein": 0.3,
+        "carbs": 15.2,
+        "sugars": 11.3,
+        "fat": 0.0,
+        "saturated_fat": 0.0,
+        "fiber": 2.5,
+        "sodium": 1
+      },
+      "notes": "TACO"
+    },
+    {
+      "id": "pessego",
+      "name": "Pêssego",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 36,
+        "protein": 0.8,
+        "carbs": 9.0,
+        "sugars": 7.0,
+        "fat": 0.1,
+        "saturated_fat": 0.0,
+        "fiber": 1.4,
+        "sodium": 1
+      },
+      "notes": "USDA"
+    },
+    {
+      "id": "uva",
+      "name": "Uva",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 53,
+        "protein": 0.7,
+        "carbs": 13.6,
+        "sugars": 12.0,
+        "fat": 0.2,
+        "saturated_fat": 0.1,
+        "fiber": 0.9,
+        "sodium": 1
+      },
+      "notes": "TACO"
+    },
+    {
+      "id": "morango",
+      "name": "Morango",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 30,
+        "protein": 0.9,
+        "carbs": 6.8,
+        "sugars": 4.7,
+        "fat": 0.3,
+        "saturated_fat": 0.0,
+        "fiber": 1.7,
+        "sodium": 1
+      },
+      "notes": "TACO"
+    },
+    {
+      "id": "laranja",
+      "name": "Laranja",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 37,
+        "protein": 1.0,
+        "carbs": 8.7,
+        "sugars": 7.0,
+        "fat": 0.1,
+        "saturated_fat": 0.0,
+        "fiber": 1.8,
+        "sodium": 1
+      },
+      "notes": "TACO"
+    },
+    {
+      "id": "brocolis",
+      "name": "Brócolis",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 25,
+        "protein": 3.6,
+        "carbs": 4.0,
+        "sugars": 1.7,
+        "fat": 0.4,
+        "saturated_fat": 0.1,
+        "fiber": 3.4,
+        "sodium": 9
+      },
+      "notes": "TACO — brócolis cozido"
+    },
+    {
+      "id": "espinafre",
+      "name": "Espinafre",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 23,
+        "protein": 2.7,
+        "carbs": 4.0,
+        "sugars": 0.4,
+        "fat": 0.3,
+        "saturated_fat": 0.0,
+        "fiber": 2.2,
+        "sodium": 79
+      },
+      "notes": "TACO"
+    },
+    {
+      "id": "alface",
+      "name": "Alface",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 13,
+        "protein": 1.1,
+        "carbs": 1.4,
+        "sugars": 0.9,
+        "fat": 0.2,
+        "saturated_fat": 0.0,
+        "fiber": 1.3,
+        "sodium": 5
+      },
+      "notes": "TACO"
+    },
+    {
+      "id": "rucula",
+      "name": "Rúcula",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 25,
+        "protein": 2.6,
+        "carbs": 3.7,
+        "sugars": 2.0,
+        "fat": 0.7,
+        "saturated_fat": 0.1,
+        "fiber": 1.6,
+        "sodium": 27
+      },
+      "notes": "USDA"
+    },
+    {
+      "id": "vagem",
+      "name": "Vagem",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 31,
+        "protein": 1.8,
+        "carbs": 7.0,
+        "sugars": 3.3,
+        "fat": 0.2,
+        "saturated_fat": 0.0,
+        "fiber": 2.7,
+        "sodium": 6
+      },
+      "notes": "USDA"
+    },
+    {
+      "id": "aspargos",
+      "name": "Aspargos",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 20,
+        "protein": 2.2,
+        "carbs": 3.9,
+        "sugars": 1.9,
+        "fat": 0.1,
+        "saturated_fat": 0.0,
+        "fiber": 2.1,
+        "sodium": 2
+      },
+      "notes": "USDA"
+    },
+    {
+      "id": "abacate",
+      "name": "Abacate",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 160,
+        "protein": 2.0,
+        "carbs": 8.5,
+        "sugars": 0.7,
+        "fat": 14.7,
+        "saturated_fat": 2.1,
+        "fiber": 6.7,
+        "sodium": 7
+      },
+      "notes": "USDA"
+    },
+    {
+      "id": "couve",
+      "name": "Couve",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 27,
+        "protein": 2.9,
+        "carbs": 4.7,
+        "sugars": 0.3,
+        "fat": 0.5,
+        "saturated_fat": 0.1,
+        "fiber": 3.0,
+        "sodium": 9
+      },
+      "notes": "TACO — couve refogada"
+    },
+    {
+      "id": "ervilha",
+      "name": "Ervilha",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 81,
+        "protein": 5.4,
+        "carbs": 14.5,
+        "sugars": 5.7,
+        "fat": 0.4,
+        "saturated_fat": 0.1,
+        "fiber": 5.1,
+        "sodium": 5
+      },
+      "notes": "USDA — cozida"
+    },
+    {
+      "id": "milho",
+      "name": "Milho",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 86,
+        "protein": 3.2,
+        "carbs": 19.0,
+        "sugars": 3.2,
+        "fat": 1.2,
+        "saturated_fat": 0.2,
+        "fiber": 2.7,
+        "sodium": 15
+      },
+      "notes": "USDA — cozido"
+    },
+    {
+      "id": "mandioca",
+      "name": "Mandioca",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 125,
+        "protein": 0.6,
+        "carbs": 30.0,
+        "sugars": 1.4,
+        "fat": 0.3,
+        "saturated_fat": 0.1,
+        "fiber": 1.6,
+        "sodium": 14
+      },
+      "notes": "TACO — mandioca cozida"
+    },
+    {
+      "id": "inhame",
+      "name": "Inhame",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 108,
+        "protein": 1.5,
+        "carbs": 23.0,
+        "sugars": 0.5,
+        "fat": 0.1,
+        "saturated_fat": 0.0,
+        "fiber": 4.0,
+        "sodium": 8
+      },
+      "notes": "USDA — cozido"
+    },
+    {
+      "id": "frango-sobrecoxa",
+      "name": "Sobrecoxa de frango sem pele",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 169,
+        "protein": 24.0,
+        "carbs": 0.0,
+        "sugars": 0.0,
+        "fat": 7.4,
+        "saturated_fat": 2.0,
+        "fiber": 0.0,
+        "sodium": 90
+      },
+      "notes": "TACO"
+    },
+    {
+      "id": "tilapia",
+      "name": "Tilápia (filé)",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 96,
+        "protein": 20.1,
+        "carbs": 0.0,
+        "sugars": 0.0,
+        "fat": 1.7,
+        "saturated_fat": 0.6,
+        "fiber": 0.0,
+        "sodium": 52
+      },
+      "notes": "USDA — cru"
+    },
+    {
+      "id": "salmao",
+      "name": "Salmão (filé)",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 208,
+        "protein": 20.4,
+        "carbs": 0.0,
+        "sugars": 0.0,
+        "fat": 13.4,
+        "saturated_fat": 3.1,
+        "fiber": 0.0,
+        "sodium": 59
+      },
+      "notes": "USDA — cru"
+    },
+    {
+      "id": "truta",
+      "name": "Truta (filé)",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 119,
+        "protein": 20.0,
+        "carbs": 0.0,
+        "sugars": 0.0,
+        "fat": 3.5,
+        "saturated_fat": 0.7,
+        "fiber": 0.0,
+        "sodium": 52
+      },
+      "notes": "USDA — cru"
+    },
+    {
+      "id": "merluza",
+      "name": "Merluza (filé)",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 90,
+        "protein": 17.0,
+        "carbs": 0.0,
+        "sugars": 0.0,
+        "fat": 2.0,
+        "saturated_fat": 0.4,
+        "fiber": 0.0,
+        "sodium": 88
+      },
+      "notes": "USDA — cru"
+    },
+    {
+      "id": "patinho",
+      "name": "Patinho",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 133,
+        "protein": 21.7,
+        "carbs": 0.0,
+        "sugars": 0.0,
+        "fat": 4.5,
+        "saturated_fat": 1.7,
+        "fiber": 0.0,
+        "sodium": 55
+      },
+      "notes": "TACO — cru"
+    },
+    {
+      "id": "file-mignon",
+      "name": "Filé Mignon",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 140,
+        "protein": 21.4,
+        "carbs": 0.0,
+        "sugars": 0.0,
+        "fat": 5.7,
+        "saturated_fat": 2.2,
+        "fiber": 0.0,
+        "sodium": 50
+      },
+      "notes": "TACO — cru"
+    },
+    {
+      "id": "carne-moida-magra",
+      "name": "Carne moída magra",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 161,
+        "protein": 20.0,
+        "carbs": 0.0,
+        "sugars": 0.0,
+        "fat": 8.0,
+        "saturated_fat": 3.2,
+        "fiber": 0.0,
+        "sodium": 65
+      },
+      "notes": "TACO — acém cru"
+    },
+    {
+      "id": "presunto-peru",
+      "name": "Presunto de peru",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 110,
+        "protein": 18.0,
+        "carbs": 2.0,
+        "sugars": 1.5,
+        "fat": 3.0,
+        "saturated_fat": 0.9,
+        "fiber": 0.0,
+        "sodium": 800
+      },
+      "notes": "Rótulo médio"
+    },
+    {
+      "id": "clara-ovo-pasteurizada",
+      "name": "Clara de ovo pasteurizada",
+      "default_unit": "ml",
+      "nutrition_per_100": {
+        "calories": 50,
+        "protein": 11.0,
+        "carbs": 0.8,
+        "sugars": 0.7,
+        "fat": 0.2,
+        "saturated_fat": 0.0,
+        "fiber": 0.0,
+        "sodium": 165
+      },
+      "notes": "Rótulo médio"
+    },
+    {
+      "id": "leite-integral",
+      "name": "Leite integral",
+      "default_unit": "ml",
+      "nutrition_per_100": {
+        "calories": 61,
+        "protein": 3.2,
+        "carbs": 4.8,
+        "sugars": 4.8,
+        "fat": 3.3,
+        "saturated_fat": 1.9,
+        "fiber": 0.0,
+        "sodium": 44
+      },
+      "notes": "TACO"
+    },
+    {
+      "id": "iogurte-grego",
+      "name": "Iogurte grego natural (zero)",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 59,
+        "protein": 10.0,
+        "carbs": 3.6,
+        "sugars": 3.2,
+        "fat": 0.4,
+        "saturated_fat": 0.1,
+        "fiber": 0.0,
+        "sodium": 36
+      },
+      "notes": "Média de rótulos"
+    },
+    {
+      "id": "queijo-cottage",
+      "name": "Queijo cottage",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 98,
+        "protein": 11.1,
+        "carbs": 3.4,
+        "sugars": 2.7,
+        "fat": 4.3,
+        "saturated_fat": 1.7,
+        "fiber": 0.0,
+        "sodium": 364
+      },
+      "notes": "USDA — low fat"
+    },
+    {
+      "id": "queijo-branco",
+      "name": "Queijo branco",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 240,
+        "protein": 17.4,
+        "carbs": 3.2,
+        "sugars": 1.0,
+        "fat": 18.0,
+        "saturated_fat": 11.5,
+        "fiber": 0.0,
+        "sodium": 380
+      },
+      "notes": "TACO"
+    },
+    {
+      "id": "queijo-coalho",
+      "name": "Queijo coalho",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 354,
+        "protein": 26.0,
+        "carbs": 1.8,
+        "sugars": 1.0,
+        "fat": 27.0,
+        "saturated_fat": 17.0,
+        "fiber": 0.0,
+        "sodium": 660
+      },
+      "notes": "Média de rótulos"
+    },
+    {
+      "id": "ricota",
+      "name": "Ricota",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 174,
+        "protein": 11.4,
+        "carbs": 3.0,
+        "sugars": 0.3,
+        "fat": 13.0,
+        "saturated_fat": 8.3,
+        "fiber": 0.0,
+        "sodium": 84
+      },
+      "notes": "USDA — whole milk"
+    },
+    {
+      "id": "requeijao-light",
+      "name": "Requeijão light",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 175,
+        "protein": 11.0,
+        "carbs": 6.5,
+        "sugars": 3.0,
+        "fat": 12.0,
+        "saturated_fat": 7.5,
+        "fiber": 0.0,
+        "sodium": 420
+      },
+      "notes": "Média de rótulos"
+    },
+    {
+      "id": "kefir",
+      "name": "Kefir",
+      "default_unit": "ml",
+      "nutrition_per_100": {
+        "calories": 41,
+        "protein": 3.3,
+        "carbs": 4.5,
+        "sugars": 4.2,
+        "fat": 1.5,
+        "saturated_fat": 0.9,
+        "fiber": 0.0,
+        "sodium": 43
+      },
+      "notes": "USDA"
+    },
+    {
+      "id": "pao-integral",
+      "name": "Pão integral",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 250,
+        "protein": 9.0,
+        "carbs": 47.0,
+        "sugars": 5.0,
+        "fat": 3.7,
+        "saturated_fat": 0.7,
+        "fiber": 6.5,
+        "sodium": 480
+      },
+      "notes": "Rótulo médio"
+    },
+    {
+      "id": "pao-hamburguer-integral",
+      "name": "Pão de hambúrguer integral",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 260,
+        "protein": 8.0,
+        "carbs": 46.0,
+        "sugars": 6.0,
+        "fat": 4.5,
+        "saturated_fat": 1.0,
+        "fiber": 5.0,
+        "sodium": 450
+      },
+      "notes": "Rótulo médio"
+    },
+    {
+      "id": "tortilha-integral",
+      "name": "Tortilha / Wrap integral",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 285,
+        "protein": 9.0,
+        "carbs": 47.0,
+        "sugars": 2.0,
+        "fat": 7.0,
+        "saturated_fat": 2.5,
+        "fiber": 5.0,
+        "sodium": 520
+      },
+      "notes": "Rótulo médio"
+    },
+    {
+      "id": "pao-queijo",
+      "name": "Pão de queijo",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 332,
+        "protein": 4.8,
+        "carbs": 41.0,
+        "sugars": 2.5,
+        "fat": 16.0,
+        "saturated_fat": 8.0,
+        "fiber": 1.5,
+        "sodium": 480
+      },
+      "notes": "TACO"
+    },
+    {
+      "id": "tapioca-goma",
+      "name": "Tapioca (goma)",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 240,
+        "protein": 0.0,
+        "carbs": 60.0,
+        "sugars": 0.0,
+        "fat": 0.0,
+        "saturated_fat": 0.0,
+        "fiber": 0.8,
+        "sodium": 1
+      },
+      "notes": "Goma hidratada"
+    },
+    {
+      "id": "cuscuz-flocao",
+      "name": "Cuscuz nordestino (flocão de milho)",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 363,
+        "protein": 7.0,
+        "carbs": 78.0,
+        "sugars": 1.0,
+        "fat": 1.4,
+        "saturated_fat": 0.2,
+        "fiber": 6.7,
+        "sodium": 5
+      },
+      "notes": "TACO — cru"
+    },
+    {
+      "id": "quinoa",
+      "name": "Quinoa",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 120,
+        "protein": 4.4,
+        "carbs": 21.3,
+        "sugars": 0.9,
+        "fat": 1.9,
+        "saturated_fat": 0.2,
+        "fiber": 2.8,
+        "sodium": 7
+      },
+      "notes": "USDA — cozida"
+    },
+    {
+      "id": "aveia-flocos",
+      "name": "Aveia em flocos",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 389,
+        "protein": 17.0,
+        "carbs": 66.0,
+        "sugars": 1.0,
+        "fat": 7.0,
+        "saturated_fat": 1.2,
+        "fiber": 10.0,
+        "sodium": 2
+      },
+      "notes": "TACO"
+    },
+    {
+      "id": "granola",
+      "name": "Granola",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 470,
+        "protein": 10.0,
+        "carbs": 65.0,
+        "sugars": 22.0,
+        "fat": 18.0,
+        "saturated_fat": 3.0,
+        "fiber": 7.0,
+        "sodium": 80
+      },
+      "notes": "Rótulo médio"
+    },
+    {
+      "id": "macarrao-integral",
+      "name": "Macarrão integral",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 131,
+        "protein": 5.0,
+        "carbs": 27.0,
+        "sugars": 1.0,
+        "fat": 1.0,
+        "saturated_fat": 0.2,
+        "fiber": 3.5,
+        "sodium": 4
+      },
+      "notes": "USDA — cozido"
+    },
+    {
+      "id": "feijao-carioca",
+      "name": "Feijão carioca",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 76,
+        "protein": 4.8,
+        "carbs": 13.6,
+        "sugars": 0.3,
+        "fat": 0.5,
+        "saturated_fat": 0.1,
+        "fiber": 8.5,
+        "sodium": 2
+      },
+      "notes": "TACO — cozido"
+    },
+    {
+      "id": "feijao-preto",
+      "name": "Feijão preto",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 77,
+        "protein": 4.5,
+        "carbs": 14.0,
+        "sugars": 0.3,
+        "fat": 0.5,
+        "saturated_fat": 0.1,
+        "fiber": 8.4,
+        "sodium": 2
+      },
+      "notes": "TACO — cozido"
+    },
+    {
+      "id": "feijao-fradinho",
+      "name": "Feijão-fradinho",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 86,
+        "protein": 5.7,
+        "carbs": 15.0,
+        "sugars": 0.5,
+        "fat": 0.7,
+        "saturated_fat": 0.2,
+        "fiber": 7.2,
+        "sodium": 3
+      },
+      "notes": "USDA — cozido"
+    },
+    {
+      "id": "grao-de-bico",
+      "name": "Grão-de-bico",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 121,
+        "protein": 7.4,
+        "carbs": 22.5,
+        "sugars": 4.0,
+        "fat": 2.0,
+        "saturated_fat": 0.2,
+        "fiber": 6.0,
+        "sodium": 6
+      },
+      "notes": "USDA — cozido"
+    },
+    {
+      "id": "mix-castanhas",
+      "name": "Mix de castanhas",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 600,
+        "protein": 17.0,
+        "carbs": 22.0,
+        "sugars": 5.0,
+        "fat": 52.0,
+        "saturated_fat": 7.0,
+        "fiber": 7.0,
+        "sodium": 2
+      },
+      "notes": "Média (amêndoas, nozes, castanhas)"
+    },
+    {
+      "id": "castanha-do-para",
+      "name": "Castanha-do-pará",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 656,
+        "protein": 14.3,
+        "carbs": 12.3,
+        "sugars": 2.3,
+        "fat": 67.0,
+        "saturated_fat": 16.0,
+        "fiber": 7.5,
+        "sodium": 3
+      },
+      "notes": "USDA"
+    },
+    {
+      "id": "noz",
+      "name": "Nozes",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 654,
+        "protein": 15.2,
+        "carbs": 14.0,
+        "sugars": 2.6,
+        "fat": 65.0,
+        "saturated_fat": 6.1,
+        "fiber": 6.7,
+        "sodium": 2
+      },
+      "notes": "USDA"
+    },
+    {
+      "id": "castanha-caju",
+      "name": "Castanha de caju",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 553,
+        "protein": 18.2,
+        "carbs": 30.0,
+        "sugars": 5.9,
+        "fat": 44.0,
+        "saturated_fat": 7.8,
+        "fiber": 3.3,
+        "sodium": 12
+      },
+      "notes": "USDA"
+    },
+    {
+      "id": "pasta-amendoim",
+      "name": "Pasta de amendoim natural",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 588,
+        "protein": 25.0,
+        "carbs": 20.0,
+        "sugars": 9.0,
+        "fat": 50.0,
+        "saturated_fat": 10.0,
+        "fiber": 8.0,
+        "sodium": 17
+      },
+      "notes": "USDA — sem açúcar"
+    },
+    {
+      "id": "chia",
+      "name": "Sementes de chia",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 486,
+        "protein": 16.5,
+        "carbs": 42.0,
+        "sugars": 0.0,
+        "fat": 30.7,
+        "saturated_fat": 3.3,
+        "fiber": 34.0,
+        "sodium": 16
+      },
+      "notes": "USDA"
+    },
+    {
+      "id": "linhaca",
+      "name": "Sementes de linhaça",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 534,
+        "protein": 18.3,
+        "carbs": 29.0,
+        "sugars": 1.6,
+        "fat": 42.0,
+        "saturated_fat": 3.7,
+        "fiber": 27.0,
+        "sodium": 30
+      },
+      "notes": "USDA"
+    },
+    {
+      "id": "whey-protein",
+      "name": "Whey protein (isolado/concentrado)",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 380,
+        "protein": 80.0,
+        "carbs": 8.0,
+        "sugars": 4.0,
+        "fat": 4.0,
+        "saturated_fat": 1.5,
+        "fiber": 0.0,
+        "sodium": 250
+      },
+      "notes": "Rótulo médio"
+    },
+    {
+      "id": "caseina",
+      "name": "Caseína",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 360,
+        "protein": 80.0,
+        "carbs": 4.0,
+        "sugars": 2.0,
+        "fat": 1.0,
+        "saturated_fat": 0.5,
+        "fiber": 0.0,
+        "sodium": 250
+      },
+      "notes": "Rótulo médio"
+    },
+    {
+      "id": "creatina",
+      "name": "Creatina monohidratada",
+      "default_unit": "g",
+      "nutrition_per_100": null,
+      "needs_review": true,
+      "notes": "Suplemento — sem aporte calórico relevante"
+    },
+    {
+      "id": "dextrose",
+      "name": "Dextrose",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 380,
+        "protein": 0.0,
+        "carbs": 95.0,
+        "sugars": 95.0,
+        "fat": 0.0,
+        "saturated_fat": 0.0,
+        "fiber": 0.0,
+        "sodium": 0
+      },
+      "notes": "Rótulo"
+    },
+    {
+      "id": "mel",
+      "name": "Mel",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 304,
+        "protein": 0.3,
+        "carbs": 82.0,
+        "sugars": 82.0,
+        "fat": 0.0,
+        "saturated_fat": 0.0,
+        "fiber": 0.2,
+        "sodium": 4
+      },
+      "notes": "USDA"
+    },
+    {
+      "id": "cacau-po",
+      "name": "Cacau em pó sem açúcar",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 228,
+        "protein": 19.6,
+        "carbs": 57.0,
+        "sugars": 1.8,
+        "fat": 13.7,
+        "saturated_fat": 8.1,
+        "fiber": 33.0,
+        "sodium": 21
+      },
+      "notes": "USDA"
+    },
+    {
+      "id": "achocolatado-light",
+      "name": "Achocolatado em pó light",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 350,
+        "protein": 5.0,
+        "carbs": 75.0,
+        "sugars": 35.0,
+        "fat": 2.0,
+        "saturated_fat": 1.0,
+        "fiber": 5.0,
+        "sodium": 220
+      },
+      "notes": "Rótulo médio"
+    },
+    {
+      "id": "acai-polpa",
+      "name": "Açaí (polpa pura)",
+      "default_unit": "g",
+      "nutrition_per_100": {
+        "calories": 58,
+        "protein": 0.8,
+        "carbs": 6.2,
+        "sugars": 1.5,
+        "fat": 4.0,
+        "saturated_fat": 0.9,
+        "fiber": 2.6,
+        "sodium": 7
+      },
+      "notes": "Sem xarope"
+    },
+    {
+      "id": "cafe",
+      "name": "Café (coado)",
+      "default_unit": "ml",
+      "nutrition_per_100": {
+        "calories": 2,
+        "protein": 0.1,
+        "carbs": 0.0,
+        "sugars": 0.0,
+        "fat": 0.0,
+        "saturated_fat": 0.0,
+        "fiber": 0.0,
+        "sodium": 2
+      },
+      "notes": "Sem açúcar"
+    },
+    {
+      "id": "suco-uva-integral",
+      "name": "Suco de uva integral",
+      "default_unit": "ml",
+      "nutrition_per_100": {
+        "calories": 60,
+        "protein": 0.6,
+        "carbs": 15.0,
+        "sugars": 14.0,
+        "fat": 0.1,
+        "saturated_fat": 0.0,
+        "fiber": 0.2,
+        "sodium": 5
+      },
+      "notes": "Sem açúcar adicionado"
+    },
+    {
+      "id": "agua-coco",
+      "name": "Água de coco",
+      "default_unit": "ml",
+      "nutrition_per_100": {
+        "calories": 19,
+        "protein": 0.7,
+        "carbs": 3.7,
+        "sugars": 2.6,
+        "fat": 0.2,
+        "saturated_fat": 0.0,
+        "fiber": 1.1,
+        "sodium": 105
+      },
+      "notes": "USDA"
+    },
+    {
+      "id": "suco-laranja-natural",
+      "name": "Suco de laranja natural",
+      "default_unit": "ml",
+      "nutrition_per_100": {
+        "calories": 45,
+        "protein": 0.7,
+        "carbs": 10.4,
+        "sugars": 8.4,
+        "fat": 0.2,
+        "saturated_fat": 0.0,
+        "fiber": 0.2,
+        "sodium": 1
+      },
+      "notes": "USDA"
     }
   ],
   "_metadata": {

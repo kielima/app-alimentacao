@@ -1558,6 +1558,1118 @@
       ],
       "needs_review": true,
       "notes": "Está na seção 'RECEITAS MEDICINAIS' do markdown original."
+    },
+    {
+      "id": "omelete-espinafre-cottage",
+      "name": "Omelete de Espinafre e Cottage",
+      "category": "pratos-principais",
+      "prep_time_min": 10,
+      "difficulty": "facil",
+      "rating": null,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "3 ovos",
+          "ingredient_id": "ovo",
+          "quantity": 3,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "Espinafre fresco a gosto",
+          "ingredient_id": "espinafre",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Queijo cottage (50g)",
+          "ingredient_id": "queijo-cottage",
+          "quantity": 50,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Sal a gosto",
+          "ingredient_id": "sal",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Pimenta-do-reino",
+          "ingredient_id": "pimenta-do-reino",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Azeite ou manteiga",
+          "ingredient_id": "azeite-de-oliva-extra-virgem",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Bater os ovos com sal e pimenta",
+        "Refogar levemente o espinafre numa frigideira antiaderente com azeite ou manteiga",
+        "Despejar os ovos e cozinhar em fogo baixo",
+        "Adicionar o queijo cottage por cima e dobrar o omelete"
+      ]
+    },
+    {
+      "id": "omelete-forno-brocolis-queijo",
+      "name": "Omelete de Forno com Brócolis e Queijo",
+      "category": "pratos-principais",
+      "prep_time_min": 30,
+      "difficulty": "facil",
+      "rating": 5,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "4 ovos",
+          "ingredient_id": "ovo",
+          "quantity": 4,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "Brócolis cozido",
+          "ingredient_id": "brocolis",
+          "quantity": 100,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Queijo mussarela (40g)",
+          "ingredient_id": "mussarela",
+          "quantity": 40,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Sal a gosto",
+          "ingredient_id": "sal",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Pimenta-do-reino",
+          "ingredient_id": "pimenta-do-reino",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Azeite",
+          "ingredient_id": "azeite-de-oliva-extra-virgem",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Pré-aquecer o forno a 180°C",
+        "Bater os ovos com sal e pimenta",
+        "Misturar os brócolis cozidos e o queijo",
+        "Untar uma assadeira pequena com azeite e despejar a mistura",
+        "Assar por 20-25 minutos até dourar e firmar"
+      ]
+    },
+    {
+      "id": "panqueca-proteica",
+      "name": "Panqueca Proteica (Whey, Ovo e Banana)",
+      "category": "pratos-principais",
+      "prep_time_min": 10,
+      "difficulty": "facil",
+      "rating": null,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "2 ovos",
+          "ingredient_id": "ovo",
+          "quantity": 2,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "1 banana média",
+          "ingredient_id": "banana",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "Aveia em flocos (30g)",
+          "ingredient_id": "aveia-flocos",
+          "quantity": 30,
+          "unit": "g"
+        },
+        {
+          "raw_text": "1 scoop de whey protein (30g)",
+          "ingredient_id": "whey-protein",
+          "quantity": 30,
+          "unit": "g"
+        }
+      ],
+      "steps": [
+        "Bater tudo no liquidificador até virar uma massa homogênea",
+        "Aquecer uma frigideira antiaderente",
+        "Despejar pequenas porções e dourar dos dois lados"
+      ]
+    },
+    {
+      "id": "crepioca",
+      "name": "Crepioca",
+      "category": "pratos-principais",
+      "prep_time_min": 8,
+      "difficulty": "facil",
+      "rating": null,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "2 ovos",
+          "ingredient_id": "ovo",
+          "quantity": 2,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "2 colheres de sopa de goma de tapioca",
+          "ingredient_id": "tapioca-goma",
+          "quantity": 30,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Sal a gosto",
+          "ingredient_id": "sal",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Misturar ovos e tapioca até ficar homogêneo",
+        "Despejar em frigideira antiaderente quente",
+        "Cozinhar dos dois lados como um crepe",
+        "Rechear a gosto (requeijão, queijo, frango etc.)"
+      ]
+    },
+    {
+      "id": "tapioca-frango-queijo",
+      "name": "Tapioca com Frango Desfiado e Queijo",
+      "category": "pratos-principais",
+      "prep_time_min": 15,
+      "difficulty": "facil",
+      "rating": 5,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Goma de tapioca (50g)",
+          "ingredient_id": "tapioca-goma",
+          "quantity": 50,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Frango desfiado (80g)",
+          "ingredient_id": "frango-peito",
+          "quantity": 80,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Queijo minas (30g)",
+          "ingredient_id": "queijo-minas-cooper",
+          "quantity": 30,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Requeijão (opcional)",
+          "ingredient_id": "requeijao",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Espalhar a goma de tapioca peneirada em frigideira antiaderente quente",
+        "Esperar a goma firmar formando o disco",
+        "Espalhar o requeijão sobre metade do disco",
+        "Adicionar o frango desfiado temperado e o queijo",
+        "Dobrar a tapioca ao meio e servir"
+      ]
+    },
+    {
+      "id": "mingau-aveia-whey",
+      "name": "Mingau de Aveia com Whey",
+      "category": "pratos-principais",
+      "prep_time_min": 8,
+      "difficulty": "facil",
+      "rating": null,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Aveia em flocos (50g)",
+          "ingredient_id": "aveia-flocos",
+          "quantity": 50,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Leite (200ml)",
+          "ingredient_id": "leite-integral",
+          "quantity": 200,
+          "unit": "ml"
+        },
+        {
+          "raw_text": "1 scoop de whey protein (30g)",
+          "ingredient_id": "whey-protein",
+          "quantity": 30,
+          "unit": "g"
+        },
+        {
+          "raw_text": "1 banana",
+          "ingredient_id": "banana",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "Canela a gosto",
+          "ingredient_id": "canela",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Aquecer o leite com a aveia até engrossar",
+        "Tirar do fogo e misturar o whey (não bater quente para não desnaturar)",
+        "Servir com banana picada e canela"
+      ]
+    },
+    {
+      "id": "wrap-frango-requeijao",
+      "name": "Wrap de Frango com Requeijão",
+      "category": "pratos-principais",
+      "prep_time_min": 10,
+      "difficulty": "facil",
+      "rating": 5,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "1 tortilha integral pequena",
+          "ingredient_id": "tortilha-integral",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "Frango desfiado (60g)",
+          "ingredient_id": "frango-peito",
+          "quantity": 60,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Requeijão light",
+          "ingredient_id": "requeijao-light",
+          "quantity": 30,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Alface",
+          "ingredient_id": "alface",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Tomate",
+          "ingredient_id": "tomate",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Aquecer levemente a tortilha",
+        "Espalhar o requeijão",
+        "Distribuir frango, alface e tomate",
+        "Enrolar firmemente e cortar ao meio"
+      ]
+    },
+    {
+      "id": "vitamina-leite-banana-whey",
+      "name": "Vitamina de Banana com Whey",
+      "category": "bebidas",
+      "prep_time_min": 5,
+      "difficulty": "facil",
+      "rating": null,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Leite (200-250ml)",
+          "ingredient_id": "leite-integral",
+          "quantity": 225,
+          "unit": "ml"
+        },
+        {
+          "raw_text": "1 banana",
+          "ingredient_id": "banana",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "1 colher de sopa de pasta de amendoim",
+          "ingredient_id": "pasta-amendoim",
+          "quantity": 15,
+          "unit": "g"
+        },
+        {
+          "raw_text": "½ scoop de whey protein (15g)",
+          "ingredient_id": "whey-protein",
+          "quantity": 15,
+          "unit": "g"
+        }
+      ],
+      "steps": [
+        "Bater todos os ingredientes no liquidificador",
+        "Servir gelado"
+      ]
+    },
+    {
+      "id": "smoothie-iogurte-cacau",
+      "name": "Smoothie de Iogurte com Cacau",
+      "category": "bebidas",
+      "prep_time_min": 5,
+      "difficulty": "facil",
+      "rating": null,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Iogurte natural (150g)",
+          "ingredient_id": "iogurte-natural-integral",
+          "quantity": 150,
+          "unit": "g"
+        },
+        {
+          "raw_text": "1 banana congelada",
+          "ingredient_id": "banana",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "Cacau em pó",
+          "ingredient_id": "cacau-po",
+          "quantity": 10,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Aveia (20g)",
+          "ingredient_id": "aveia-flocos",
+          "quantity": 20,
+          "unit": "g"
+        }
+      ],
+      "steps": [
+        "Bater tudo no liquidificador até cremoso",
+        "Servir imediatamente"
+      ]
+    },
+    {
+      "id": "pudim-chia",
+      "name": "Pudim de Chia",
+      "category": "sobremesas-e-lanches",
+      "prep_time_min": 5,
+      "difficulty": "facil",
+      "rating": null,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Sementes de chia (30g)",
+          "ingredient_id": "chia",
+          "quantity": 30,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Leite (200ml)",
+          "ingredient_id": "leite-integral",
+          "quantity": 200,
+          "unit": "ml"
+        },
+        {
+          "raw_text": "½ scoop de whey (15g)",
+          "ingredient_id": "whey-protein",
+          "quantity": 15,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Mel a gosto (opcional)",
+          "ingredient_id": "mel",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Misturar a chia com o leite e o whey num pote",
+        "Adoçar com mel se quiser",
+        "Levar à geladeira por pelo menos 4h (idealmente noite anterior)"
+      ]
+    },
+    {
+      "id": "acai-granola-whey",
+      "name": "Açaí com Granola e Whey",
+      "category": "sobremesas-e-lanches",
+      "prep_time_min": 5,
+      "difficulty": "facil",
+      "rating": null,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Polpa de açaí (150g)",
+          "ingredient_id": "acai-polpa",
+          "quantity": 150,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Granola (30g)",
+          "ingredient_id": "granola",
+          "quantity": 30,
+          "unit": "g"
+        },
+        {
+          "raw_text": "1 banana",
+          "ingredient_id": "banana",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "1 scoop de whey (30g)",
+          "ingredient_id": "whey-protein",
+          "quantity": 30,
+          "unit": "g"
+        }
+      ],
+      "steps": [
+        "Bater a polpa de açaí com o whey e a banana",
+        "Servir em tigela e cobrir com granola"
+      ]
+    },
+    {
+      "id": "strogonoff-de-frango",
+      "name": "Strogonoff de Frango",
+      "category": "pratos-principais",
+      "prep_time_min": 30,
+      "difficulty": "facil",
+      "rating": 5,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Peito de frango em cubos (200g)",
+          "ingredient_id": "frango-peito",
+          "quantity": 200,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Cebola picada",
+          "ingredient_id": "cebola",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "Alho",
+          "ingredient_id": "alho",
+          "quantity": 2,
+          "unit": "dt"
+        },
+        {
+          "raw_text": "Molho de tomate",
+          "ingredient_id": "molho-de-tomate",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Requeijão (ou creme de leite light)",
+          "ingredient_id": "requeijao-light",
+          "quantity": 100,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Sal, pimenta",
+          "ingredient_id": "sal",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Temperar e dourar o frango em cubos",
+        "Refogar cebola e alho à parte",
+        "Juntar o frango, o molho de tomate e deixar reduzir",
+        "Finalizar com o requeijão sem ferver para não talhar",
+        "Servir com arroz integral"
+      ]
+    },
+    {
+      "id": "yakisoba-frango",
+      "name": "Yakisoba de Frango",
+      "category": "pratos-principais",
+      "prep_time_min": 25,
+      "difficulty": "medio",
+      "rating": 5,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Peito de frango em tiras (150g)",
+          "ingredient_id": "frango-peito",
+          "quantity": 150,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Macarrão integral (100g)",
+          "ingredient_id": "macarrao-integral",
+          "quantity": 100,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Abobrinha",
+          "ingredient_id": "abobrinha",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Couve-flor",
+          "ingredient_id": "couve-flor",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Cenoura",
+          "ingredient_id": "cenoura",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Shoyu",
+          "ingredient_id": "shoyu-organico",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Óleo de gergelim",
+          "ingredient_id": "oleo-de-gergelim",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Cozinhar o macarrão al dente e reservar",
+        "Saltear o frango em fogo alto até dourar",
+        "Adicionar os legumes em tiras e refogar mantendo a crocância",
+        "Juntar o macarrão e temperar com shoyu e óleo de gergelim"
+      ]
+    },
+    {
+      "id": "hamburguer-frango-caseiro",
+      "name": "Hambúrguer de Frango Caseiro",
+      "category": "pratos-principais",
+      "prep_time_min": 20,
+      "difficulty": "facil",
+      "rating": 5,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Peito de frango moído (160g — 2 unidades de 80g)",
+          "ingredient_id": "frango-peito",
+          "quantity": 160,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Cebola ralada",
+          "ingredient_id": "cebola",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Alho",
+          "ingredient_id": "alho",
+          "quantity": 1,
+          "unit": "dt"
+        },
+        {
+          "raw_text": "Sal e pimenta",
+          "ingredient_id": "sal",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Cheiro verde",
+          "ingredient_id": "cheiro-verde",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Misturar todos os ingredientes e moldar 2 hambúrgueres",
+        "Grelhar em frigideira antiaderente, 4 min de cada lado",
+        "Excelente para fazer em lote e congelar"
+      ]
+    },
+    {
+      "id": "pao-hamburguer-fitness",
+      "name": "Pão de Hambúrguer Fitness",
+      "category": "pratos-principais",
+      "prep_time_min": 10,
+      "difficulty": "facil",
+      "rating": 5,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "1 pão de hambúrguer integral",
+          "ingredient_id": "pao-hamburguer-integral",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "1 hambúrguer de frango ou filé",
+          "ingredient_id": "frango-peito",
+          "quantity": 80,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Queijo mussarela",
+          "ingredient_id": "mussarela",
+          "quantity": 20,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Tomate",
+          "ingredient_id": "tomate",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Cebola",
+          "ingredient_id": "cebola",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Alface",
+          "ingredient_id": "alface",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Molhos a gosto (mostarda, ketchup, maionese light)",
+          "ingredient_id": "tempero",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Grelhar o hambúrguer ou filé de frango",
+        "Tostar o pão",
+        "Montar com queijo, tomate, cebola, alface e molhos"
+      ]
+    },
+    {
+      "id": "bowl-frango-arroz-feijao",
+      "name": "Bowl de Frango com Arroz, Feijão e Abacate",
+      "category": "pratos-principais",
+      "prep_time_min": 15,
+      "difficulty": "facil",
+      "rating": 5,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Peito de frango em cubos (180g)",
+          "ingredient_id": "frango-peito",
+          "quantity": 180,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Arroz integral cozido (130g)",
+          "ingredient_id": "arroz-integral",
+          "quantity": 130,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Feijão carioca (100g — 1 concha)",
+          "ingredient_id": "feijao-carioca",
+          "quantity": 100,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Milho cozido",
+          "ingredient_id": "milho",
+          "quantity": 30,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Abacate em cubos (50g)",
+          "ingredient_id": "abacate",
+          "quantity": 50,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Azeite",
+          "ingredient_id": "azeite-de-oliva-extra-virgem",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Grelhar o frango temperado",
+        "Montar em tigela: arroz, feijão, frango, milho e abacate",
+        "Finalizar com fio de azeite"
+      ]
+    },
+    {
+      "id": "escondidinho-frango-mandioca",
+      "name": "Escondidinho de Frango com Mandioca",
+      "category": "pratos-principais",
+      "prep_time_min": 60,
+      "difficulty": "medio",
+      "rating": 5,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Frango desfiado (150g)",
+          "ingredient_id": "frango-peito",
+          "quantity": 150,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Mandioca cozida",
+          "ingredient_id": "mandioca",
+          "quantity": 200,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Leite",
+          "ingredient_id": "leite-integral",
+          "quantity": 100,
+          "unit": "ml"
+        },
+        {
+          "raw_text": "Manteiga",
+          "ingredient_id": "manteiga",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Cebola",
+          "ingredient_id": "cebola",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Alho",
+          "ingredient_id": "alho",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Queijo mussarela para gratinar",
+          "ingredient_id": "mussarela",
+          "quantity": 40,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Tomate ou molho de tomate",
+          "ingredient_id": "molho-de-tomate",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Refogar o frango desfiado com cebola, alho e molho de tomate",
+        "Bater a mandioca cozida com leite e manteiga até virar purê",
+        "Montar em refratária: camada de purê, frango, purê",
+        "Cobrir com queijo e gratinar no forno"
+      ]
+    },
+    {
+      "id": "salada-completa-frango",
+      "name": "Salada Completa com Frango",
+      "category": "pratos-principais",
+      "prep_time_min": 15,
+      "difficulty": "facil",
+      "rating": null,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Folhas (alface, rúcula)",
+          "ingredient_id": "alface",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Frango grelhado em tiras (150g)",
+          "ingredient_id": "frango-peito",
+          "quantity": 150,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Grão-de-bico cozido (80g)",
+          "ingredient_id": "grao-de-bico",
+          "quantity": 80,
+          "unit": "g"
+        },
+        {
+          "raw_text": "1 ovo cozido",
+          "ingredient_id": "ovo",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "Queijo branco",
+          "ingredient_id": "queijo-branco",
+          "quantity": 30,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Tomate",
+          "ingredient_id": "tomate",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Azeite extra virgem",
+          "ingredient_id": "azeite-de-oliva-extra-virgem",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Lavar as folhas e montar a base",
+        "Adicionar o frango, grão-de-bico, ovo, queijo e tomate",
+        "Finalizar com azeite, sal e limão"
+      ]
+    },
+    {
+      "id": "sanduiche-atum",
+      "name": "Sanduíche de Atum",
+      "category": "pratos-principais",
+      "prep_time_min": 5,
+      "difficulty": "facil",
+      "rating": null,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "2 fatias de pão integral",
+          "ingredient_id": "pao-integral",
+          "quantity": 60,
+          "unit": "g"
+        },
+        {
+          "raw_text": "1 lata de atum",
+          "ingredient_id": "atum-em-lata",
+          "quantity": 170,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Alface",
+          "ingredient_id": "alface",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Tomate",
+          "ingredient_id": "tomate",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Escorrer o atum",
+        "Montar o sanduíche com atum, alface e tomate"
+      ]
+    },
+    {
+      "id": "frango-molho-tomate",
+      "name": "Frango ao Molho de Tomate",
+      "category": "pratos-principais",
+      "prep_time_min": 30,
+      "difficulty": "facil",
+      "rating": null,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Peito de frango em cubos (180g)",
+          "ingredient_id": "frango-peito",
+          "quantity": 180,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Molho de tomate ou passata",
+          "ingredient_id": "passata-de-tomate",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Cebola",
+          "ingredient_id": "cebola",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Alho",
+          "ingredient_id": "alho",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Manjericão",
+          "ingredient_id": "cheiro-verde",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Refogar cebola e alho no azeite",
+        "Dourar o frango temperado",
+        "Adicionar o molho de tomate e deixar apurar",
+        "Finalizar com ervas frescas"
+      ]
+    },
+    {
+      "id": "legumes-salteados",
+      "name": "Legumes Salteados",
+      "category": "pratos-principais",
+      "prep_time_min": 15,
+      "difficulty": "facil",
+      "rating": null,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Abobrinha",
+          "ingredient_id": "abobrinha",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Cenoura",
+          "ingredient_id": "cenoura",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Brócolis",
+          "ingredient_id": "brocolis",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Couve-flor",
+          "ingredient_id": "couve-flor",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Azeite extra virgem",
+          "ingredient_id": "azeite-de-oliva-extra-virgem",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Alho",
+          "ingredient_id": "alho",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Sal",
+          "ingredient_id": "sal",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Cortar os legumes em fatias finas / pequenos floretes",
+        "Aquecer o azeite com alho em fogo alto",
+        "Saltear os legumes mantendo a crocância (3-5 min)",
+        "Temperar com sal e pimenta"
+      ]
+    },
+    {
+      "id": "sopa-frango-macarrao",
+      "name": "Sopa de Frango com Macarrão e Legumes",
+      "category": "pratos-principais",
+      "prep_time_min": 40,
+      "difficulty": "facil",
+      "rating": null,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Peito de frango (180g)",
+          "ingredient_id": "frango-peito",
+          "quantity": 180,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Macarrão integral (50g)",
+          "ingredient_id": "macarrao-integral",
+          "quantity": 50,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Cenoura",
+          "ingredient_id": "cenoura",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Cebola",
+          "ingredient_id": "cebola",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Alho",
+          "ingredient_id": "alho",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Cheiro verde",
+          "ingredient_id": "cheiro-verde",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Sal",
+          "ingredient_id": "sal",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Água",
+          "ingredient_id": "agua",
+          "quantity": 800,
+          "unit": "ml"
+        }
+      ],
+      "steps": [
+        "Cozinhar o frango em água com cebola, alho e sal",
+        "Desfiar o frango e reservar o caldo",
+        "Voltar o frango ao caldo, adicionar os legumes em cubos",
+        "Cozinhar até os legumes ficarem macios",
+        "Adicionar o macarrão e cozinhar mais 8 min",
+        "Finalizar com cheiro verde"
+      ]
+    },
+    {
+      "id": "tapioca-queijo",
+      "name": "Tapioca com Queijo",
+      "category": "pratos-principais",
+      "prep_time_min": 5,
+      "difficulty": "facil",
+      "rating": 5,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Goma de tapioca",
+          "ingredient_id": "tapioca-goma",
+          "quantity": 50,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Queijo branco ou minas (40g)",
+          "ingredient_id": "queijo-branco",
+          "quantity": 40,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Orégano a gosto",
+          "ingredient_id": "tempero",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Peneirar a goma em frigideira quente",
+        "Adicionar o queijo sobre metade do disco",
+        "Dobrar ao meio e servir"
+      ]
     }
   ],
   "_metadata": {
