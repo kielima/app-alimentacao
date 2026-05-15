@@ -335,8 +335,12 @@ function IngredientList({
             )}
             <span className="ml-auto">
               {inPantry ? (
-                <span className="shrink-0 text-xs text-emerald-600 dark:text-emerald-400">
-                  ✓ dispensa
+                <span
+                  className="shrink-0 text-base"
+                  title="Você já tem este ingrediente na dispensa"
+                  aria-label="Já tenho na dispensa"
+                >
+                  🥫
                 </span>
               ) : (
                 <button
@@ -347,13 +351,15 @@ function IngredientList({
                     onAddToCart(item);
                     setAddedIndices((s) => new Set(s).add(i));
                   }}
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium transition-colors ${
+                  className={`shrink-0 rounded-full px-2 py-1 text-sm leading-none transition-colors ${
                     justAdded
                       ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
                       : 'bg-zinc-100 text-zinc-500 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-brand-900/30 dark:hover:text-brand-400'
                   }`}
+                  aria-label="Adicionar à lista de compras"
+                  title="Adicionar à lista de compras"
                 >
-                  {justAdded ? '✓' : '+ compras'}
+                  {justAdded ? '✓' : '🛒'}
                 </button>
               )}
             </span>
