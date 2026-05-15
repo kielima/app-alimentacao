@@ -1,8 +1,12 @@
 # Plano de Projeto — App de Alimentação (PWA)
 
-> **Versão:** 1.0  
-> **Data:** 2026-05-10  
-> **Status:** Planejamento concluído — pronto para iniciar desenvolvimento
+> **Versão:** 1.1
+> **Data:** 2026-05-15
+> **Status:** Planejamento refinado — seed inicial gerado, pronto para Fase 1
+
+> **Histórico:**
+> - 1.0 (2026-05-10): Versão inicial
+> - 1.1 (2026-05-15): Adicionado campo opcional `brand` em `ingredients` para produtos comerciais; descobriu-se que as 8 fotos em `TABELAS NUTRICIONAIS/` são embalagens de produtos, não tabelas genéricas — decidiu-se tratá-los como ingredientes especiais (com `brand`) na mesma entidade, sem criar entidade `products` separada. Seed inicial gerado em `seed/`.
 
 ---
 
@@ -139,6 +143,7 @@ A **base de ingredientes** é a entidade central. Todas as outras entidades refe
 ingredients (base única)
 ├── id
 ├── name
+├── brand (opcional — preenchido apenas em produtos comerciais, ex: "Urbano")
 ├── default_unit (g | ml | unit)
 ├── nutrition_per_100:
 │   ├── calories
@@ -149,6 +154,8 @@ ingredients (base única)
 │   ├── saturated_fat
 │   ├── fiber
 │   └── sodium
+├── extras_per_100 (opcional — micronutrientes como cálcio, ferro, ômega 3, etc.)
+├── source_image (opcional — referência à foto da embalagem quando aplicável)
 ├── photo_url (opcional)
 └── substitutes[] → [ingredient_id] (futuro)
 
