@@ -10,6 +10,7 @@ import Plano from './pages/Plano';
 import ReceitaDetalhe from './pages/ReceitaDetalhe';
 import ReceitaForm from './pages/ReceitaForm';
 import DispensaForm from './pages/DispensaForm';
+import ComprasItemForm from './pages/ComprasItemForm';
 import Ingredientes from './pages/Ingredientes';
 import IngredienteDetalhe from './pages/IngredienteDetalhe';
 import { useTheme } from './hooks/useTheme';
@@ -48,6 +49,7 @@ export default function App() {
           <Route path="/dispensa/novo" element={<DispensaForm />} />
           <Route path="/dispensa/:id/editar" element={<DispensaForm />} />
           <Route path="/compras" element={<Compras />} />
+          <Route path="/compras/:id" element={<ComprasItemForm />} />
           <Route path="/plano" element={<Plano />} />
           <Route path="/ingredientes" element={<Ingredientes />} />
           <Route path="/ingredientes/:id" element={<IngredienteDetalhe />} />

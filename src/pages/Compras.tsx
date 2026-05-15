@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   upsertShoppingItem,
   deleteShoppingItem,
@@ -7,7 +7,7 @@ import {
   replaceShoppingList,
 } from '../data/shoppingList';
 import { upsertPantryItem } from '../data/pantry';
-import { allIngredients, findIngredientById } from '../data/ingredients';
+import { allIngredients } from '../data/ingredients';
 import { findRecipeById } from '../data/recipes';
 import { UNIT_OPTIONS, unitLabel } from '../utils/units';
 import type { ShoppingItem } from '../types/shoppingList';
@@ -16,6 +16,7 @@ import type { Ingredient } from '../types/ingredient';
 const UNGROUPED = '__sem-mercado__';
 
 export default function Compras() {
+  const navigate = useNavigate();
   const items = useShoppingItems();
   const [adding, setAdding] = useState(false);
   const [moveValidity, setMoveValidity] = useState('');
@@ -126,7 +127,6 @@ export default function Compras() {
               </h2>
               <ul className="space-y-1">
                 {list.map((item) => {
-                  const ing = item.ingredient_id ? findIngredientById(item.ingredient_id) : undefined;
                   const recipe =
                     item.source === 'from_recipe' && item.source_ref
                       ? findRecipeById(item.source_ref)
@@ -135,7 +135,10 @@ export default function Compras() {
                     <li key={item.id} className="flex items-start gap-2 py-1">
                       <button
                         type="button"
-                        onClick={() => toggleChecked(item)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleChecked(item);
+                        }}
                         className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors ${
                           item.checked
                             ? 'border-brand-500 bg-brand-500 text-white dark:border-brand-400 dark:bg-brand-600'
@@ -145,7 +148,11 @@ export default function Compras() {
                       >
                         {item.checked && '✓'}
                       </button>
-                      <div className="min-w-0 flex-1">
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/compras/${item.id}`)}
+                        className="min-w-0 flex-1 text-left"
+                      >
                         <p
                           className={`text-sm ${
                             item.checked
@@ -153,16 +160,7 @@ export default function Compras() {
                               : 'text-zinc-900 dark:text-zinc-100'
                           }`}
                         >
-                          {ing ? (
-                            <Link
-                              to={`/ingredientes/${ing.id}`}
-                              className="hover:text-brand-600 dark:hover:text-brand-400"
-                            >
-                              {item.raw_text}
-                            </Link>
-                          ) : (
-                            item.raw_text
-                          )}
+                          {item.raw_text}
                         </p>
                         <div className="flex flex-wrap items-center gap-x-2 text-[11px] text-zinc-500 dark:text-zinc-400">
                           {item.quantity != null && item.unit && (
@@ -185,10 +183,13 @@ export default function Compras() {
                           )}
                           {item.source === 'from_pantry' && <span>← vencido na dispensa</span>}
                         </div>
-                      </div>
+                      </button>
                       <button
                         type="button"
-                        onClick={() => deleteShoppingItem(item.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteShoppingItem(item.id);
+                        }}
                         className="shrink-0 px-2 text-zinc-400 hover:text-red-500"
                         aria-label="Remover"
                       >

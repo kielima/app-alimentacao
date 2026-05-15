@@ -1,6 +1,5 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { usePantry, type PantryFilter } from '../hooks/usePantry';
-import { findIngredientById } from '../data/ingredients';
 import { expiryStatus, expiryLabel, statusColor, statusIcon } from '../utils/expiry';
 import { unitLabel } from '../utils/units';
 import { upsertShoppingItem } from '../data/shoppingList';
@@ -15,6 +14,7 @@ const filterChips: { value: PantryFilter; label: string }[] = [
 ];
 
 export default function Dispensa() {
+  const navigate = useNavigate();
   const { list, query, setQuery, filter, setFilter, total, countsByStatus } = usePantry();
 
   const sendToList = (item: PantryItem) => {
@@ -103,51 +103,38 @@ export default function Dispensa() {
         <ul className="space-y-2">
           {list.map((item) => {
             const status = expiryStatus(item.expiry_date);
-            const ing = item.ingredient_id ? findIngredientById(item.ingredient_id) : undefined;
             const isExpiredOrSoon = status === 'expired' || status === 'soon';
             return (
-              <li
-                key={item.id}
-                className="rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900"
-              >
-                <div className="flex items-start gap-2">
-                  <span className="text-xl" aria-hidden>
-                    {statusIcon(status)}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    {ing ? (
-                      <Link
-                        to={`/ingredientes/${ing.id}`}
-                        className="block truncate text-sm font-medium hover:text-brand-600 dark:hover:text-brand-400"
-                      >
-                        {item.raw_text}
-                      </Link>
-                    ) : (
-                      <p className="truncate text-sm font-medium">{item.raw_text}</p>
-                    )}
-                    <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-                      {item.quantity && item.unit
-                        ? `${item.quantity} ${unitLabel(item.unit)}`
-                        : item.quantity ?? ''}
-                      {item.store && ` · ${item.store}`}
-                    </p>
-                    <p className={`mt-0.5 text-xs font-medium ${statusColor(status)}`}>
-                      {expiryLabel(item.expiry_date)}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 flex-col gap-1">
-                    <Link
-                      to={`/dispensa/${item.id}/editar`}
-                      className="rounded-md px-2 py-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-                      aria-label="Editar"
-                    >
-                      ✏️
-                    </Link>
+              <li key={item.id}>
+                <div
+                  role="button"
+                  onClick={() => navigate(`/dispensa/${item.id}/editar`)}
+                  className="cursor-pointer rounded-xl border border-zinc-200 bg-white p-3 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800/60"
+                >
+                  <div className="flex items-start gap-2">
+                    <span className="text-xl" aria-hidden>
+                      {statusIcon(status)}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium">{item.raw_text}</span>
+                      <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+                        {item.quantity && item.unit
+                          ? `${item.quantity} ${unitLabel(item.unit)}`
+                          : item.quantity ?? ''}
+                        {item.store && ` · ${item.store}`}
+                      </p>
+                      <p className={`mt-0.5 text-xs font-medium ${statusColor(status)}`}>
+                        {expiryLabel(item.expiry_date)}
+                      </p>
+                    </div>
                     {isExpiredOrSoon && (
                       <button
                         type="button"
-                        onClick={() => sendToList(item)}
-                        className="rounded-md px-2 py-1 text-zinc-400 hover:bg-zinc-100 hover:text-brand-600 dark:hover:bg-zinc-800 dark:hover:text-brand-400"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          sendToList(item);
+                        }}
+                        className="shrink-0 rounded-md px-2 py-1 text-zinc-400 hover:bg-zinc-100 hover:text-brand-600 dark:hover:bg-zinc-800 dark:hover:text-brand-400"
                         aria-label="Enviar para Lista de Compras"
                         title="Enviar para Lista de Compras"
                       >
