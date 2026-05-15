@@ -15,6 +15,11 @@ import type { Ingredient } from '../types/ingredient';
 
 const UNGROUPED = '__sem-mercado__';
 
+function shortDate(iso: string): string {
+  const [, m, d] = iso.split('-');
+  return `${d}/${m}`;
+}
+
 export default function Compras() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -23,7 +28,6 @@ export default function Compras() {
   const allIng = useAllIngredients();
   const returnIngredientId = searchParams.get('ingredient') ?? undefined;
   const [adding, setAdding] = useState(() => Boolean(returnIngredientId));
-  const [moveValidity, setMoveValidity] = useState('');
 
   const sortedIngredients = useMemo(
     () => [...allIng].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
@@ -68,14 +72,13 @@ export default function Compras() {
         raw_text: item.raw_text,
         quantity: item.quantity,
         unit: item.unit,
-        expiry_date: moveValidity || null,
+        expiry_date: item.expiry_date ?? null,
         store: item.store,
         added_at: new Date().toISOString(),
       });
     }
     // Remove checked from shopping list
     replaceShoppingList(items.filter((i) => !i.checked));
-    setMoveValidity('');
   };
 
   const clearAll = () => {
@@ -202,6 +205,32 @@ export default function Compras() {
                           {item.source === 'from_pantry' && <span>← vencido na dispensa</span>}
                         </div>
                       </button>
+                      <label
+                        className="flex shrink-0 cursor-pointer items-center rounded-md px-1.5 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                        onClick={(e) => e.stopPropagation()}
+                        aria-label="Definir validade"
+                      >
+                        <input
+                          type="date"
+                          value={item.expiry_date ?? ''}
+                          onChange={(e) =>
+                            upsertShoppingItem({
+                              ...item,
+                              expiry_date: e.target.value || null,
+                            })
+                          }
+                          className="sr-only"
+                        />
+                        {item.expiry_date ? (
+                          <span className="text-[11px] font-medium text-brand-600 dark:text-brand-400">
+                            {shortDate(item.expiry_date)}
+                          </span>
+                        ) : (
+                          <span className="text-zinc-400" aria-hidden>
+                            📅
+                          </span>
+                        )}
+                      </label>
                       <button
                         type="button"
                         onClick={(e) => {
@@ -225,24 +254,13 @@ export default function Compras() {
               <p className="mb-2 text-xs font-medium text-brand-800 dark:text-brand-300">
                 {totalChecked} item(s) marcado(s) → enviar para a Dispensa
               </p>
-              <div className="flex flex-wrap items-center gap-2">
-                <label className="flex items-center gap-1 text-xs text-brand-800 dark:text-brand-300">
-                  Validade:
-                  <input
-                    type="date"
-                    value={moveValidity}
-                    onChange={(e) => setMoveValidity(e.target.value)}
-                    className="rounded-md border border-brand-300 bg-white px-2 py-1 text-xs dark:border-brand-700 dark:bg-zinc-900"
-                  />
-                </label>
-                <button
-                  type="button"
-                  onClick={moveCheckedToPantry}
-                  className="rounded-full bg-brand-500 px-3 py-1 text-xs font-medium text-white hover:bg-brand-600"
-                >
-                  Mover para Dispensa
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={moveCheckedToPantry}
+                className="rounded-full bg-brand-500 px-3 py-1 text-xs font-medium text-white hover:bg-brand-600"
+              >
+                Mover para Dispensa
+              </button>
             </div>
           )}
 

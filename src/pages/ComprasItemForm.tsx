@@ -154,6 +154,7 @@ export default function ComprasItemForm() {
       source: original?.source ?? 'manual',
       source_ref: original?.source_ref,
       added_at: original?.added_at ?? new Date().toISOString(),
+      expiry_date: original?.expiry_date ?? null,
     };
     upsertShoppingItem(item);
     navigate('/compras');

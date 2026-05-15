@@ -12,4 +12,5 @@ export interface ShoppingItem {
   source: ShoppingSource;
   source_ref?: string;
   added_at: string;
+  expiry_date?: string | null;
 }
