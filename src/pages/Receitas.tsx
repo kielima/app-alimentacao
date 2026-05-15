@@ -46,9 +46,15 @@ export default function Receitas() {
           🍳
         </span>
         <h1 className="text-lg font-semibold">Receitas</h1>
-        <span className="ml-auto text-xs text-zinc-500 dark:text-zinc-400">
+        <span className="text-xs text-zinc-500 dark:text-zinc-400">
           {list.length} de {total}
         </span>
+        <Link
+          to="/receitas/nova"
+          className="ml-auto rounded-full bg-brand-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
+        >
+          + Nova
+        </Link>
       </div>
 
       <input

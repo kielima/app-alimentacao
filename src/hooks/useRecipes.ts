@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { allRecipes } from '../data/recipes';
+import { getAllRecipes } from '../data/recipes';
+import { useUserRecipes } from '../data/userRecipes';
 import { matches } from '../utils/search';
 import type { Recipe, RecipeCategoryId, Rating } from '../types/recipe';
 
@@ -25,8 +26,11 @@ export function useRecipes(): UseRecipesResult {
   const [completeness, setCompleteness] = useState<CompletenessFilter>('todas');
   const [minRating, setMinRating] = useState<RatingFilter>(0);
 
+  // Subscribe to user-recipes mutations to trigger re-render
+  const userRecipes = useUserRecipes();
+
   const list = useMemo(() => {
-    return allRecipes
+    return getAllRecipes()
       .filter((r) => category === 'todas' || r.category === category)
       .filter((r) => {
         if (completeness === 'completas') return !r.needs_review;
@@ -39,13 +43,12 @@ export function useRecipes(): UseRecipesResult {
       })
       .filter((r) => matches(r.name, query))
       .sort((a, b) => {
-        // Completas primeiro, depois rating desc, depois nome
         if (!!a.needs_review !== !!b.needs_review) return a.needs_review ? 1 : -1;
         const rDiff = (b.rating ?? 0) - (a.rating ?? 0);
         if (rDiff !== 0) return rDiff;
         return a.name.localeCompare(b.name, 'pt-BR');
       });
-  }, [query, category, completeness, minRating]);
+  }, [query, category, completeness, minRating, userRecipes]);
 
   return {
     list,
@@ -57,7 +60,7 @@ export function useRecipes(): UseRecipesResult {
     setCompleteness,
     minRating,
     setMinRating,
-    total: allRecipes.length,
+    total: getAllRecipes().length,
   };
 }
 
