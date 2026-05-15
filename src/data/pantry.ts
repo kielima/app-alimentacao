@@ -1,7 +1,7 @@
-import { createLocalStore } from '../utils/localStore';
+import { createFirestoreStore } from '../utils/createFirestoreStore';
 import type { PantryItem } from '../types/pantry';
 
-const store = createLocalStore<PantryItem>('app-alimentacao:pantry');
+const store = createFirestoreStore<PantryItem>('app-alimentacao:pantry', 'pantry');
 
 export const getPantry = store.getAll;
 export const getPantryItem = store.getById;

@@ -1,8 +1,8 @@
-import { createLocalStore } from '../utils/localStore';
+import { createFirestoreStore } from '../utils/createFirestoreStore';
 import type { DayPlan, DayOfWeek, PlanType, Meal, MealItem, MealType } from '../types/mealPlan';
 import { MEAL_TYPES, planKey } from '../types/mealPlan';
 
-const store = createLocalStore<DayPlan>('app-alimentacao:meal-plan');
+const store = createFirestoreStore<DayPlan>('app-alimentacao:meal-plan', 'mealPlan');
 
 export const getMealPlans = store.getAll;
 export const getMealPlanByKey = (day: DayOfWeek, plan: PlanType): DayPlan | undefined =>
