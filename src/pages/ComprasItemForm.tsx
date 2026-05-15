@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { allIngredients, findIngredientById } from '../data/ingredients';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useAllIngredients, getAllIngredients, findIngredientById } from '../data/ingredients';
 import { getShoppingItem, upsertShoppingItem, deleteShoppingItem, useShoppingItems } from '../data/shoppingList';
 import { usePantryItems } from '../data/pantry';
 import { UNIT_OPTIONS } from '../utils/units';
@@ -34,31 +34,18 @@ function itemToForm(item: ShoppingItem | undefined): FormState {
   };
 }
 
-function initialSelectValue(state: FormState): string {
-  if (state.ingredient_id) return state.ingredient_id;
-  if (state.raw_text) return '__custom__';
-  return '';
-}
-
 export default function ComprasItemForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const original = id !== undefined ? getShoppingItem(id) : undefined;
 
-  if (id !== undefined && !original) {
-    return (
-      <div className="mx-auto max-w-md px-4 pt-12 text-center">
-        <p className="mb-4 text-zinc-500 dark:text-zinc-400">Item não encontrado.</p>
-        <Link to="/compras" className="text-brand-600 underline dark:text-brand-400">
-          Voltar
-        </Link>
-      </div>
-    );
-  }
-
+  // Hooks must be called before early return
+  const returnIngredientId = searchParams.get('ingredient');
+  const allIng = useAllIngredients();
   const sortedIngredients = useMemo(
-    () => [...allIngredients].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
-    [],
+    () => [...allIng].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
+    [allIng],
   );
 
   const pantryItems = usePantryItems();
@@ -70,9 +57,25 @@ export default function ComprasItemForm() {
     return [...new Set(all)].sort((a, b) => a.localeCompare(b, 'pt-BR'));
   }, [pantryItems, shoppingItems]);
 
-  const initialState = itemToForm(original);
-  const [state, setState] = useState<FormState>(() => initialState);
-  const [selectValue, setSelectValue] = useState(() => initialSelectValue(initialState));
+  const [state, setState] = useState<FormState>(() => {
+    const base = itemToForm(original);
+    if (returnIngredientId) {
+      const ing = getAllIngredients().find((i) => i.id === returnIngredientId);
+      return {
+        ...base,
+        ingredient_id: returnIngredientId,
+        raw_text: ing ? (ing.brand ? `${ing.brand} — ${ing.name}` : ing.name) : base.raw_text,
+        unit: base.unit || (ing?.default_unit ?? ''),
+      };
+    }
+    return base;
+  });
+
+  const [selectValue, setSelectValue] = useState<string>(() => {
+    if (returnIngredientId) return returnIngredientId;
+    return original?.ingredient_id ?? '';
+  });
+
   const [error, setError] = useState<string | null>(null);
 
   // Store state
@@ -86,9 +89,26 @@ export default function ComprasItemForm() {
     }
   }, [knownStores]); // intentionally only runs when knownStores changes (first load)
 
+  if (id !== undefined && !original) {
+    return (
+      <div className="mx-auto max-w-md px-4 pt-12 text-center">
+        <p className="mb-4 text-zinc-500 dark:text-zinc-400">Item não encontrado.</p>
+        <Link to="/compras" className="text-brand-600 underline dark:text-brand-400">
+          Voltar
+        </Link>
+      </div>
+    );
+  }
+
+  const returnPath = `/compras/${id}`;
+
   const handleIngredientSelect = (value: string) => {
+    if (value === '__new__') {
+      navigate(`/ingredientes/novo?return=${encodeURIComponent(returnPath)}`);
+      return;
+    }
     setSelectValue(value);
-    if (value === '__custom__' || value === '') {
+    if (value === '') {
       setState((s) => ({ ...s, ingredient_id: '', unit: s.unit }));
     } else {
       const matched = sortedIngredients.find((i) => i.id === value);
@@ -108,8 +128,8 @@ export default function ComprasItemForm() {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (selectValue === '' || (selectValue === '__custom__' && !state.raw_text.trim())) {
-      setError('Informe o nome do item ou selecione um ingrediente');
+    if (!state.ingredient_id) {
+      setError('Selecione um ingrediente');
       return;
     }
     const linkedIngredient = sortedIngredients.find((i) => i.id === state.ingredient_id);
@@ -192,25 +212,15 @@ export default function ComprasItemForm() {
           className={inputClass}
         >
           <option value="" disabled>
-            Selecione ou escolha personalizado…
+            Selecione um ingrediente…
           </option>
-          <option value="__custom__">✏️ Nome personalizado</option>
           {sortedIngredients.map((i) => (
             <option key={i.id} value={i.id}>
               {i.brand ? `${i.brand} — ${i.name}` : i.name}
             </option>
           ))}
+          <option value="__new__">➕ Criar novo ingrediente</option>
         </select>
-        {selectValue === '__custom__' && (
-          <input
-            type="text"
-            value={state.raw_text}
-            onChange={(e) => setState((s) => ({ ...s, raw_text: e.target.value }))}
-            className={`${inputClass} mt-2`}
-            placeholder='Ex.: "1 galho de alecrim"'
-            autoFocus
-          />
-        )}
       </Field>
 
       <div className="grid grid-cols-[100px,1fr] gap-3">

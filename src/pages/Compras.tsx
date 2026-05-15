@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   upsertShoppingItem,
   deleteShoppingItem,
@@ -7,7 +7,7 @@ import {
   replaceShoppingList,
 } from '../data/shoppingList';
 import { upsertPantryItem, usePantryItems } from '../data/pantry';
-import { allIngredients } from '../data/ingredients';
+import { useAllIngredients } from '../data/ingredients';
 import { findRecipeById } from '../data/recipes';
 import { UNIT_OPTIONS, unitLabel } from '../utils/units';
 import type { ShoppingItem } from '../types/shoppingList';
@@ -17,14 +17,17 @@ const UNGROUPED = '__sem-mercado__';
 
 export default function Compras() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const items = useShoppingItems();
   const pantryItems = usePantryItems();
-  const [adding, setAdding] = useState(false);
+  const allIng = useAllIngredients();
+  const returnIngredientId = searchParams.get('ingredient') ?? undefined;
+  const [adding, setAdding] = useState(() => Boolean(returnIngredientId));
   const [moveValidity, setMoveValidity] = useState('');
 
   const sortedIngredients = useMemo(
-    () => [...allIngredients].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
-    [],
+    () => [...allIng].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
+    [allIng],
   );
 
   const knownStores = useMemo(() => {
@@ -114,6 +117,7 @@ export default function Compras() {
           onDone={() => setAdding(false)}
           ingredients={sortedIngredients}
           knownStores={knownStores}
+          initialIngredientId={returnIngredientId}
         />
       )}
 
@@ -259,26 +263,41 @@ function QuickAdd({
   onDone,
   ingredients,
   knownStores,
+  initialIngredientId,
 }: {
   onDone: () => void;
   ingredients: Ingredient[];
   knownStores: string[];
+  initialIngredientId?: string;
 }) {
-  // Change A: unified ingredient field
-  const [selectValue, setSelectValue] = useState('');
-  const [rawText, setRawText] = useState('');
-  const [ingredientId, setIngredientId] = useState('');
+  const navigate = useNavigate();
+
+  const getInitialIngredient = () => {
+    if (!initialIngredientId) return null;
+    return ingredients.find((i) => i.id === initialIngredientId) ?? null;
+  };
+
+  const initIng = getInitialIngredient();
+  const [selectValue, setSelectValue] = useState(initialIngredientId ?? '');
+  const [rawText, setRawText] = useState(
+    initIng ? (initIng.brand ? `${initIng.brand} — ${initIng.name}` : initIng.name) : '',
+  );
+  const [ingredientId, setIngredientId] = useState(initialIngredientId ?? '');
   const [quantity, setQuantity] = useState('');
-  const [unit, setUnit] = useState('');
+  const [unit, setUnit] = useState(initIng?.default_unit ?? '');
   const [price, setPrice] = useState('');
 
-  // Change B: store dropdown
+  // Store dropdown
   const [storeSelect, setStoreSelect] = useState('');
   const [storeCustom, setStoreCustom] = useState('');
 
   const handleIngredientSelect = (value: string) => {
+    if (value === '__new__') {
+      navigate('/ingredientes/novo?return=%2Fcompras');
+      return;
+    }
     setSelectValue(value);
-    if (value === '__custom__' || value === '') {
+    if (value === '') {
       setIngredientId('');
     } else {
       const matched = ingredients.find((i) => i.id === value);
@@ -302,12 +321,9 @@ function QuickAdd({
     }
   }, [knownStores]);
 
-  const effectiveRaw =
-    selectValue !== '' && selectValue !== '__custom__'
-      ? rawText
-      : rawText.trim();
+  const effectiveRaw = rawText;
 
-  const canAdd = selectValue !== '' && (selectValue !== '__custom__' || rawText.trim() !== '');
+  const canAdd = ingredientId !== '';
 
   const handleAdd = () => {
     if (!canAdd) return;
@@ -350,25 +366,15 @@ function QuickAdd({
           autoFocus
         >
           <option value="" disabled>
-            Selecione ou escolha personalizado…
+            Selecione um ingrediente…
           </option>
-          <option value="__custom__">✏️ Nome personalizado</option>
           {ingredients.map((i) => (
             <option key={i.id} value={i.id}>
               {i.brand ? `${i.brand} — ${i.name}` : i.name}
             </option>
           ))}
+          <option value="__new__">➕ Criar novo ingrediente</option>
         </select>
-        {selectValue === '__custom__' && (
-          <input
-            type="text"
-            value={rawText}
-            onChange={(e) => setRawText(e.target.value)}
-            className={`${quickAddInputClass} mt-2`}
-            placeholder='Ex.: "1 galho de alecrim"'
-            autoFocus
-          />
-        )}
       </div>
       <div className="mb-2 grid grid-cols-2 gap-2">
         <input

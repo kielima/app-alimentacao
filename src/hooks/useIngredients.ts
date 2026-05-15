@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { allIngredients } from '../data/ingredients';
+import { useAllIngredients } from '../data/ingredients';
 import { matches } from '../utils/search';
 import type { Ingredient } from '../types/ingredient';
 
@@ -17,6 +17,7 @@ interface UseIngredientsResult {
 export function useIngredients(): UseIngredientsResult {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<IngredientFilter>('todos');
+  const allIngredients = useAllIngredients();
 
   const list = useMemo(() => {
     return allIngredients
@@ -27,7 +28,7 @@ export function useIngredients(): UseIngredientsResult {
       })
       .filter((i) => matches(`${i.name} ${i.brand ?? ''}`, query))
       .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
-  }, [query, filter]);
+  }, [query, filter, allIngredients]);
 
   return { list, query, setQuery, filter, setFilter, total: allIngredients.length };
 }

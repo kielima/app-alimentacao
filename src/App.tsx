@@ -13,6 +13,7 @@ import DispensaForm from './pages/DispensaForm';
 import ComprasItemForm from './pages/ComprasItemForm';
 import Ingredientes from './pages/Ingredientes';
 import IngredienteDetalhe from './pages/IngredienteDetalhe';
+import IngredienteForm from './pages/IngredienteForm';
 import { useTheme } from './hooks/useTheme';
 import { usePinAuth } from './hooks/usePinAuth';
 
@@ -52,6 +53,7 @@ export default function App() {
           <Route path="/compras/:id" element={<ComprasItemForm />} />
           <Route path="/plano" element={<Plano />} />
           <Route path="/ingredientes" element={<Ingredientes />} />
+          <Route path="/ingredientes/novo" element={<IngredienteForm />} />
           <Route path="/ingredientes/:id" element={<IngredienteDetalhe />} />
           <Route path="*" element={<Navigate to="/receitas" replace />} />
         </Routes>

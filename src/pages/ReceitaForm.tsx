@@ -1,6 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { allIngredients } from '../data/ingredients';
+import { useAllIngredients } from '../data/ingredients';
 import { findRecipeById, recipeCategories, allRecipeIds } from '../data/recipes';
 import { upsertUserRecipe } from '../data/userRecipes';
 import { uniqueSlug } from '../utils/slug';
@@ -128,9 +128,10 @@ export default function ReceitaForm() {
     );
   }
 
+  const allIng = useAllIngredients();
   const sortedIngredients = useMemo(
-    () => [...allIngredients].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
-    [],
+    () => [...allIng].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
+    [allIng],
   );
 
   const [state, setState] = useState<FormState>(() => recipeToForm(original));

@@ -17,7 +17,7 @@ import {
   upsertMealPlan,
   useMealPlans,
 } from '../data/mealPlan';
-import { allIngredients, findIngredientById } from '../data/ingredients';
+import { useAllIngredients, findIngredientById } from '../data/ingredients';
 import { computeNutrition, type NutritionBreakdown } from '../utils/nutrition';
 import { UNIT_OPTIONS, unitLabel } from '../utils/units';
 import type { Ingredient } from '../types/ingredient';
@@ -28,9 +28,10 @@ export default function Plano() {
   const [planType, setPlanType] = useState<PlanType>('training_day');
   const [editing, setEditing] = useState(false);
 
+  const allIng = useAllIngredients();
   const sortedIngredients = useMemo(
-    () => [...allIngredients].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
-    [],
+    () => [...allIng].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
+    [allIng],
   );
 
   const dayPlan = useMemo(() => {
