@@ -1,6 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import TabBar from './components/TabBar';
-import ThemeToggle from './components/ThemeToggle';
+import HeaderActions from './components/HeaderActions';
 import PinScreen from './components/PinScreen';
 import LoadingSplash from './components/LoadingSplash';
 import Receitas from './pages/Receitas';
@@ -9,6 +9,7 @@ import Compras from './pages/Compras';
 import Plano from './pages/Plano';
 import ReceitaDetalhe from './pages/ReceitaDetalhe';
 import ReceitaForm from './pages/ReceitaForm';
+import DispensaForm from './pages/DispensaForm';
 import Ingredientes from './pages/Ingredientes';
 import IngredienteDetalhe from './pages/IngredienteDetalhe';
 import { useTheme } from './hooks/useTheme';
@@ -16,7 +17,7 @@ import { usePinAuth } from './hooks/usePinAuth';
 
 export default function App() {
   useTheme();
-  const { loading, authenticated, hasPin, setPin, verifyPin } = usePinAuth();
+  const { loading, authenticated, hasPin, setPin, verifyPin, signOut } = usePinAuth();
 
   if (loading) {
     return <LoadingSplash />;
@@ -34,7 +35,7 @@ export default function App() {
   return (
     <div className="flex h-full flex-col">
       <header className="flex items-center justify-end px-4 pt-3">
-        <ThemeToggle />
+        <HeaderActions onSignOut={signOut} />
       </header>
       <main className="flex-1 overflow-y-auto pb-20">
         <Routes>
@@ -44,6 +45,8 @@ export default function App() {
           <Route path="/receitas/:id/editar" element={<ReceitaForm />} />
           <Route path="/receitas/:id" element={<ReceitaDetalhe />} />
           <Route path="/dispensa" element={<Dispensa />} />
+          <Route path="/dispensa/novo" element={<DispensaForm />} />
+          <Route path="/dispensa/:id/editar" element={<DispensaForm />} />
           <Route path="/compras" element={<Compras />} />
           <Route path="/plano" element={<Plano />} />
           <Route path="/ingredientes" element={<Ingredientes />} />

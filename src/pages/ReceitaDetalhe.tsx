@@ -4,7 +4,9 @@ import { findRecipeById, findCategory, isSeedRecipe } from '../data/recipes';
 import { findIngredientById } from '../data/ingredients';
 import { useRecipeNutrition } from '../hooks/useRecipeNutrition';
 import { deleteUserRecipe, getUserRecipeById } from '../data/userRecipes';
-import type { RecipeIngredient } from '../types/recipe';
+import { upsertShoppingItem } from '../data/shoppingList';
+import { getPantry } from '../data/pantry';
+import type { Recipe, RecipeIngredient } from '../types/recipe';
 
 function fmt(value: number | undefined, digits = 0): string {
   if (value === undefined) return '—';
@@ -34,6 +36,45 @@ export default function ReceitaDetalhe() {
     if (!confirm('Descartar suas edições e voltar à versão original?')) return;
     deleteUserRecipe(id);
     navigate(`/receitas/${id}`);
+  };
+
+  const handleAddToShoppingList = (onlyMissing: boolean) => {
+    if (!recipe) return;
+    const items = collectAllIngredients(recipe);
+    if (items.length === 0) {
+      alert('Esta receita não tem ingredientes cadastrados.');
+      return;
+    }
+    const pantryIngredientIds = new Set(
+      getPantry()
+        .map((p) => p.ingredient_id)
+        .filter((x): x is string => !!x),
+    );
+    const toAdd = onlyMissing
+      ? items.filter((i) => !i.ingredient_id || !pantryIngredientIds.has(i.ingredient_id))
+      : items;
+    if (toAdd.length === 0) {
+      alert('Você já tem todos os ingredientes desta receita na dispensa.');
+      return;
+    }
+    for (const item of toAdd) {
+      upsertShoppingItem({
+        id: `from-recipe-${recipe.id}-${Math.random().toString(36).slice(2, 9)}`,
+        ingredient_id: item.ingredient_id,
+        raw_text: item.raw_text,
+        quantity: item.quantity,
+        unit: item.unit,
+        store: null,
+        price: null,
+        checked: false,
+        source: 'from_recipe',
+        source_ref: recipe.id,
+        added_at: new Date().toISOString(),
+      });
+    }
+    if (confirm(`${toAdd.length} item(ns) adicionado(s) à Lista de Compras. Ir para a lista agora?`)) {
+      navigate('/compras');
+    }
   };
 
   if (!recipe) {
@@ -132,6 +173,22 @@ export default function ReceitaDetalhe() {
       {(recipe.ingredients?.length ?? 0) > 0 && (
         <Section title="Ingredientes">
           <IngredientList items={recipe.ingredients ?? []} />
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => handleAddToShoppingList(false)}
+              className="rounded-full bg-brand-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
+            >
+              🛒 Adicionar todos à Lista
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAddToShoppingList(true)}
+              className="rounded-full bg-zinc-200/60 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60"
+            >
+              🛒 Só os faltantes
+            </button>
+          </div>
         </Section>
       )}
 
@@ -282,6 +339,10 @@ function Steps({ steps }: { steps: string[] }) {
       ))}
     </ol>
   );
+}
+
+function collectAllIngredients(recipe: Recipe): RecipeIngredient[] {
+  return [...(recipe.ingredients ?? []), ...(recipe.ingredients_molho ?? [])];
 }
 
 function difficultyLabel(d: string): string {
