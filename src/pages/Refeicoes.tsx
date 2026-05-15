@@ -57,17 +57,13 @@ export default function Refeicoes() {
         className="mb-3 w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-base placeholder:text-zinc-400 focus:border-brand-500 focus:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
       />
 
-      <div className="mb-3">
-        <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-          Slot
-        </p>
-        <div className="flex flex-wrap gap-1.5">
+      <div className="-mx-4 mb-3 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {slotChips.map((c) => (
             <button
               key={c.value}
               type="button"
               onClick={() => setSlot(c.value)}
-              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+              className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                 slot === c.value
                   ? 'bg-brand-500 text-white dark:bg-brand-600'
                   : 'bg-zinc-200/60 text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60'
@@ -77,7 +73,6 @@ export default function Refeicoes() {
             </button>
           ))}
         </div>
-      </div>
 
       {filtered.length === 0 ? (
         <p className="mt-12 text-center text-sm text-zinc-500 dark:text-zinc-400">
