@@ -6,6 +6,8 @@ import Receitas from './pages/Receitas';
 import Dispensa from './pages/Dispensa';
 import Compras from './pages/Compras';
 import Plano from './pages/Plano';
+import Ingredientes from './pages/Ingredientes';
+import IngredienteDetalhe from './pages/IngredienteDetalhe';
 import { useTheme } from './hooks/useTheme';
 import { usePinAuth } from './hooks/usePinAuth';
 
@@ -34,6 +36,8 @@ export default function App() {
           <Route path="/dispensa" element={<Dispensa />} />
           <Route path="/compras" element={<Compras />} />
           <Route path="/plano" element={<Plano />} />
+          <Route path="/ingredientes" element={<Ingredientes />} />
+          <Route path="/ingredientes/:id" element={<IngredienteDetalhe />} />
           <Route path="*" element={<Navigate to="/receitas" replace />} />
         </Routes>
       </main>

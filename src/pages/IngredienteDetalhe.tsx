@@ -1,0 +1,224 @@
+import { useMemo, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { findIngredientById } from '../data/ingredients';
+import type { NutritionPer100 } from '../types/ingredient';
+
+const macroLabels: { key: keyof NutritionPer100; label: string; unit: string }[] = [
+  { key: 'calories', label: 'Calorias', unit: 'kcal' },
+  { key: 'protein', label: 'Proteínas', unit: 'g' },
+  { key: 'carbs', label: 'Carboidratos', unit: 'g' },
+  { key: 'sugars', label: '— dos quais açúcares', unit: 'g' },
+  { key: 'fat', label: 'Gorduras totais', unit: 'g' },
+  { key: 'saturated_fat', label: '— das quais saturadas', unit: 'g' },
+  { key: 'fiber', label: 'Fibras', unit: 'g' },
+  { key: 'sodium', label: 'Sódio', unit: 'mg' },
+];
+
+function formatExtraKey(key: string): string {
+  const cleaned = key.replace(/_(mg|ug|g)$/, '').replace(/_/g, ' ');
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+}
+
+function inferUnitFromKey(key: string): string {
+  if (key.endsWith('_mg')) return 'mg';
+  if (key.endsWith('_ug')) return 'µg';
+  if (key.endsWith('_g')) return 'g';
+  return '';
+}
+
+function fmt(value: number | null | undefined, digits = 1): string {
+  if (value === null || value === undefined) return '—';
+  return value.toLocaleString('pt-BR', { maximumFractionDigits: digits });
+}
+
+export default function IngredienteDetalhe() {
+  const { id } = useParams<{ id: string }>();
+  const ingredient = id ? findIngredientById(id) : undefined;
+
+  const [quantity, setQuantity] = useState(100);
+  const [showExtras, setShowExtras] = useState(false);
+
+  const factor = quantity / 100;
+
+  const scaled = useMemo(() => {
+    if (!ingredient?.nutrition_per_100) return null;
+    const out: Partial<Record<keyof NutritionPer100, number>> = {};
+    for (const [k, v] of Object.entries(ingredient.nutrition_per_100)) {
+      if (typeof v === 'number') {
+        out[k as keyof NutritionPer100] = v * factor;
+      }
+    }
+    return out;
+  }, [ingredient, factor]);
+
+  if (!ingredient) {
+    return (
+      <div className="mx-auto max-w-md px-4 pt-12 text-center">
+        <p className="mb-4 text-zinc-500 dark:text-zinc-400">Ingrediente não encontrado.</p>
+        <Link
+          to="/ingredientes"
+          className="text-brand-600 underline dark:text-brand-400"
+        >
+          Voltar à lista
+        </Link>
+      </div>
+    );
+  }
+
+  const unitSuffix = ingredient.default_unit === 'ml' ? 'ml' : 'g';
+
+  return (
+    <div className="mx-auto max-w-md px-4 pt-2 pb-6">
+      <div className="mb-4 flex items-center gap-2">
+        <Link
+          to="/ingredientes"
+          className="rounded-full bg-zinc-200/60 px-2 py-1 text-sm text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60"
+          aria-label="Voltar"
+        >
+          ←
+        </Link>
+        <h1 className="truncate text-lg font-semibold">{ingredient.name}</h1>
+      </div>
+
+      <div className="mb-4">
+        {ingredient.brand && (
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <span className="font-medium text-brand-600 dark:text-brand-400">{ingredient.brand}</span>
+          </p>
+        )}
+        {ingredient.serving_description && (
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            Porção padrão: {ingredient.serving_size_g}
+            {unitSuffix} ({ingredient.serving_description})
+          </p>
+        )}
+        {ingredient.needs_review && (
+          <p className="mt-2 inline-block rounded-md bg-amber-100 px-2 py-1 text-xs text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+            ⚠️ Valores nutricionais ainda em revisão
+          </p>
+        )}
+      </div>
+
+      <section className="mb-4 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          Calculadora
+        </h2>
+        <div className="mb-4 flex items-center gap-2">
+          <input
+            type="number"
+            inputMode="numeric"
+            min={0}
+            step={1}
+            value={quantity}
+            onChange={(e) => setQuantity(Math.max(0, Number(e.target.value) || 0))}
+            className="w-24 rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-base focus:border-brand-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
+          />
+          <span className="text-sm text-zinc-600 dark:text-zinc-300">{unitSuffix}</span>
+          {ingredient.serving_size_g && (
+            <button
+              type="button"
+              onClick={() => setQuantity(ingredient.serving_size_g!)}
+              className="ml-auto rounded-md bg-zinc-200/60 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60"
+            >
+              1 porção ({ingredient.serving_size_g}
+              {unitSuffix})
+            </button>
+          )}
+        </div>
+
+        {ingredient.nutrition_per_100 ? (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-zinc-200 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+                <th className="py-1 text-left font-normal">Nutriente</th>
+                <th className="py-1 text-right font-normal">Por 100{unitSuffix}</th>
+                <th className="py-1 text-right font-normal">Por {quantity}{unitSuffix}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {macroLabels.map(({ key, label, unit }) => {
+                const base = ingredient.nutrition_per_100![key];
+                const calc = scaled?.[key];
+                const isSubrow = label.startsWith('—');
+                return (
+                  <tr key={key} className="border-b border-zinc-100 last:border-0 dark:border-zinc-800/60">
+                    <td className={`py-1.5 ${isSubrow ? 'pl-3 text-zinc-500 dark:text-zinc-400' : ''}`}>
+                      {label}
+                    </td>
+                    <td className="py-1.5 text-right text-zinc-700 dark:text-zinc-300">
+                      {fmt(base)} {unit}
+                    </td>
+                    <td className="py-1.5 text-right font-medium">
+                      {fmt(calc)} {unit}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        ) : (
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            Sem dados nutricionais cadastrados.
+          </p>
+        )}
+
+        {ingredient.extras_per_100 && Object.keys(ingredient.extras_per_100).length > 0 && (
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={() => setShowExtras((s) => !s)}
+              className="text-sm text-brand-600 hover:underline dark:text-brand-400"
+            >
+              {showExtras ? '▾' : '▸'} Micronutrientes ({Object.keys(ingredient.extras_per_100).length})
+            </button>
+            {showExtras && (
+              <table className="mt-2 w-full text-sm">
+                <tbody>
+                  {Object.entries(ingredient.extras_per_100).map(([k, v]) => (
+                    <tr key={k} className="border-b border-zinc-100 last:border-0 dark:border-zinc-800/60">
+                      <td className="py-1.5 text-zinc-600 dark:text-zinc-300">{formatExtraKey(k)}</td>
+                      <td className="py-1.5 text-right text-zinc-700 dark:text-zinc-300">
+                        {fmt(v as number | null | undefined, 2)} {inferUnitFromKey(k)}
+                      </td>
+                      <td className="py-1.5 text-right font-medium">
+                        {typeof v === 'number'
+                          ? `${fmt(v * factor, 2)} ${inferUnitFromKey(k)}`
+                          : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+      </section>
+
+      {(ingredient.ingredients_text || ingredient.allergens) && (
+        <section className="mb-4 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            Composição
+          </h2>
+          {ingredient.ingredients_text && (
+            <p className="mb-2 text-sm text-zinc-700 dark:text-zinc-300">
+              {ingredient.ingredients_text}
+            </p>
+          )}
+          {ingredient.allergens && (
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <span className="font-medium">Alérgicos:</span> {ingredient.allergens}
+            </p>
+          )}
+        </section>
+      )}
+
+      {ingredient.notes && (
+        <p className="mb-4 text-xs italic text-zinc-500 dark:text-zinc-400">{ingredient.notes}</p>
+      )}
+
+      <p className="mt-6 text-center text-xs text-zinc-400 dark:text-zinc-600">
+        Substitutos · em breve
+      </p>
+    </div>
+  );
+}
