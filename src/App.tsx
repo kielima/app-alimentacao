@@ -1,4 +1,5 @@
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { useEffect, useLayoutEffect, useState } from 'react';
+import { Navigate, Route, Routes, useLocation, useNavigationType } from 'react-router-dom';
 import NavMenu from './components/NavMenu';
 import { HEADER_SLOT_ID } from './components/HeaderSlot';
 import PinScreen from './components/PinScreen';
@@ -60,11 +61,44 @@ function PlanoHeaderStrip() {
   );
 }
 
+const SCROLL_KEY_PREFIX = 'scroll:';
+
+function useScrollRestoration(scrollEl: HTMLElement | null) {
+  const location = useLocation();
+  const navigationType = useNavigationType();
+
+  useLayoutEffect(() => {
+    if (!scrollEl) return;
+    if (navigationType === 'POP') {
+      const saved = sessionStorage.getItem(`${SCROLL_KEY_PREFIX}${location.key}`);
+      if (saved != null) {
+        scrollEl.scrollTop = Number(saved);
+        return;
+      }
+    }
+    scrollEl.scrollTop = 0;
+  }, [scrollEl, location.key, navigationType]);
+
+  useEffect(() => {
+    if (!scrollEl) return;
+    const key = `${SCROLL_KEY_PREFIX}${location.key}`;
+    const handler = () => {
+      sessionStorage.setItem(key, String(scrollEl.scrollTop));
+    };
+    scrollEl.addEventListener('scroll', handler, { passive: true });
+    return () => {
+      scrollEl.removeEventListener('scroll', handler);
+    };
+  }, [scrollEl, location.key]);
+}
+
 export default function App() {
   useTheme();
   const { loading, authenticated, hasPin, setPin, verifyPin, signOut } = usePinAuth();
   const location = useLocation();
   const isPlano = location.pathname === '/plano';
+  const [mainEl, setMainEl] = useState<HTMLElement | null>(null);
+  useScrollRestoration(mainEl);
 
   if (loading) {
     return <LoadingSplash />;
@@ -90,7 +124,7 @@ export default function App() {
             <div id={HEADER_SLOT_ID} className="flex min-w-0 flex-1 items-center gap-2" />
           )}
         </header>
-        <main className="flex-1 overflow-y-auto pb-4">
+        <main ref={setMainEl} className="flex-1 overflow-y-auto pb-4">
           <Routes>
             <Route path="/" element={<Navigate to="/receitas" replace />} />
             <Route path="/receitas" element={<Receitas />} />
