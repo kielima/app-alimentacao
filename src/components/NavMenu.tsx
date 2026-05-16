@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { useTheme } from '../hooks/useTheme';
 
 const tabs = [
   { to: '/plano', icon: '📅', label: 'Plano' },
@@ -11,6 +12,10 @@ const tabs = [
 
 export default function NavMenu({ onSignOut }: { onSignOut: () => void }) {
   const [open, setOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const nextTheme = theme === 'dark' ? 'light' : theme === 'light' ? 'system' : 'dark';
+  const themeLabel = theme === 'dark' ? 'Escuro' : theme === 'light' ? 'Claro' : 'Sistema';
+  const themeIcon = theme === 'dark' ? '🌙' : theme === 'light' ? '☀️' : '🖥️';
 
   useEffect(() => {
     if (!open) return;
@@ -99,7 +104,16 @@ export default function NavMenu({ onSignOut }: { onSignOut: () => void }) {
           </ul>
         </nav>
 
-        <div className="border-t border-zinc-200 px-3 py-3 dark:border-zinc-800">
+        <div className="border-t border-zinc-200 px-3 py-3 dark:border-zinc-800 space-y-1">
+          <button
+            type="button"
+            onClick={() => setTheme(nextTheme)}
+            className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-base font-medium text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800/50"
+            aria-label={`Tema: ${themeLabel}. Clique para alternar.`}
+          >
+            <span className="text-lg" aria-hidden>{themeIcon}</span>
+            <span>Tema: {themeLabel}</span>
+          </button>
           <button
             type="button"
             onClick={handleSignOut}
