@@ -153,6 +153,7 @@ export default function App() {
             <Route path="/refeicoes/:id" element={<RefeicaoDetalhe />} />
             <Route path="/ingredientes" element={<Ingredientes />} />
             <Route path="/ingredientes/novo" element={<IngredienteForm />} />
+            <Route path="/ingredientes/:id/editar" element={<IngredienteForm />} />
             <Route path="/ingredientes/:id" element={<IngredienteDetalhe />} />
             <Route path="/mercados" element={<Mercados />} />
             <Route path="/mercados/novo" element={<MercadoForm />} />

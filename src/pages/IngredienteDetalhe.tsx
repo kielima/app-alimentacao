@@ -464,6 +464,14 @@ export default function IngredienteDetalhe() {
       <p className="mt-6 text-center text-xs text-zinc-400 dark:text-zinc-600">
         Substitutos · em breve
       </p>
+
+      <Link
+        to={`/ingredientes/${ingredient.id}/editar`}
+        aria-label="Editar ingrediente"
+        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-500 text-2xl shadow-lg hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
+      >
+        ✏️
+      </Link>
     </div>
   );
 }

@@ -1,10 +1,10 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import { uniqueSlug } from '../utils/slug';
 import { upsertUserIngredient } from '../data/userIngredients';
-import { allIngredientIds } from '../data/ingredients';
-import type { IngredientCategory, Unit } from '../types/ingredient';
+import { allIngredientIds, findIngredientById } from '../data/ingredients';
+import type { Ingredient, IngredientCategory, Unit } from '../types/ingredient';
 import { INGREDIENT_CATEGORIES } from '../types/ingredient';
 
 const unitOptions: { value: Unit; label: string }[] = [
@@ -15,14 +15,29 @@ const unitOptions: { value: Unit; label: string }[] = [
 
 export default function IngredienteForm() {
   const navigate = useNavigate();
+  const { id: paramId } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
-  const returnPath = searchParams.get('return') ?? '/ingredientes';
+  const editing = paramId !== undefined;
+  const existing: Ingredient | undefined = editing ? findIngredientById(paramId!) : undefined;
+  const returnPath =
+    searchParams.get('return') ?? (editing && existing ? `/ingredientes/${existing.id}` : '/ingredientes');
 
-  const [name, setName] = useState('');
-  const [brand, setBrand] = useState('');
-  const [unit, setUnit] = useState<Unit>('g');
-  const [category, setCategory] = useState<IngredientCategory | ''>('');
+  const [name, setName] = useState(existing?.name ?? '');
+  const [brand, setBrand] = useState(existing?.brand ?? '');
+  const [unit, setUnit] = useState<Unit>(existing?.default_unit ?? 'g');
+  const [category, setCategory] = useState<IngredientCategory | ''>(existing?.category ?? '');
   const [error, setError] = useState<string | null>(null);
+
+  if (editing && !existing) {
+    return (
+      <div className="mx-auto max-w-md px-4 pt-12 text-center">
+        <p className="mb-4 text-zinc-500 dark:text-zinc-400">Ingrediente não encontrado.</p>
+        <Link to="/ingredientes" className="text-brand-600 underline dark:text-brand-400">
+          Voltar à lista
+        </Link>
+      </div>
+    );
+  }
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -31,15 +46,20 @@ export default function IngredienteForm() {
       setError('Informe o nome do ingrediente');
       return;
     }
-    const id = uniqueSlug(name.trim(), allIngredientIds());
+    const id = existing?.id ?? uniqueSlug(name.trim(), allIngredientIds());
     upsertUserIngredient({
+      ...(existing ?? {}),
       id,
       name: name.trim(),
       brand: brand.trim() || null,
       default_unit: unit,
       category: category || null,
-      nutrition_per_100: null,
+      nutrition_per_100: existing?.nutrition_per_100 ?? null,
     } as Parameters<typeof upsertUserIngredient>[0]);
+    if (editing) {
+      navigate(returnPath);
+      return;
+    }
     const dest = returnPath.includes('?')
       ? `${returnPath}&ingredient=${id}`
       : `${returnPath}?ingredient=${id}`;
@@ -49,7 +69,9 @@ export default function IngredienteForm() {
   return (
     <form id="ingrediente-form" onSubmit={handleSubmit} className="mx-auto max-w-md px-4 pt-2 pb-28">
       <HeaderSlot>
-        <h1 className="min-w-0 flex-1 truncate text-lg font-semibold">Novo ingrediente</h1>
+        <h1 className="min-w-0 flex-1 truncate text-lg font-semibold">
+          {editing ? 'Editar ingrediente' : 'Novo ingrediente'}
+        </h1>
         <button
           type="submit"
           form="ingrediente-form"
@@ -80,7 +102,7 @@ export default function IngredienteForm() {
       <Field label="Marca (opcional)">
         <input
           type="text"
-          value={brand}
+          value={brand ?? ''}
           onChange={(e) => setBrand(e.target.value)}
           className={inputClass}
           placeholder='Ex.: "Urbano"'
@@ -116,9 +138,11 @@ export default function IngredienteForm() {
         </select>
       </Field>
 
-      <p className="mt-4 text-xs text-zinc-500 dark:text-zinc-400">
-        Dados nutricionais podem ser adicionados depois na página do ingrediente.
-      </p>
+      {!editing && (
+        <p className="mt-4 text-xs text-zinc-500 dark:text-zinc-400">
+          Dados nutricionais podem ser adicionados depois na página do ingrediente.
+        </p>
+      )}
 
       <Link
         to={returnPath}
