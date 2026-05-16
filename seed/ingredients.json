@@ -137,7 +137,8 @@
       },
       "ingredients_text": "Farinha de trigo integral, farinha de trigo enriquecida com ferro e ácido fólico, água, açúcar, glúten, castanha-do-pará, óleo de soja, fibra de trigo, sal, conservadores propionato de cálcio e ácido sórbico e ácido ascórbico",
       "allergens": "Contém castanha-do-pará e derivados de trigo e soja. Pode conter amendoim, avelãs, macadâmias, castanha-de-caju, nozes, ovos, peças e crustáceos. Contém glúten.",
-      "source_image": "TABELAS NUTRICIONAIS/WhatsApp Image 2026-05-10 at 15.21.55 (3).jpeg"
+      "source_image": "TABELAS NUTRICIONAIS/WhatsApp Image 2026-05-10 at 15.21.55 (3).jpeg",
+      "off_barcode": "7896066301297"
     },
     {
       "id": "shoyu-organico",
@@ -193,18 +194,29 @@
       "name": "Couve-flor",
       "default_unit": "unit",
       "nutrition_per_100": {
-        "calories": 25,
-        "protein": 1.9,
-        "carbs": 5,
-        "sugars": 1.9,
-        "fat": 0.3,
-        "saturated_fat": 0.1,
-        "fiber": 2,
-        "sodium": 30
+        "calories": 27,
+        "protein": 1.98,
+        "carbs": 5.43,
+        "sugars": 0,
+        "fat": 0.26,
+        "saturated_fat": 0.12,
+        "fiber": 2.42,
+        "sodium": 3.97
       },
       "needs_review": true,
       "notes": "Valores de referência (USDA) — confirmar contra TACO",
-      "ceagesp_slug": "couve-flor"
+      "ceagesp_slug": "couve-flor",
+      "tbca_code": "BRC0024B",
+      "extras_per_100": {
+        "calcium_mg": 20.6,
+        "iron_mg": 0.48,
+        "magnesium_mg": 13.9,
+        "phosphorus_mg": 66,
+        "potassium_mg": 295,
+        "zinc_mg": 0.44,
+        "cholesterol_mg": 0,
+        "trans_fat_g": 0
+      }
     },
     {
       "id": "cebola",
@@ -228,17 +240,28 @@
       "name": "Alho",
       "default_unit": "unit",
       "nutrition_per_100": {
-        "calories": 149,
-        "protein": 6.4,
-        "carbs": 33,
-        "sugars": 1,
-        "fat": 0.5,
-        "saturated_fat": 0.1,
-        "fiber": 2.1,
-        "sodium": 17
+        "calories": 121,
+        "protein": 5.7,
+        "carbs": 25.8,
+        "sugars": 0,
+        "fat": 0.2,
+        "saturated_fat": 0.04,
+        "fiber": 3.19,
+        "sodium": 5.43
       },
       "needs_review": true,
-      "ceagesp_slug": "alho"
+      "ceagesp_slug": "alho",
+      "tbca_code": "BRC0010B",
+      "extras_per_100": {
+        "calcium_mg": 13.7,
+        "iron_mg": 0.81,
+        "magnesium_mg": 21.6,
+        "phosphorus_mg": 150,
+        "potassium_mg": 541,
+        "zinc_mg": 0.83,
+        "cholesterol_mg": 0,
+        "trans_fat_g": 0
+      }
     },
     {
       "id": "sal",
@@ -318,17 +341,28 @@
       "name": "Lentilha",
       "default_unit": "g",
       "nutrition_per_100": {
-        "calories": 116,
-        "protein": 9,
-        "carbs": 20,
-        "sugars": 1.8,
-        "fat": 0.4,
-        "saturated_fat": 0.1,
-        "fiber": 7.9,
-        "sodium": 2
+        "calories": 314,
+        "protein": 23.5,
+        "carbs": 61,
+        "sugars": 0,
+        "fat": 1.46,
+        "saturated_fat": 0.19,
+        "fiber": 18.7,
+        "sodium": null
       },
       "needs_review": true,
-      "notes": "Cozida"
+      "notes": "Cozida",
+      "tbca_code": "BRC0019T",
+      "extras_per_100": {
+        "calcium_mg": 53.6,
+        "iron_mg": 7.06,
+        "magnesium_mg": 93.7,
+        "phosphorus_mg": 368,
+        "potassium_mg": 888,
+        "zinc_mg": 3.31,
+        "cholesterol_mg": 0,
+        "trans_fat_g": 0
+      }
     },
     {
       "id": "frango-peito",
@@ -509,7 +543,26 @@
       "name": "Margarina",
       "brand": null,
       "default_unit": "g",
-      "nutrition_per_100": null
+      "nutrition_per_100": {
+        "calories": 540,
+        "protein": null,
+        "carbs": 0,
+        "sugars": 0,
+        "fat": 60,
+        "saturated_fat": 16.2,
+        "fiber": 0,
+        "sodium": 711
+      },
+      "tbca_code": "BRC0009D",
+      "needs_review": true,
+      "extras_per_100": {
+        "calcium_mg": 3.86,
+        "iron_mg": 0.06,
+        "magnesium_mg": 0.89,
+        "phosphorus_mg": 5.28,
+        "potassium_mg": 9.32,
+        "trans_fat_g": 2.99
+      }
     },
     {
       "id": "molho-de-tomate",
@@ -572,8 +625,29 @@
       "name": "Tomate",
       "brand": null,
       "default_unit": "g",
-      "nutrition_per_100": null,
-      "ceagesp_slug": "tomate"
+      "nutrition_per_100": {
+        "calories": 18,
+        "protein": 1.04,
+        "carbs": 3.82,
+        "sugars": 0,
+        "fat": 0.17,
+        "saturated_fat": 0.02,
+        "fiber": 1.6,
+        "sodium": 3.13
+      },
+      "ceagesp_slug": "tomate",
+      "tbca_code": "BRC0035B",
+      "needs_review": true,
+      "extras_per_100": {
+        "calcium_mg": 6.94,
+        "iron_mg": 0.3,
+        "magnesium_mg": 10,
+        "phosphorus_mg": 21.8,
+        "potassium_mg": 191,
+        "zinc_mg": 0.15,
+        "cholesterol_mg": 0,
+        "trans_fat_g": 0
+      }
     },
     {
       "id": "trigo-para-kibe",
@@ -645,7 +719,18 @@
         "sodium": 1
       },
       "notes": "USDA",
-      "ceagesp_slug": "pessego"
+      "ceagesp_slug": "pessego",
+      "tbca_code": "BRC0031C",
+      "extras_per_100": {
+        "calcium_mg": 2.92,
+        "iron_mg": 0.24,
+        "magnesium_mg": 6.97,
+        "phosphorus_mg": 16.8,
+        "potassium_mg": 134,
+        "zinc_mg": 0.09,
+        "cholesterol_mg": 0,
+        "trans_fat_g": 0
+      }
     },
     {
       "id": "uva",
@@ -662,7 +747,17 @@
         "sodium": 1
       },
       "notes": "TACO",
-      "ceagesp_slug": "uva"
+      "ceagesp_slug": "uva",
+      "tbca_code": "BRC0033C",
+      "extras_per_100": {
+        "calcium_mg": 7.58,
+        "iron_mg": 0.16,
+        "magnesium_mg": 6.04,
+        "phosphorus_mg": 17.5,
+        "potassium_mg": 160,
+        "cholesterol_mg": 0,
+        "trans_fat_g": 0
+      }
     },
     {
       "id": "morango",
@@ -713,7 +808,18 @@
         "sodium": 9
       },
       "notes": "TACO — brócolis cozido",
-      "ceagesp_slug": "brocolis"
+      "ceagesp_slug": "brocolis",
+      "tbca_code": "BRC0016B",
+      "extras_per_100": {
+        "calcium_mg": 108,
+        "iron_mg": 0.77,
+        "magnesium_mg": 37.4,
+        "phosphorus_mg": 99.2,
+        "potassium_mg": 322,
+        "zinc_mg": 0.6,
+        "cholesterol_mg": 0,
+        "trans_fat_g": 0
+      }
     },
     {
       "id": "espinafre",
@@ -730,7 +836,18 @@
         "sodium": 79
       },
       "notes": "TACO",
-      "ceagesp_slug": "espinafre"
+      "ceagesp_slug": "espinafre",
+      "tbca_code": "BRC0072B",
+      "extras_per_100": {
+        "calcium_mg": 91.2,
+        "iron_mg": 0.48,
+        "magnesium_mg": 72,
+        "phosphorus_mg": 34.3,
+        "potassium_mg": 452,
+        "zinc_mg": 0.31,
+        "cholesterol_mg": 0,
+        "trans_fat_g": 0
+      }
     },
     {
       "id": "alface",
@@ -747,7 +864,18 @@
         "sodium": 5
       },
       "notes": "TACO",
-      "ceagesp_slug": "alface"
+      "ceagesp_slug": "alface",
+      "tbca_code": "BRC0009B",
+      "extras_per_100": {
+        "calcium_mg": 37.5,
+        "iron_mg": 0.75,
+        "magnesium_mg": 12.7,
+        "phosphorus_mg": 26,
+        "potassium_mg": 311,
+        "zinc_mg": 0.29,
+        "cholesterol_mg": 0,
+        "trans_fat_g": 0
+      }
     },
     {
       "id": "rucula",
@@ -764,7 +892,18 @@
         "sodium": 27
       },
       "notes": "USDA",
-      "ceagesp_slug": "rucula"
+      "ceagesp_slug": "rucula",
+      "tbca_code": "BRC0081B",
+      "extras_per_100": {
+        "calcium_mg": 107,
+        "iron_mg": 1.02,
+        "magnesium_mg": 23.9,
+        "phosphorus_mg": 31.4,
+        "potassium_mg": 298,
+        "zinc_mg": 0.31,
+        "cholesterol_mg": 0,
+        "trans_fat_g": 0
+      }
     },
     {
       "id": "vagem",
@@ -814,7 +953,18 @@
         "sodium": 7
       },
       "notes": "USDA",
-      "ceagesp_slug": "abacate"
+      "ceagesp_slug": "abacate",
+      "tbca_code": "BRC0001C",
+      "extras_per_100": {
+        "calcium_mg": 7.16,
+        "iron_mg": 0.18,
+        "magnesium_mg": 17,
+        "phosphorus_mg": 18.5,
+        "potassium_mg": 174,
+        "zinc_mg": 0.23,
+        "cholesterol_mg": 0,
+        "trans_fat_g": 0
+      }
     },
     {
       "id": "couve",
@@ -1139,7 +1289,18 @@
         "fiber": 0,
         "sodium": 660
       },
-      "notes": "Média de rótulos"
+      "notes": "Média de rótulos",
+      "tbca_code": "BRC0048G",
+      "extras_per_100": {
+        "calcium_mg": 731,
+        "iron_mg": 0.23,
+        "magnesium_mg": 28.5,
+        "phosphorus_mg": 423,
+        "potassium_mg": 126,
+        "zinc_mg": 2.82,
+        "cholesterol_mg": 80.2,
+        "trans_fat_g": 1.04
+      }
     },
     {
       "id": "ricota",
@@ -1363,7 +1524,17 @@
         "fiber": 8.5,
         "sodium": 2
       },
-      "notes": "TACO — cozido"
+      "notes": "TACO — cozido",
+      "tbca_code": "BRC0002T",
+      "extras_per_100": {
+        "calcium_mg": 106,
+        "iron_mg": 6.99,
+        "magnesium_mg": 147,
+        "phosphorus_mg": 367,
+        "potassium_mg": 1361,
+        "zinc_mg": 2.83,
+        "cholesterol_mg": 0
+      }
     },
     {
       "id": "feijao-preto",
@@ -1379,7 +1550,17 @@
         "fiber": 8.4,
         "sodium": 2
       },
-      "notes": "TACO — cozido"
+      "notes": "TACO — cozido",
+      "tbca_code": "BRC0009T",
+      "extras_per_100": {
+        "calcium_mg": 122,
+        "iron_mg": 9.83,
+        "magnesium_mg": 141,
+        "phosphorus_mg": 479,
+        "potassium_mg": 1441,
+        "zinc_mg": 3.37,
+        "cholesterol_mg": 0
+      }
     },
     {
       "id": "feijao-fradinho",
@@ -1411,7 +1592,18 @@
         "fiber": 6,
         "sodium": 6
       },
-      "notes": "USDA — cozido"
+      "notes": "USDA — cozido",
+      "tbca_code": "BRC0016T",
+      "extras_per_100": {
+        "calcium_mg": 114,
+        "iron_mg": 8.8,
+        "magnesium_mg": 133,
+        "phosphorus_mg": 345,
+        "potassium_mg": 1113,
+        "zinc_mg": 4.04,
+        "cholesterol_mg": 0,
+        "trans_fat_g": 0
+      }
     },
     {
       "id": "mix-castanhas",
@@ -1427,7 +1619,17 @@
         "fiber": 7,
         "sodium": 2
       },
-      "notes": "Média (amêndoas, nozes, castanhas)"
+      "notes": "Média (amêndoas, nozes, castanhas)",
+      "tbca_code": "BRC0035U",
+      "extras_per_100": {
+        "calcium_mg": 76.8,
+        "iron_mg": 3.36,
+        "magnesium_mg": 246,
+        "phosphorus_mg": 495,
+        "potassium_mg": 607,
+        "zinc_mg": 3.82,
+        "cholesterol_mg": 0
+      }
     },
     {
       "id": "castanha-do-para",
@@ -1443,7 +1645,17 @@
         "fiber": 7.5,
         "sodium": 3
       },
-      "notes": "USDA"
+      "notes": "USDA",
+      "tbca_code": "BRC0003U",
+      "extras_per_100": {
+        "calcium_mg": 162,
+        "iron_mg": 2.98,
+        "magnesium_mg": 323,
+        "phosphorus_mg": 679,
+        "potassium_mg": 625,
+        "zinc_mg": 4.28,
+        "cholesterol_mg": 0
+      }
     },
     {
       "id": "noz",
@@ -1475,7 +1687,17 @@
         "fiber": 3.3,
         "sodium": 12
       },
-      "notes": "USDA"
+      "notes": "USDA",
+      "tbca_code": "BRC0012U",
+      "extras_per_100": {
+        "calcium_mg": 37,
+        "iron_mg": 6.68,
+        "magnesium_mg": 292,
+        "phosphorus_mg": 593,
+        "potassium_mg": 660,
+        "zinc_mg": 5.78,
+        "cholesterol_mg": 0
+      }
     },
     {
       "id": "pasta-amendoim",
@@ -1491,7 +1713,15 @@
         "fiber": 8,
         "sodium": 17
       },
-      "notes": "USDA — sem açúcar"
+      "notes": "USDA — sem açúcar",
+      "tbca_code": "BRC0290T",
+      "extras_per_100": {
+        "iron_mg": 3.27,
+        "magnesium_mg": 178,
+        "phosphorus_mg": 425,
+        "potassium_mg": 606,
+        "zinc_mg": 3.05
+      }
     },
     {
       "id": "chia",
