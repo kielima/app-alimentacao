@@ -170,7 +170,7 @@ export default function MercadoForm() {
           type="search"
           value={ingSearch}
           onChange={(e) => setIngSearch(e.target.value)}
-          placeholder="🔍 Buscar ingrediente…"
+          placeholder="Buscar ingrediente…"
           className="mb-2 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
         />
         <div className="max-h-52 overflow-y-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
