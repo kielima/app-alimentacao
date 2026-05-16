@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigationType } from 'react-router-dom';
 import NavMenu from './components/NavMenu';
+import BackButton from './components/BackButton';
 import { HEADER_SLOT_ID } from './components/HeaderSlot';
 import PinScreen from './components/PinScreen';
 import LoadingSplash from './components/LoadingSplash';
@@ -109,11 +110,14 @@ function useScrollRestoration(scrollEl: HTMLElement | null) {
   }, [scrollEl, location.key]);
 }
 
+const BACK_ROUTE_PATTERN = /^\/(ingredientes|receitas|refeicoes)\/[^/]+/;
+
 export default function App() {
   useTheme();
   const { loading, authenticated, hasPin, setPin, verifyPin, signOut } = usePinAuth();
   const location = useLocation();
   const isPlano = location.pathname === '/plano';
+  const showBack = BACK_ROUTE_PATTERN.test(location.pathname);
   const [mainEl, setMainEl] = useState<HTMLElement | null>(null);
   useScrollRestoration(mainEl);
 
@@ -134,7 +138,7 @@ export default function App() {
     <PlanoProvider>
       <div className="flex h-full flex-col">
         <header className="mx-auto flex w-full max-w-md items-center px-4 pt-3 gap-2">
-          <NavMenu onSignOut={signOut} />
+          {showBack ? <BackButton /> : <NavMenu onSignOut={signOut} />}
           {isPlano ? (
             <>
               <PlanoHeaderStrip />
