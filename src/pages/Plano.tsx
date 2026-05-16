@@ -57,7 +57,7 @@ function saveDone(day: DayOfWeek, planType: PlanType, done: Set<MealType>) {
 
 export default function Plano() {
   const plans = useMealPlans();
-  const { day, planType, setPlanType } = usePlano();
+  const { day, planType } = usePlano();
   const [editing, setEditing] = useState(false);
   const [doneMealTypes, setDoneMealTypes] = useState<Set<MealType>>(
     () => loadDone(todayDayOfWeek(), 'training_day'),
@@ -136,31 +136,6 @@ export default function Plano() {
       >
         {editing ? '✓' : '✏️'}
       </button>
-
-      <div className="mb-4 grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={() => setPlanType('training_day')}
-          className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-            planType === 'training_day'
-              ? 'bg-brand-500 text-white dark:bg-brand-600'
-              : 'bg-zinc-200/60 text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200'
-          }`}
-        >
-          🏋️ Dia de Treino
-        </button>
-        <button
-          type="button"
-          onClick={() => setPlanType('rest_day')}
-          className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-            planType === 'rest_day'
-              ? 'bg-brand-500 text-white dark:bg-brand-600'
-              : 'bg-zinc-200/60 text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200'
-          }`}
-        >
-          😴 Dia de Descanso
-        </button>
-      </div>
 
       <DaySummary
         nutrition={dayNutrition}

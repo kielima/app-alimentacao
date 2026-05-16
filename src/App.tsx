@@ -26,7 +26,8 @@ import { PlanoProvider, usePlano } from './contexts/PlanoContext';
 import { DAYS_OF_WEEK, todayDayOfWeek, type DayOfWeek } from './types/mealPlan';
 
 function PlanoHeaderStrip() {
-  const { day, setDay } = usePlano();
+  const { day, setDay, planType, setPlanType } = usePlano();
+  const isTraining = planType === 'training_day';
   return (
     <div className="flex flex-1 items-center gap-1 mx-2">
       <button
@@ -56,6 +57,15 @@ function PlanoHeaderStrip() {
         aria-label="Próximo dia"
       >
         ▶
+      </button>
+      <button
+        type="button"
+        onClick={() => setPlanType(isTraining ? 'rest_day' : 'training_day')}
+        className="rounded-full bg-zinc-200/60 px-2 py-1 text-sm transition-colors hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:hover:bg-zinc-700/60"
+        aria-label={`${isTraining ? 'Dia de Treino' : 'Dia de Descanso'}. Clique para alternar.`}
+        title={isTraining ? 'Dia de Treino' : 'Dia de Descanso'}
+      >
+        <span aria-hidden>{isTraining ? '🏋️' : '😴'}</span>
       </button>
     </div>
   );
