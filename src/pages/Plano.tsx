@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import SearchableSelect from '../components/SearchableSelect';
 import {
+  DAYS_OF_WEEK,
   MEAL_TYPES,
   todayDayOfWeek,
   type DayOfWeek,
