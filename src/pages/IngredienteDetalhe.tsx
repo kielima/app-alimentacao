@@ -419,6 +419,22 @@ export default function IngredienteDetalhe() {
         <p className="mb-4 text-xs italic text-zinc-500 dark:text-zinc-400">{ingredient.notes}</p>
       )}
 
+      {ingredient.ceagesp_slug && (
+        <p className="mt-6 border-t border-zinc-200 pt-3 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+          <span aria-hidden>🥬 </span>
+          Guia de escolha, variedades e sazonalidade no{' '}
+          <a
+            href={`https://ceagesp.gov.br/hortiescolha/hortipedia/${ingredient.ceagesp_slug}/`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-brand-600 underline hover:no-underline dark:text-brand-400"
+          >
+            Hortipédia da CEAGESP
+          </a>
+          .
+        </p>
+      )}
+
       <p className="mt-6 text-center text-xs text-zinc-400 dark:text-zinc-600">
         Substitutos · em breve
       </p>
