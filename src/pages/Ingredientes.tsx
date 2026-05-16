@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import { useIngredients, type IngredientFilter } from '../hooks/useIngredients';
@@ -36,10 +36,16 @@ export default function Ingredientes() {
     return set;
   }, [shoppingItems, pantryItems]);
 
-  const { list, query, setQuery, filter, setFilter, total } = useIngredients({
-    listedIngredientIds,
-  });
-  const [showFilters, setShowFilters] = useState(false);
+  const {
+    list,
+    query,
+    setQuery,
+    filter,
+    setFilter,
+    showFilters,
+    setShowFilters,
+    total,
+  } = useIngredients({ listedIngredientIds });
 
   const hasActiveFilters = filter !== 'todos';
   const isFiltering = hasActiveFilters || !!query.trim();
@@ -139,7 +145,7 @@ export default function Ingredientes() {
       )}
 
       {showFilters && (
-        <div className="mb-3">
+        <div className="sticky top-0 z-10 -mx-4 mb-3 bg-zinc-50/95 px-4 pb-2 pt-2 backdrop-blur supports-[backdrop-filter]:bg-zinc-50/80 dark:bg-zinc-950/95 dark:supports-[backdrop-filter]:bg-zinc-950/80">
           <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {filters.map((f) => (
               <button
