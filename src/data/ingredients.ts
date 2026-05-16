@@ -11,18 +11,23 @@ export const seedIngredients: Ingredient[] = data.ingredients;
 // Backward-compat alias (non-reactive, seed only)
 export const allIngredients: Ingredient[] = seedIngredients;
 
+function mergeIngredients(userIngredients: Ingredient[], hidden: Set<string>): Ingredient[] {
+  const userById = new Map(userIngredients.map((i) => [i.id, i]));
+  const merged = seedIngredients.map((i) => userById.get(i.id) ?? i);
+  for (const u of userIngredients) {
+    if (!merged.some((i) => i.id === u.id)) merged.push(u);
+  }
+  return merged.filter((i) => !hidden.has(i.id));
+}
+
 export function getAllIngredients(): Ingredient[] {
-  const hidden = getHiddenIngredientIds();
-  return [...seedIngredients, ...getUserIngredients()].filter((i) => !hidden.has(i.id));
+  return mergeIngredients(getUserIngredients(), getHiddenIngredientIds());
 }
 
 export function useAllIngredients(): Ingredient[] {
   const userIngredients = useUserIngredients();
   const hidden = useHiddenIngredientIds();
-  return useMemo(
-    () => [...seedIngredients, ...userIngredients].filter((i) => !hidden.has(i.id)),
-    [userIngredients, hidden],
-  );
+  return useMemo(() => mergeIngredients(userIngredients, hidden), [userIngredients, hidden]);
 }
 
 export function findIngredientById(id: string): Ingredient | undefined {
