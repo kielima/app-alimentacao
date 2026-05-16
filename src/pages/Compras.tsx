@@ -9,6 +9,7 @@ import {
 } from '../data/shoppingList';
 import { upsertPantryItem, usePantryItems } from '../data/pantry';
 import { useAllIngredients } from '../data/ingredients';
+import { useMarkets } from '../data/markets';
 import { findRecipeById } from '../data/recipes';
 import { UNIT_OPTIONS, unitLabel } from '../utils/units';
 import type { ShoppingItem } from '../types/shoppingList';
@@ -27,6 +28,7 @@ export default function Compras() {
   const items = useShoppingItems();
   const pantryItems = usePantryItems();
   const allIng = useAllIngredients();
+  const markets = useMarkets();
   const returnIngredientId = searchParams.get('ingredient') ?? undefined;
   const [adding, setAdding] = useState(() => Boolean(returnIngredientId));
 
@@ -36,11 +38,14 @@ export default function Compras() {
   );
 
   const knownStores = useMemo(() => {
-    const all = [...pantryItems, ...items]
+    const fromItems = [...pantryItems, ...items]
       .map((i) => i.store)
       .filter((s): s is string => !!s && s.trim() !== '');
-    return [...new Set(all)].sort((a, b) => a.localeCompare(b, 'pt-BR'));
-  }, [pantryItems, items]);
+    const fromMarkets = markets.map((m) => m.name);
+    return [...new Set([...fromMarkets, ...fromItems])].sort((a, b) =>
+      a.localeCompare(b, 'pt-BR'),
+    );
+  }, [pantryItems, items, markets]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, ShoppingItem[]>();

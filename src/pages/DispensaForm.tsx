@@ -4,6 +4,7 @@ import SearchableSelect from '../components/SearchableSelect';
 import { useAllIngredients, getAllIngredients, findIngredientById } from '../data/ingredients';
 import { getPantryItem, upsertPantryItem, deletePantryItem, usePantryItems } from '../data/pantry';
 import { useShoppingItems } from '../data/shoppingList';
+import { useMarkets } from '../data/markets';
 import { UNIT_OPTIONS } from '../utils/units';
 import NutritionTable from '../components/NutritionTable';
 import type { PantryItem } from '../types/pantry';
@@ -55,12 +56,16 @@ export default function DispensaForm() {
 
   const pantryItems = usePantryItems();
   const shoppingItems = useShoppingItems();
+  const markets = useMarkets();
   const knownStores = useMemo(() => {
-    const all = [...pantryItems, ...shoppingItems]
+    const fromItems = [...pantryItems, ...shoppingItems]
       .map((i) => i.store)
       .filter((s): s is string => !!s && s.trim() !== '');
-    return [...new Set(all)].sort((a, b) => a.localeCompare(b, 'pt-BR'));
-  }, [pantryItems, shoppingItems]);
+    const fromMarkets = markets.map((m) => m.name);
+    return [...new Set([...fromMarkets, ...fromItems])].sort((a, b) =>
+      a.localeCompare(b, 'pt-BR'),
+    );
+  }, [pantryItems, shoppingItems, markets]);
 
   const [state, setState] = useState<FormState>(() => {
     const base = itemToForm(original);

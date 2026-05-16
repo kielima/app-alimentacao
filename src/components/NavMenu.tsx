@@ -8,6 +8,7 @@ const tabs = [
   { to: '/receitas', icon: '🍳', label: 'Receitas' },
   { to: '/dispensa', icon: '🥫', label: 'Dispensa' },
   { to: '/compras', icon: '🛒', label: 'Compras' },
+  { to: '/mercados', icon: '🏪', label: 'Mercados' },
 ];
 
 export default function NavMenu({ onSignOut }: { onSignOut: () => void }) {
