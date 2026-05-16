@@ -336,12 +336,11 @@ function IngredientList({
             <span className="ml-auto">
               {inPantry ? (
                 <span
-                  className="shrink-0 text-base"
+                  className="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500"
                   title="Você já tem este ingrediente na dispensa"
                   aria-label="Já tenho na dispensa"
-                >
-                  🟢
-                </span>
+                  role="img"
+                />
               ) : (
                 <button
                   type="button"
