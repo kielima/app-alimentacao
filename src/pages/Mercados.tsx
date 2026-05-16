@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import HeaderSlot from '../components/HeaderSlot';
 import { useMarkets } from '../data/markets';
 import { useShoppingItems } from '../data/shoppingList';
 import { useAllIngredients } from '../data/ingredients';
@@ -47,15 +48,15 @@ export default function Mercados() {
         +
       </button>
 
-      <div className="mb-3">
+      <HeaderSlot>
         <input
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="🔍 Buscar mercado…"
-          className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-2 text-base placeholder:text-zinc-400 focus:border-brand-500 focus:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
+          className="h-9 min-w-0 flex-1 rounded-xl border border-zinc-200 bg-white px-3 text-sm placeholder:text-zinc-400 focus:border-brand-500 focus:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
         />
-      </div>
+      </HeaderSlot>
 
       {markets.length > 0 && (
         <p className="mb-2 text-xs text-zinc-400 dark:text-zinc-500">
