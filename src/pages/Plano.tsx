@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import SearchableSelect from '../components/SearchableSelect';
 import {
-  DAYS_OF_WEEK,
   MEAL_TYPES,
   todayDayOfWeek,
   type DayOfWeek,
@@ -11,6 +10,7 @@ import {
   type MealType,
   type PlanType,
 } from '../types/mealPlan';
+import { usePlano } from '../contexts/PlanoContext';
 import {
   ensureMealStructure,
   emptyDayPlan,
@@ -56,8 +56,7 @@ function saveDone(day: DayOfWeek, planType: PlanType, done: Set<MealType>) {
 
 export default function Plano() {
   const plans = useMealPlans();
-  const [day, setDay] = useState<DayOfWeek>(todayDayOfWeek);
-  const [planType, setPlanType] = useState<PlanType>('training_day');
+  const { day, planType, setPlanType } = usePlano();
   const [editing, setEditing] = useState(false);
   const [doneMealTypes, setDoneMealTypes] = useState<Set<MealType>>(
     () => loadDone(todayDayOfWeek(), 'training_day'),
@@ -124,13 +123,6 @@ export default function Plano() {
 
   return (
     <div className="mx-auto max-w-md px-4 pt-2 pb-28">
-      <div className="mb-3 flex items-center gap-2">
-        <span className="text-2xl" aria-hidden>
-          📅
-        </span>
-        <h1 className="text-lg font-semibold">Plano Alimentar</h1>
-      </div>
-
       <button
         type="button"
         onClick={() => setEditing((e) => !e)}
@@ -143,38 +135,6 @@ export default function Plano() {
       >
         {editing ? '✓' : '✏️'}
       </button>
-
-
-      <div className="mb-3 flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setDay((d) => ((d + 6) % 7) as DayOfWeek)}
-          className="rounded-full bg-zinc-200/60 px-2 py-1 text-sm text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200"
-          aria-label="Dia anterior"
-        >
-          ◀
-        </button>
-        <select
-          value={day}
-          onChange={(e) => setDay(Number(e.target.value) as DayOfWeek)}
-          className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium focus:border-brand-500 focus:outline-none dark:border-zinc-800 dark:bg-zinc-900"
-        >
-          {DAYS_OF_WEEK.map((d) => (
-            <option key={d.value} value={d.value}>
-              {d.label}
-              {d.value === todayDayOfWeek() ? ' (hoje)' : ''}
-            </option>
-          ))}
-        </select>
-        <button
-          type="button"
-          onClick={() => setDay((d) => ((d + 1) % 7) as DayOfWeek)}
-          className="rounded-full bg-zinc-200/60 px-2 py-1 text-sm text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200"
-          aria-label="Próximo dia"
-        >
-          ▶
-        </button>
-      </div>
 
       <div className="mb-4 grid grid-cols-2 gap-2">
         <button
