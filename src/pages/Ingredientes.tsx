@@ -140,7 +140,7 @@ export default function Ingredientes() {
                         : 'sem dados nutricionais'}
                     </p>
                   </div>
-                  {ing.needs_review && (
+                  {(ing.needs_review || !ing.nutrition_per_100) && (
                     <span
                       className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
                       title="Valores nutricionais ainda precisam validação"
