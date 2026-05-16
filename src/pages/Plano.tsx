@@ -123,7 +123,7 @@ export default function Plano() {
   };
 
   return (
-    <div className="mx-auto max-w-md px-4 pt-2 pb-6">
+    <div className="mx-auto max-w-md px-4 pt-2 pb-28">
       <div className="mb-3 flex items-center gap-2">
         <span className="text-2xl" aria-hidden>
           📅

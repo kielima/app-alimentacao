@@ -41,7 +41,7 @@ export default function Dispensa() {
   };
 
   return (
-    <div className="mx-auto max-w-md px-4 pt-2">
+    <div className="mx-auto max-w-md px-4 pt-2 pb-28">
       {/* search | ⚙️ | + */}
       <div className="mb-2 flex items-center gap-2">
         <input
