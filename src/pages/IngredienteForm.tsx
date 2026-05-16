@@ -3,7 +3,8 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { uniqueSlug } from '../utils/slug';
 import { upsertUserIngredient } from '../data/userIngredients';
 import { allIngredientIds } from '../data/ingredients';
-import type { Unit } from '../types/ingredient';
+import type { IngredientCategory, Unit } from '../types/ingredient';
+import { INGREDIENT_CATEGORIES } from '../types/ingredient';
 
 const unitOptions: { value: Unit; label: string }[] = [
   { value: 'g', label: 'g (gramas)' },
@@ -19,6 +20,7 @@ export default function IngredienteForm() {
   const [name, setName] = useState('');
   const [brand, setBrand] = useState('');
   const [unit, setUnit] = useState<Unit>('g');
+  const [category, setCategory] = useState<IngredientCategory | ''>('');
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = (e: FormEvent) => {
@@ -34,6 +36,7 @@ export default function IngredienteForm() {
       name: name.trim(),
       brand: brand.trim() || null,
       default_unit: unit,
+      category: category || null,
       nutrition_per_100: null,
     } as Parameters<typeof upsertUserIngredient>[0]);
     const dest = returnPath.includes('?')
@@ -97,6 +100,21 @@ export default function IngredienteForm() {
           {unitOptions.map((u) => (
             <option key={u.value} value={u.value}>
               {u.label}
+            </option>
+          ))}
+        </select>
+      </Field>
+
+      <Field label="Categoria">
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value as IngredientCategory | '')}
+          className={inputClass}
+        >
+          <option value="">Sem categoria</option>
+          {INGREDIENT_CATEGORIES.map((c) => (
+            <option key={c.value} value={c.value}>
+              {c.label}
             </option>
           ))}
         </select>

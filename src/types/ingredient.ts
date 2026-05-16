@@ -1,5 +1,14 @@
 export type Unit = 'g' | 'ml' | 'unit';
 
+export type IngredientCategory = 'lacticinios' | 'hortifruti' | 'carnes' | 'enlatados';
+
+export const INGREDIENT_CATEGORIES: { value: IngredientCategory; label: string }[] = [
+  { value: 'lacticinios', label: 'Lacticínios' },
+  { value: 'hortifruti', label: 'Hortifruti' },
+  { value: 'carnes', label: 'Carnes' },
+  { value: 'enlatados', label: 'Enlatados' },
+];
+
 export interface NutritionPer100 {
   calories: number;
   protein: number;
@@ -26,6 +35,7 @@ export interface Ingredient {
   needs_review?: boolean;
   notes?: string;
   ceagesp_slug?: string;
+  category?: IngredientCategory | null;
   tbca_code?: string;
   off_barcode?: string;
 }
