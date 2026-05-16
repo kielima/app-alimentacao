@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
+import SearchableSelect from '../components/SearchableSelect';
 import { recipeCategories, useHiddenSeedRecipes } from '../data/recipes';
 import { unhideRecipe } from '../data/hiddenRecipes';
 import {
@@ -10,22 +11,22 @@ import {
 } from '../hooks/useRecipes';
 import type { RecipeCategoryId } from '../types/recipe';
 
-const categoryChips: { value: RecipeCategoryId | 'todas'; label: string; icon: string }[] = [
-  { value: 'todas', label: 'Todas', icon: '✨' },
-  ...recipeCategories.map((c) => ({ value: c.id, label: c.name, icon: c.icon })),
+const categoryOptions: { value: RecipeCategoryId | 'todas'; label: string }[] = [
+  { value: 'todas', label: '✨ Todas' },
+  ...recipeCategories.map((c) => ({ value: c.id, label: `${c.icon} ${c.name}` })),
 ];
 
-const completenessChips: { value: CompletenessFilter; label: string }[] = [
+const completenessOptions: { value: CompletenessFilter; label: string }[] = [
   { value: 'todas', label: 'Tudo' },
   { value: 'completas', label: 'Completas' },
   { value: 'revisao', label: 'Em revisão' },
 ];
 
-const ratingChips: { value: RatingFilter; label: string }[] = [
-  { value: 0, label: 'Qualquer' },
-  { value: 3, label: '⭐ 3+' },
-  { value: 4, label: '⭐ 4+' },
-  { value: 5, label: '⭐ 5' },
+const ratingOptions: { value: string; label: string; raw: RatingFilter }[] = [
+  { value: '0', label: 'Qualquer', raw: 0 },
+  { value: '3', label: '⭐ 3+', raw: 3 },
+  { value: '4', label: '⭐ 4+', raw: 4 },
+  { value: '5', label: '⭐ 5', raw: 5 },
 ];
 
 export default function Receitas() {
@@ -80,32 +81,35 @@ export default function Receitas() {
       )}
 
       {showFilters && (
-        <div className="mb-3">
-          <FilterRow label="Categoria">
-            {categoryChips.map((c) => (
-              <Chip key={c.value} active={category === c.value} onClick={() => setCategory(c.value)}>
-                <span aria-hidden>{c.icon}</span> {c.label}
-              </Chip>
-            ))}
-          </FilterRow>
-          <FilterRow label="Status">
-            {completenessChips.map((c) => (
-              <Chip
-                key={c.value}
-                active={completeness === c.value}
-                onClick={() => setCompleteness(c.value)}
-              >
-                {c.label}
-              </Chip>
-            ))}
-          </FilterRow>
-          <FilterRow label="Avaliação">
-            {ratingChips.map((r) => (
-              <Chip key={r.value} active={minRating === r.value} onClick={() => setMinRating(r.value)}>
-                {r.label}
-              </Chip>
-            ))}
-          </FilterRow>
+        <div className="mb-3 space-y-2">
+          <FilterField label="Categoria">
+            <SearchableSelect
+              value={category}
+              onChange={(v) => setCategory(v as RecipeCategoryId | 'todas')}
+              options={categoryOptions}
+              className="text-sm"
+            />
+          </FilterField>
+          <FilterField label="Status">
+            <SearchableSelect
+              value={completeness}
+              onChange={(v) => setCompleteness(v as CompletenessFilter)}
+              options={completenessOptions}
+              className="text-sm"
+            />
+          </FilterField>
+          <FilterField label="Avaliação">
+            <SearchableSelect
+              value={String(minRating)}
+              onChange={(v) =>
+                setMinRating(
+                  (ratingOptions.find((r) => r.value === v)?.raw ?? 0) as RatingFilter,
+                )
+              }
+              options={ratingOptions.map(({ value, label }) => ({ value, label }))}
+              className="text-sm"
+            />
+          </FilterField>
         </div>
       )}
 
@@ -207,39 +211,13 @@ function HiddenRecipesPanel() {
   );
 }
 
-function FilterRow({ label, children }: { label: string; children: React.ReactNode }) {
+function FilterField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="mb-2">
+    <div>
       <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
         {label}
       </p>
-      <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function Chip({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-        active
-          ? 'bg-brand-500 text-white dark:bg-brand-600'
-          : 'bg-zinc-200/60 text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60'
-      }`}
-    >
       {children}
-    </button>
+    </div>
   );
 }

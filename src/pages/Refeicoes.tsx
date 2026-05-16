@@ -1,15 +1,16 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
+import SearchableSelect from '../components/SearchableSelect';
 import { useAllMeals } from '../data/meals';
 import { MEAL_TYPES, type MealType } from '../types/mealPlan';
 
 type SlotFilter = 'todas' | MealType | 'sem-slot';
 
-const slotChips: { value: SlotFilter; label: string; icon: string }[] = [
-  { value: 'todas', label: 'Todas', icon: '✨' },
-  ...MEAL_TYPES.map((m) => ({ value: m.value as SlotFilter, label: m.label, icon: m.icon })),
-  { value: 'sem-slot', label: 'Sem slot', icon: '➖' },
+const slotOptions: { value: SlotFilter; label: string }[] = [
+  { value: 'todas', label: '✨ Todas' },
+  ...MEAL_TYPES.map((m) => ({ value: m.value as SlotFilter, label: `${m.icon} ${m.label}` })),
+  { value: 'sem-slot', label: '➖ Sem slot' },
 ];
 
 export default function Refeicoes() {
@@ -68,22 +69,14 @@ export default function Refeicoes() {
 
       {showFilters && (
         <div className="mb-3">
-          <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {slotChips.map((c) => (
-              <button
-                key={c.value}
-                type="button"
-                onClick={() => setSlot(c.value)}
-                className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                  slot === c.value
-                    ? 'bg-brand-500 text-white dark:bg-brand-600'
-                    : 'bg-zinc-200/60 text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60'
-                }`}
-              >
-                <span aria-hidden>{c.icon}</span> {c.label}
-              </button>
-            ))}
-          </div>
+          <FilterField label="Slot">
+            <SearchableSelect
+              value={slot}
+              onChange={(v) => setSlot(v as SlotFilter)}
+              options={slotOptions}
+              className="text-sm"
+            />
+          </FilterField>
         </div>
       )}
 
@@ -133,6 +126,17 @@ export default function Refeicoes() {
       >
         +
       </Link>
+    </div>
+  );
+}
+
+function FilterField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        {label}
+      </p>
+      {children}
     </div>
   );
 }

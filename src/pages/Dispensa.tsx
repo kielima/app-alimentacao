@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
+import SearchableSelect from '../components/SearchableSelect';
 import { usePantry, type PantryFilter } from '../hooks/usePantry';
 import { expiryStatus, expiryLabel, statusColor, statusIcon } from '../utils/expiry';
 import { unitLabel } from '../utils/units';
@@ -8,7 +9,7 @@ import { upsertShoppingItem } from '../data/shoppingList';
 import { deletePantryItem } from '../data/pantry';
 import type { PantryItem } from '../types/pantry';
 
-const filterChips: { value: PantryFilter; label: string }[] = [
+const baseFilterOptions: { value: PantryFilter; label: string }[] = [
   { value: 'todos', label: 'Todos' },
   { value: 'expired', label: '❌ Vencidos' },
   { value: 'soon', label: '⚠️ Vencendo' },
@@ -23,6 +24,21 @@ export default function Dispensa() {
 
   const hasActiveFilters = filter !== 'todos';
   const isFiltering = hasActiveFilters || !!query.trim();
+
+  const filterOptions = useMemo(
+    () =>
+      baseFilterOptions.map((opt) => {
+        const count =
+          opt.value === 'todos'
+            ? total
+            : countsByStatus[opt.value as Exclude<PantryFilter, 'todos'>];
+        return {
+          value: opt.value,
+          label: count > 0 ? `${opt.label} (${count})` : opt.label,
+        };
+      }),
+    [total, countsByStatus],
+  );
 
   const sendToList = (item: PantryItem) => {
     upsertShoppingItem({
@@ -76,28 +92,14 @@ export default function Dispensa() {
 
       {showFilters && (
         <div className="mb-3">
-          <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {filterChips.map((c) => {
-              const count =
-                c.value === 'todos'
-                  ? total
-                  : countsByStatus[c.value as Exclude<PantryFilter, 'todos'>];
-              return (
-                <button
-                  key={c.value}
-                  type="button"
-                  onClick={() => setFilter(c.value)}
-                  className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                    filter === c.value
-                      ? 'bg-brand-500 text-white dark:bg-brand-600'
-                      : 'bg-zinc-200/60 text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60'
-                  }`}
-                >
-                  {c.label} {count > 0 && <span className="opacity-70">({count})</span>}
-                </button>
-              );
-            })}
-          </div>
+          <FilterField label="Status">
+            <SearchableSelect
+              value={filter}
+              onChange={(v) => setFilter(v as PantryFilter)}
+              options={filterOptions}
+              className="text-sm"
+            />
+          </FilterField>
         </div>
       )}
 
@@ -171,6 +173,17 @@ export default function Dispensa() {
           })}
         </ul>
       )}
+    </div>
+  );
+}
+
+function FilterField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        {label}
+      </p>
+      {children}
     </div>
   );
 }

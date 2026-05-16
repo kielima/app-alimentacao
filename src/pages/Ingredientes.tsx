@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
+import SearchableSelect from '../components/SearchableSelect';
 import { useIngredients, type IngredientFilter } from '../hooks/useIngredients';
 import { upsertShoppingItem } from '../data/shoppingList';
 import { upsertPantryItem } from '../data/pantry';
@@ -8,7 +9,7 @@ import type { Ingredient } from '../types/ingredient';
 
 type AddedFlash = { id: string; action: 'cart' | 'pantry' } | null;
 
-const filters: { value: IngredientFilter; label: string }[] = [
+const filterOptions: { value: IngredientFilter; label: string }[] = [
   { value: 'todos', label: 'Todos' },
   { value: 'marcas', label: 'Marcas' },
   { value: 'genericos', label: 'Genéricos' },
@@ -97,22 +98,14 @@ export default function Ingredientes() {
 
       {showFilters && (
         <div className="mb-3">
-          <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {filters.map((f) => (
-              <button
-                key={f.value}
-                type="button"
-                onClick={() => setFilter(f.value)}
-                className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                  filter === f.value
-                    ? 'bg-brand-500 text-white dark:bg-brand-600'
-                    : 'bg-zinc-200/60 text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60'
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
+          <FilterField label="Tipo">
+            <SearchableSelect
+              value={filter}
+              onChange={(v) => setFilter(v as IngredientFilter)}
+              options={filterOptions}
+              className="text-sm"
+            />
+          </FilterField>
         </div>
       )}
 
@@ -191,6 +184,17 @@ export default function Ingredientes() {
           })}
         </ul>
       )}
+    </div>
+  );
+}
+
+function FilterField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="mb-2">
+      <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        {label}
+      </p>
+      {children}
     </div>
   );
 }
