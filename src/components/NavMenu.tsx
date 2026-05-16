@@ -4,13 +4,13 @@ import { useTheme } from '../hooks/useTheme';
 import { useOffContributions } from '../data/offContributions';
 
 const tabs = [
-  { to: '/plano', icon: '📅', label: 'Plano' },
-  { to: '/refeicoes', icon: '📋', label: 'Refeições' },
-  { to: '/receitas', icon: '🍳', label: 'Receitas' },
-  { to: '/ingredientes', icon: '🥕', label: 'Ingredientes' },
-  { to: '/dispensa', icon: '🥫', label: 'Dispensa' },
-  { to: '/compras', icon: '🛒', label: 'Compras' },
-  { to: '/mercados', icon: '🏪', label: 'Mercados' },
+  { to: '/plano', label: 'Plano Alimentar' },
+  { to: '/refeicoes', label: 'Lista de Refeições' },
+  { to: '/receitas', label: 'Livro de Receitas' },
+  { to: '/ingredientes', label: 'Lista de Ingredientes' },
+  { to: '/dispensa', label: 'Lista da Dispensa' },
+  { to: '/compras', label: 'Lista de Compras' },
+  { to: '/mercados', label: 'Lista de Mercados' },
 ];
 
 export default function NavMenu({ onSignOut }: { onSignOut: () => void }) {
@@ -99,9 +99,6 @@ export default function NavMenu({ onSignOut }: { onSignOut: () => void }) {
                     }`
                   }
                 >
-                  <span className="text-lg" aria-hidden>
-                    {tab.icon}
-                  </span>
                   <span>{tab.label}</span>
                 </NavLink>
               </li>
