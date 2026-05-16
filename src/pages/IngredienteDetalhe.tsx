@@ -335,6 +335,56 @@ export default function IngredienteDetalhe() {
             )}
           </div>
         )}
+
+        {(ingredient.ceagesp_slug || ingredient.tbca_code || ingredient.off_barcode) && (
+          <div className="mt-4 space-y-2 border-t border-zinc-200 pt-3 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+            {ingredient.ceagesp_slug && (
+              <p>
+                <span aria-hidden>🥬 </span>
+                Guia de escolha, variedades e sazonalidade no{' '}
+                <a
+                  href={`https://ceagesp.gov.br/hortiescolha/hortipedia/${ingredient.ceagesp_slug}/`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-brand-600 underline hover:no-underline dark:text-brand-400"
+                >
+                  Hortipédia da CEAGESP
+                </a>
+                .
+              </p>
+            )}
+            {ingredient.tbca_code && (
+              <p>
+                <span aria-hidden>🍽️ </span>
+                Composição nutricional baseada na{' '}
+                <a
+                  href="http://www.tbca.net.br"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-brand-600 underline hover:no-underline dark:text-brand-400"
+                >
+                  TBCA — Tabela Brasileira de Composição de Alimentos
+                </a>{' '}
+                (USP/FoRC), código <code className="font-mono">{ingredient.tbca_code}</code>.
+              </p>
+            )}
+            {ingredient.off_barcode && (
+              <p>
+                <span aria-hidden>🏷️ </span>
+                Dados do rótulo via{' '}
+                <a
+                  href={`https://br.openfoodfacts.org/produto/${ingredient.off_barcode}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-brand-600 underline hover:no-underline dark:text-brand-400"
+                >
+                  Open Food Facts
+                </a>
+                .
+              </p>
+            )}
+          </div>
+        )}
       </section>
 
       {recipesUsingIngredient.length > 0 && (
@@ -411,54 +461,6 @@ export default function IngredienteDetalhe() {
 
       {ingredient.notes && (
         <p className="mb-4 text-xs italic text-zinc-500 dark:text-zinc-400">{ingredient.notes}</p>
-      )}
-
-      {ingredient.ceagesp_slug && (
-        <p className="mt-6 border-t border-zinc-200 pt-3 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-          <span aria-hidden>🥬 </span>
-          Guia de escolha, variedades e sazonalidade no{' '}
-          <a
-            href={`https://ceagesp.gov.br/hortiescolha/hortipedia/${ingredient.ceagesp_slug}/`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-brand-600 underline hover:no-underline dark:text-brand-400"
-          >
-            Hortipédia da CEAGESP
-          </a>
-          .
-        </p>
-      )}
-
-      {ingredient.tbca_code && (
-        <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
-          <span aria-hidden>🍽️ </span>
-          Composição nutricional baseada na{' '}
-          <a
-            href="http://www.tbca.net.br"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-brand-600 underline hover:no-underline dark:text-brand-400"
-          >
-            TBCA — Tabela Brasileira de Composição de Alimentos
-          </a>{' '}
-          (USP/FoRC), código <code className="font-mono">{ingredient.tbca_code}</code>.
-        </p>
-      )}
-
-      {ingredient.off_barcode && (
-        <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
-          <span aria-hidden>🏷️ </span>
-          Dados do rótulo via{' '}
-          <a
-            href={`https://br.openfoodfacts.org/produto/${ingredient.off_barcode}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-brand-600 underline hover:no-underline dark:text-brand-400"
-          >
-            Open Food Facts
-          </a>
-          .
-        </p>
       )}
 
       <p className="mt-6 text-center text-xs text-zinc-400 dark:text-zinc-600">
