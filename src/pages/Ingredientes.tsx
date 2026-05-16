@@ -204,7 +204,7 @@ export default function Ingredientes() {
                       e.stopPropagation();
                       handleTogglePantry(ing);
                     }}
-                    className={`shrink-0 rounded-full px-2 py-1 text-sm leading-none transition-colors ${
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm leading-none transition-colors ${
                       addedToPantry
                         ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
                         : 'bg-zinc-100 text-zinc-500 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-brand-900/30 dark:hover:text-brand-400'
@@ -221,7 +221,7 @@ export default function Ingredientes() {
                       e.stopPropagation();
                       handleToggleCart(ing);
                     }}
-                    className={`shrink-0 rounded-full px-2 py-1 text-sm leading-none transition-colors ${
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm leading-none transition-colors ${
                       addedToCart
                         ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
                         : 'bg-zinc-100 text-zinc-500 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-brand-900/30 dark:hover:text-brand-400'
