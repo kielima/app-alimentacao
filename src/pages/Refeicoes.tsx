@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import HeaderSlot from '../components/HeaderSlot';
 import { useAllMeals } from '../data/meals';
 import { MEAL_TYPES, type MealType } from '../types/mealPlan';
 
@@ -34,13 +35,13 @@ export default function Refeicoes() {
 
   return (
     <div className="mx-auto max-w-md px-4 pt-2 pb-28">
-      <div className="mb-2 flex items-center gap-2">
+      <HeaderSlot>
         <input
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="🔍 Buscar refeição…"
-          className="min-w-0 flex-1 rounded-xl border border-zinc-200 bg-white px-4 py-2 text-base placeholder:text-zinc-400 focus:border-brand-500 focus:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
+          className="h-9 min-w-0 flex-1 rounded-xl border border-zinc-200 bg-white px-3 text-sm placeholder:text-zinc-400 focus:border-brand-500 focus:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
         />
         <button
           type="button"
@@ -57,7 +58,7 @@ export default function Refeicoes() {
             <span className="absolute right-0.5 top-0.5 h-2.5 w-2.5 rounded-full bg-brand-500 ring-2 ring-white dark:ring-zinc-950" />
           )}
         </button>
-      </div>
+      </HeaderSlot>
 
       {isFiltering && (
         <p className="mb-2 text-xs text-zinc-400 dark:text-zinc-500">

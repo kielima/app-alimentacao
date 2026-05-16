@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import NavMenu from './components/NavMenu';
+import { HEADER_SLOT_ID } from './components/HeaderSlot';
 import PinScreen from './components/PinScreen';
 import LoadingSplash from './components/LoadingSplash';
 import Receitas from './pages/Receitas';
@@ -81,9 +82,13 @@ export default function App() {
   return (
     <PlanoProvider>
       <div className="flex h-full flex-col">
-        <header className="flex items-center px-4 pt-3 gap-2">
+        <header className="mx-auto flex w-full max-w-md items-center px-4 pt-3 gap-2">
           <NavMenu onSignOut={signOut} />
-          {isPlano && <PlanoHeaderStrip />}
+          {isPlano ? (
+            <PlanoHeaderStrip />
+          ) : (
+            <div id={HEADER_SLOT_ID} className="flex min-w-0 flex-1 items-center gap-2" />
+          )}
         </header>
         <main className="flex-1 overflow-y-auto pb-4">
           <Routes>
