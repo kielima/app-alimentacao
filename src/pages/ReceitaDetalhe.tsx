@@ -340,7 +340,7 @@ function IngredientList({
                   title="Você já tem este ingrediente na dispensa"
                   aria-label="Já tenho na dispensa"
                 >
-                  🥫
+                  🟢
                 </span>
               ) : (
                 <button
