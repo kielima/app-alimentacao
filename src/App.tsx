@@ -1,6 +1,5 @@
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import NavMenu from './components/NavMenu';
-import HeaderActions from './components/HeaderActions';
 import PinScreen from './components/PinScreen';
 import LoadingSplash from './components/LoadingSplash';
 import Receitas from './pages/Receitas';
@@ -83,7 +82,6 @@ export default function App() {
         <header className="flex items-center px-4 pt-3 gap-2">
           <NavMenu onSignOut={signOut} />
           {isPlano && <PlanoHeaderStrip />}
-          <HeaderActions />
         </header>
         <main className="flex-1 overflow-y-auto pb-4">
           <Routes>
