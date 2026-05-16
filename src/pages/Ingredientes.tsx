@@ -1,12 +1,18 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import { useIngredients, type IngredientFilter } from '../hooks/useIngredients';
-import { upsertShoppingItem } from '../data/shoppingList';
-import { upsertPantryItem } from '../data/pantry';
+import {
+  upsertShoppingItem,
+  deleteShoppingItem,
+  useShoppingItems,
+} from '../data/shoppingList';
+import {
+  upsertPantryItem,
+  deletePantryItem,
+  usePantryItems,
+} from '../data/pantry';
 import type { Ingredient } from '../types/ingredient';
-
-type AddedFlash = { id: string; action: 'cart' | 'pantry' } | null;
 
 const filters: { value: IngredientFilter; label: string }[] = [
   { value: 'todos', label: 'Todos' },
@@ -17,21 +23,40 @@ const filters: { value: IngredientFilter; label: string }[] = [
 export default function Ingredientes() {
   const { list, query, setQuery, filter, setFilter, total } = useIngredients();
   const [showFilters, setShowFilters] = useState(false);
-  const [flash, setFlash] = useState<AddedFlash>(null);
+  const shoppingItems = useShoppingItems();
+  const pantryItems = usePantryItems();
 
   const hasActiveFilters = filter !== 'todos';
   const isFiltering = hasActiveFilters || !!query.trim();
 
-  const flashAdded = (id: string, action: 'cart' | 'pantry') => {
-    setFlash({ id, action });
-    setTimeout(() => {
-      setFlash((current) =>
-        current && current.id === id && current.action === action ? null : current,
-      );
-    }, 1200);
-  };
+  const cartByIngredient = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const item of shoppingItems) {
+      if (!item.ingredient_id) continue;
+      const ids = map.get(item.ingredient_id) ?? [];
+      ids.push(item.id);
+      map.set(item.ingredient_id, ids);
+    }
+    return map;
+  }, [shoppingItems]);
 
-  const handleAddToCart = (ing: Ingredient) => {
+  const pantryByIngredient = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const item of pantryItems) {
+      if (!item.ingredient_id) continue;
+      const ids = map.get(item.ingredient_id) ?? [];
+      ids.push(item.id);
+      map.set(item.ingredient_id, ids);
+    }
+    return map;
+  }, [pantryItems]);
+
+  const handleToggleCart = (ing: Ingredient) => {
+    const existing = cartByIngredient.get(ing.id);
+    if (existing && existing.length > 0) {
+      existing.forEach((id) => deleteShoppingItem(id));
+      return;
+    }
     upsertShoppingItem({
       id: `from-ingredient-${ing.id}-${Date.now()}`,
       ingredient_id: ing.id,
@@ -45,10 +70,14 @@ export default function Ingredientes() {
       source_ref: ing.id,
       added_at: new Date().toISOString(),
     });
-    flashAdded(ing.id, 'cart');
   };
 
-  const handleAddToPantry = (ing: Ingredient) => {
+  const handleTogglePantry = (ing: Ingredient) => {
+    const existing = pantryByIngredient.get(ing.id);
+    if (existing && existing.length > 0) {
+      existing.forEach((id) => deletePantryItem(id));
+      return;
+    }
     upsertPantryItem({
       id: `from-ingredient-${ing.id}-${Date.now()}`,
       ingredient_id: ing.id,
@@ -59,7 +88,6 @@ export default function Ingredientes() {
       store: null,
       added_at: new Date().toISOString(),
     });
-    flashAdded(ing.id, 'pantry');
   };
 
   return (
@@ -123,8 +151,8 @@ export default function Ingredientes() {
       ) : (
         <ul className="space-y-2">
           {list.map((ing) => {
-            const addedToCart = flash?.id === ing.id && flash.action === 'cart';
-            const addedToPantry = flash?.id === ing.id && flash.action === 'pantry';
+            const addedToCart = (cartByIngredient.get(ing.id)?.length ?? 0) > 0;
+            const addedToPantry = (pantryByIngredient.get(ing.id)?.length ?? 0) > 0;
             return (
               <li key={ing.id}>
                 <Link
@@ -153,15 +181,15 @@ export default function Ingredientes() {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      handleAddToPantry(ing);
+                      handleTogglePantry(ing);
                     }}
                     className={`shrink-0 rounded-full px-2 py-1 text-sm leading-none transition-colors ${
                       addedToPantry
                         ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
                         : 'bg-zinc-100 text-zinc-500 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-brand-900/30 dark:hover:text-brand-400'
                     }`}
-                    aria-label="Adicionar à dispensa"
-                    title="Adicionar à dispensa"
+                    aria-label={addedToPantry ? 'Remover da dispensa' : 'Adicionar à dispensa'}
+                    title={addedToPantry ? 'Remover da dispensa' : 'Adicionar à dispensa'}
                   >
                     {addedToPantry ? '✓' : '🥫'}
                   </button>
@@ -170,15 +198,15 @@ export default function Ingredientes() {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      handleAddToCart(ing);
+                      handleToggleCart(ing);
                     }}
                     className={`shrink-0 rounded-full px-2 py-1 text-sm leading-none transition-colors ${
                       addedToCart
                         ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
                         : 'bg-zinc-100 text-zinc-500 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-brand-900/30 dark:hover:text-brand-400'
                     }`}
-                    aria-label="Adicionar à lista de compras"
-                    title="Adicionar à lista de compras"
+                    aria-label={addedToCart ? 'Remover da lista de compras' : 'Adicionar à lista de compras'}
+                    title={addedToCart ? 'Remover da lista de compras' : 'Adicionar à lista de compras'}
                   >
                     {addedToCart ? '✓' : '🛒'}
                   </button>
