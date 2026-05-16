@@ -1,8 +1,16 @@
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { findIngredientById } from '../data/ingredients';
-import { upsertShoppingItem } from '../data/shoppingList';
-import { upsertPantryItem } from '../data/pantry';
+import {
+  upsertShoppingItem,
+  deleteShoppingItem,
+  useShoppingItems,
+} from '../data/shoppingList';
+import {
+  upsertPantryItem,
+  deletePantryItem,
+  usePantryItems,
+} from '../data/pantry';
 import type { NutritionPer100 } from '../types/ingredient';
 
 const macroLabels: { key: keyof NutritionPer100; label: string; unit: string }[] = [
@@ -39,11 +47,32 @@ export default function IngredienteDetalhe() {
 
   const [quantity, setQuantity] = useState(100);
   const [showExtras, setShowExtras] = useState(false);
-  const [addedToCart, setAddedToCart] = useState(false);
-  const [addedToPantry, setAddedToPantry] = useState(false);
+  const shoppingItems = useShoppingItems();
+  const pantryItems = usePantryItems();
 
-  const handleAddToCart = () => {
+  const cartMatches = useMemo(
+    () =>
+      ingredient
+        ? shoppingItems.filter((i) => i.ingredient_id === ingredient.id)
+        : [],
+    [shoppingItems, ingredient],
+  );
+  const pantryMatches = useMemo(
+    () =>
+      ingredient
+        ? pantryItems.filter((i) => i.ingredient_id === ingredient.id)
+        : [],
+    [pantryItems, ingredient],
+  );
+  const addedToCart = cartMatches.length > 0;
+  const addedToPantry = pantryMatches.length > 0;
+
+  const handleToggleCart = () => {
     if (!ingredient) return;
+    if (addedToCart) {
+      cartMatches.forEach((i) => deleteShoppingItem(i.id));
+      return;
+    }
     upsertShoppingItem({
       id: `from-ingredient-${ingredient.id}-${Date.now()}`,
       ingredient_id: ingredient.id,
@@ -57,11 +86,14 @@ export default function IngredienteDetalhe() {
       source_ref: ingredient.id,
       added_at: new Date().toISOString(),
     });
-    setAddedToCart(true);
   };
 
-  const handleAddToPantry = () => {
+  const handleTogglePantry = () => {
     if (!ingredient) return;
+    if (addedToPantry) {
+      pantryMatches.forEach((i) => deletePantryItem(i.id));
+      return;
+    }
     upsertPantryItem({
       id: `from-ingredient-${ingredient.id}-${Date.now()}`,
       ingredient_id: ingredient.id,
@@ -72,7 +104,6 @@ export default function IngredienteDetalhe() {
       store: null,
       added_at: new Date().toISOString(),
     });
-    setAddedToPantry(true);
   };
 
   const factor = quantity / 100;
@@ -117,27 +148,27 @@ export default function IngredienteDetalhe() {
         <h1 className="flex-1 truncate text-lg font-semibold">{ingredient.name}</h1>
         <button
           type="button"
-          onClick={handleAddToCart}
+          onClick={handleToggleCart}
           className={`shrink-0 rounded-full px-3 py-1 text-base leading-none transition-colors ${
             addedToCart
               ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
               : 'bg-zinc-200/60 text-zinc-700 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-brand-900/30 dark:hover:text-brand-400'
           }`}
-          aria-label="Adicionar à lista de compras"
-          title="Adicionar à lista de compras"
+          aria-label={addedToCart ? 'Remover da lista de compras' : 'Adicionar à lista de compras'}
+          title={addedToCart ? 'Remover da lista de compras' : 'Adicionar à lista de compras'}
         >
           {addedToCart ? '✓' : '🛒'}
         </button>
         <button
           type="button"
-          onClick={handleAddToPantry}
+          onClick={handleTogglePantry}
           className={`shrink-0 rounded-full px-3 py-1 text-base leading-none transition-colors ${
             addedToPantry
               ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
               : 'bg-zinc-200/60 text-zinc-700 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-brand-900/30 dark:hover:text-brand-400'
           }`}
-          aria-label="Adicionar à dispensa"
-          title="Adicionar à dispensa"
+          aria-label={addedToPantry ? 'Remover da dispensa' : 'Adicionar à dispensa'}
+          title={addedToPantry ? 'Remover da dispensa' : 'Adicionar à dispensa'}
         >
           {addedToPantry ? '✓' : '🥫'}
         </button>
