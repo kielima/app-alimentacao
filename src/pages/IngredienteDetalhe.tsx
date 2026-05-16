@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { findIngredientById } from '../data/ingredients';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { findIngredientById, isSeedIngredient } from '../data/ingredients';
+import { deleteUserIngredient, getUserIngredientById } from '../data/userIngredients';
+import { hideIngredient } from '../data/hiddenIngredients';
 import {
   upsertShoppingItem,
   deleteShoppingItem,
@@ -43,12 +45,26 @@ function fmt(value: number | null | undefined, digits = 1): string {
 
 export default function IngredienteDetalhe() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const ingredient = id ? findIngredientById(id) : undefined;
 
   const [quantity, setQuantity] = useState(100);
   const [showExtras, setShowExtras] = useState(false);
   const shoppingItems = useShoppingItems();
   const pantryItems = usePantryItems();
+
+  const handleDelete = () => {
+    if (!id) return;
+    const isUser = !!getUserIngredientById(id);
+    const isSeed = isSeedIngredient(id);
+    const msg = isSeed
+      ? 'Apagar este ingrediente? (Ingredientes padrão ficam ocultos e podem ser restaurados depois.)'
+      : 'Apagar este ingrediente? Esta ação não pode ser desfeita.';
+    if (!confirm(msg)) return;
+    if (isUser) deleteUserIngredient(id);
+    if (isSeed) hideIngredient(id);
+    navigate('/ingredientes');
+  };
 
   const cartMatches = useMemo(
     () =>
@@ -171,6 +187,15 @@ export default function IngredienteDetalhe() {
           title={addedToPantry ? 'Remover da dispensa' : 'Adicionar à dispensa'}
         >
           {addedToPantry ? '✓' : '🥫'}
+        </button>
+        <button
+          type="button"
+          onClick={handleDelete}
+          className="shrink-0 rounded-full bg-zinc-200/60 px-3 py-1 text-base leading-none text-zinc-700 transition-colors hover:bg-red-100 hover:text-red-700 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-red-900/30 dark:hover:text-red-300"
+          aria-label="Excluir ingrediente"
+          title="Excluir ingrediente"
+        >
+          🗑️
         </button>
       </div>
 
