@@ -56,7 +56,7 @@ export default function NavMenu({ onSignOut }: { onSignOut: () => void }) {
       </button>
 
       <div
-        className={`fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] transition-opacity duration-200 ${
+        className={`fixed inset-0 z-[70] bg-black/40 backdrop-blur-[2px] transition-opacity duration-200 ${
           open ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
         onClick={() => setOpen(false)}
@@ -64,7 +64,7 @@ export default function NavMenu({ onSignOut }: { onSignOut: () => void }) {
       />
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[82%] max-w-sm flex-col bg-white shadow-2xl transition-transform duration-200 ease-out dark:bg-zinc-900 ${
+        className={`fixed inset-y-0 left-0 z-[80] flex w-[82%] max-w-sm flex-col bg-white shadow-2xl transition-transform duration-200 ease-out dark:bg-zinc-900 ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
         role="dialog"
