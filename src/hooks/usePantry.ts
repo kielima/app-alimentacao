@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { usePantryItems } from '../data/pantry';
 import { expiryStatus, type ExpiryStatus } from '../utils/expiry';
 import { matches } from '../utils/search';
+import { createUIStore } from '../utils/persistentUIState';
 import type { PantryItem } from '../types/pantry';
 
 export type PantryFilter = 'todos' | ExpiryStatus;
@@ -19,14 +20,21 @@ interface UsePantryResult {
   setQuery: (q: string) => void;
   filter: PantryFilter;
   setFilter: (f: PantryFilter) => void;
+  showFilters: boolean;
+  setShowFilters: (s: boolean | ((prev: boolean) => boolean)) => void;
   total: number;
   countsByStatus: Record<ExpiryStatus, number>;
 }
 
+const ui = createUIStore({
+  query: '',
+  filter: 'todos' as PantryFilter,
+  showFilters: false,
+});
+
 export function usePantry(): UsePantryResult {
   const items = usePantryItems();
-  const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState<PantryFilter>('todos');
+  const { query, filter, showFilters } = ui.useStore();
 
   const countsByStatus = useMemo(() => {
     const c: Record<ExpiryStatus, number> = { expired: 0, soon: 0, fresh: 0, 'no-date': 0 };
@@ -57,9 +65,11 @@ export function usePantry(): UsePantryResult {
   return {
     list,
     query,
-    setQuery,
+    setQuery: (q) => ui.set('query', q),
     filter,
-    setFilter,
+    setFilter: (f) => ui.set('filter', f),
+    showFilters,
+    setShowFilters: (s) => ui.set('showFilters', s),
     total: items.length,
     countsByStatus,
   };

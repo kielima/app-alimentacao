@@ -39,10 +39,11 @@ export default function Receitas() {
     setCompleteness,
     minRating,
     setMinRating,
+    showFilters,
+    setShowFilters,
     total,
   } = useRecipes();
 
-  const [showFilters, setShowFilters] = useState(false);
   const hasActiveFilters = category !== 'todas' || completeness !== 'todas' || minRating !== 0;
   const isFiltering = hasActiveFilters || !!query;
 
@@ -80,7 +81,7 @@ export default function Receitas() {
       )}
 
       {showFilters && (
-        <div className="mb-3">
+        <div className="sticky top-0 z-10 -mx-4 mb-3 bg-zinc-50/95 px-4 pb-2 pt-2 backdrop-blur supports-[backdrop-filter]:bg-zinc-50/80 dark:bg-zinc-950/95 dark:supports-[backdrop-filter]:bg-zinc-950/80">
           <FilterRow label="Categoria">
             {categoryChips.map((c) => (
               <Chip key={c.value} active={category === c.value} onClick={() => setCategory(c.value)}>

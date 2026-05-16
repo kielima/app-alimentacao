@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useAllRecipes } from '../data/recipes';
 import { matches } from '../utils/search';
+import { createUIStore } from '../utils/persistentUIState';
 import type { Recipe, RecipeCategoryId, Rating } from '../types/recipe';
 
 export type CompletenessFilter = 'todas' | 'completas' | 'revisao';
@@ -16,15 +17,21 @@ interface UseRecipesResult {
   setCompleteness: (c: CompletenessFilter) => void;
   minRating: RatingFilter;
   setMinRating: (r: RatingFilter) => void;
+  showFilters: boolean;
+  setShowFilters: (s: boolean | ((prev: boolean) => boolean)) => void;
   total: number;
 }
 
-export function useRecipes(): UseRecipesResult {
-  const [query, setQuery] = useState('');
-  const [category, setCategory] = useState<RecipeCategoryId | 'todas'>('todas');
-  const [completeness, setCompleteness] = useState<CompletenessFilter>('todas');
-  const [minRating, setMinRating] = useState<RatingFilter>(0);
+const ui = createUIStore({
+  query: '',
+  category: 'todas' as RecipeCategoryId | 'todas',
+  completeness: 'todas' as CompletenessFilter,
+  minRating: 0 as RatingFilter,
+  showFilters: false,
+});
 
+export function useRecipes(): UseRecipesResult {
+  const { query, category, completeness, minRating, showFilters } = ui.useStore();
   const allRecipes = useAllRecipes();
 
   const list = useMemo(() => {
@@ -51,13 +58,15 @@ export function useRecipes(): UseRecipesResult {
   return {
     list,
     query,
-    setQuery,
+    setQuery: (q) => ui.set('query', q),
     category,
-    setCategory,
+    setCategory: (c) => ui.set('category', c),
     completeness,
-    setCompleteness,
+    setCompleteness: (c) => ui.set('completeness', c),
     minRating,
-    setMinRating,
+    setMinRating: (r) => ui.set('minRating', r),
+    showFilters,
+    setShowFilters: (s) => ui.set('showFilters', s),
     total: allRecipes.length,
   };
 }
