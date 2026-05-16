@@ -1,6 +1,8 @@
-import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
+import ScanButton from '../components/ScanButton';
+import BarcodeScannerModal from '../components/BarcodeScannerModal';
 import { useIngredients, type IngredientFilter } from '../hooks/useIngredients';
 import {
   upsertShoppingItem,
@@ -12,6 +14,8 @@ import {
   deletePantryItem,
   usePantryItems,
 } from '../data/pantry';
+import { useAllIngredients } from '../data/ingredients';
+import { handleScanForIngredientsList } from '../lib/scanActions';
 import type { Ingredient } from '../types/ingredient';
 
 const filters: { value: IngredientFilter; label: string }[] = [
@@ -22,8 +26,11 @@ const filters: { value: IngredientFilter; label: string }[] = [
 ];
 
 export default function Ingredientes() {
+  const navigate = useNavigate();
   const shoppingItems = useShoppingItems();
   const pantryItems = usePantryItems();
+  const allIngredients = useAllIngredients();
+  const [scanOpen, setScanOpen] = useState(false);
 
   const listedIngredientIds = useMemo(() => {
     const set = new Set<string>();
@@ -121,6 +128,7 @@ export default function Ingredientes() {
           placeholder="Buscar ingrediente…"
           className="h-9 min-w-0 flex-1 rounded-xl border border-zinc-200 bg-white px-3 text-sm placeholder:text-zinc-400 focus:border-brand-500 focus:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
         />
+        <ScanButton onClick={() => setScanOpen(true)} />
         <button
           type="button"
           onClick={() => setShowFilters((f) => !f)}
@@ -137,6 +145,16 @@ export default function Ingredientes() {
           )}
         </button>
       </HeaderSlot>
+
+      <BarcodeScannerModal
+        open={scanOpen}
+        onClose={() => setScanOpen(false)}
+        actions={['create-ingredient', 'manual-not-found']}
+        onPick={(result, action) => {
+          setScanOpen(false);
+          handleScanForIngredientsList(result, action, allIngredients, navigate);
+        }}
+      />
 
       {isFiltering && (
         <p className="mb-2 text-xs text-zinc-400 dark:text-zinc-500">

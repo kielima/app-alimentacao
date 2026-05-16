@@ -15,6 +15,7 @@ import ComprasItemForm from './pages/ComprasItemForm';
 import Ingredientes from './pages/Ingredientes';
 import IngredienteDetalhe from './pages/IngredienteDetalhe';
 import IngredienteForm from './pages/IngredienteForm';
+import OffContribuicoes from './pages/OffContribuicoes';
 import Refeicoes from './pages/Refeicoes';
 import RefeicaoForm from './pages/RefeicaoForm';
 import RefeicaoDetalhe from './pages/RefeicaoDetalhe';
@@ -164,6 +165,7 @@ export default function App() {
             <Route path="/ingredientes/novo" element={<IngredienteForm />} />
             <Route path="/ingredientes/:id/editar" element={<IngredienteForm />} />
             <Route path="/ingredientes/:id" element={<IngredienteDetalhe />} />
+            <Route path="/contribuicoes-off" element={<OffContribuicoes />} />
             <Route path="/mercados" element={<Mercados />} />
             <Route path="/mercados/novo" element={<MercadoForm />} />
             <Route path="/mercados/:id/editar" element={<MercadoForm />} />

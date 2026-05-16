@@ -4,6 +4,7 @@ import HeaderSlot from '../components/HeaderSlot';
 import { uniqueSlug } from '../utils/slug';
 import { upsertUserIngredient } from '../data/userIngredients';
 import { allIngredientIds, findIngredientById } from '../data/ingredients';
+import { upsertOffContribution } from '../data/offContributions';
 import type { Ingredient, IngredientCategory, Unit } from '../types/ingredient';
 import { INGREDIENT_CATEGORIES } from '../types/ingredient';
 
@@ -19,13 +20,16 @@ export default function IngredienteForm() {
   const [searchParams] = useSearchParams();
   const editing = paramId !== undefined;
   const existing: Ingredient | undefined = editing ? findIngredientById(paramId!) : undefined;
+  const scannedBarcode = searchParams.get('barcode') ?? '';
   const returnPath =
-    searchParams.get('return') ?? (editing && existing ? `/ingredientes/${existing.id}` : '/ingredientes');
+    searchParams.get('return') ??
+    (editing && existing ? `/ingredientes/${existing.id}` : '/ingredientes');
 
   const [name, setName] = useState(existing?.name ?? '');
   const [brand, setBrand] = useState(existing?.brand ?? '');
   const [unit, setUnit] = useState<Unit>(existing?.default_unit ?? 'g');
   const [category, setCategory] = useState<IngredientCategory | ''>(existing?.category ?? '');
+  const [contributeOff, setContributeOff] = useState(Boolean(scannedBarcode));
   const [error, setError] = useState<string | null>(null);
 
   if (editing && !existing) {
@@ -47,7 +51,7 @@ export default function IngredienteForm() {
       return;
     }
     const id = existing?.id ?? uniqueSlug(name.trim(), allIngredientIds());
-    upsertUserIngredient({
+    const payload: Ingredient = {
       ...(existing ?? {}),
       id,
       name: name.trim(),
@@ -55,7 +59,20 @@ export default function IngredienteForm() {
       default_unit: unit,
       category: category || null,
       nutrition_per_100: existing?.nutrition_per_100 ?? null,
-    } as Parameters<typeof upsertUserIngredient>[0]);
+    };
+    if (!editing && scannedBarcode) {
+      payload.off_barcode = scannedBarcode;
+    }
+    upsertUserIngredient(payload as Parameters<typeof upsertUserIngredient>[0]);
+    if (!editing && scannedBarcode && contributeOff) {
+      upsertOffContribution({
+        id: `off-${scannedBarcode}`,
+        barcode: scannedBarcode,
+        product_name: name.trim(),
+        brands: brand.trim() || undefined,
+        created_at: new Date().toISOString(),
+      });
+    }
     if (editing) {
       navigate(returnPath);
       return;
@@ -84,6 +101,16 @@ export default function IngredienteForm() {
       {error && (
         <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
           {error}
+        </div>
+      )}
+
+      {scannedBarcode && (
+        <div className="mb-4 rounded-xl border border-zinc-200 bg-zinc-100 p-3 text-xs dark:border-zinc-800 dark:bg-zinc-900">
+          <p className="mb-1 text-zinc-500 dark:text-zinc-400">Código escaneado</p>
+          <p className="font-mono text-sm text-zinc-900 dark:text-zinc-100">{scannedBarcode}</p>
+          <p className="mt-1 text-zinc-500 dark:text-zinc-400">
+            Não estava no Open Food Facts.
+          </p>
         </div>
       )}
 
@@ -137,6 +164,21 @@ export default function IngredienteForm() {
           ))}
         </select>
       </Field>
+
+      {!editing && scannedBarcode && (
+        <label className="mb-3 flex items-start gap-2 rounded-xl border border-zinc-200 bg-white p-3 text-xs dark:border-zinc-800 dark:bg-zinc-900">
+          <input
+            type="checkbox"
+            checked={contributeOff}
+            onChange={(e) => setContributeOff(e.target.checked)}
+            className="mt-0.5 h-4 w-4 accent-brand-500"
+          />
+          <span className="text-zinc-700 dark:text-zinc-300">
+            Salvar como rascunho para contribuir com o Open Food Facts depois. Você pode revisar
+            antes de enviar.
+          </span>
+        </label>
+      )}
 
       {!editing && (
         <p className="mt-4 text-xs text-zinc-500 dark:text-zinc-400">

@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import HeaderSlot from '../components/HeaderSlot';
 import SearchableSelect from '../components/SearchableSelect';
+import ScanButton from '../components/ScanButton';
+import BarcodeScannerModal from '../components/BarcodeScannerModal';
 import {
   upsertShoppingItem,
   deleteShoppingItem,
@@ -11,6 +14,7 @@ import { upsertPantryItem, usePantryItems } from '../data/pantry';
 import { useAllIngredients } from '../data/ingredients';
 import { useMarkets } from '../data/markets';
 import { findRecipeById } from '../data/recipes';
+import { handleScanForShoppingList } from '../lib/scanActions';
 import { UNIT_OPTIONS, unitLabel } from '../utils/units';
 import type { ShoppingItem } from '../types/shoppingList';
 import type { Ingredient } from '../types/ingredient';
@@ -31,6 +35,7 @@ export default function Compras() {
   const markets = useMarkets();
   const returnIngredientId = searchParams.get('ingredient') ?? undefined;
   const [adding, setAdding] = useState(() => Boolean(returnIngredientId));
+  const [scanOpen, setScanOpen] = useState(false);
 
   const sortedIngredients = useMemo(
     () => [...allIng].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
@@ -94,6 +99,21 @@ export default function Compras() {
 
   return (
     <div className="mx-auto max-w-md px-4 pt-2 pb-28">
+      <HeaderSlot>
+        <div className="flex-1" />
+        <ScanButton onClick={() => setScanOpen(true)} />
+      </HeaderSlot>
+
+      <BarcodeScannerModal
+        open={scanOpen}
+        onClose={() => setScanOpen(false)}
+        actions={['add-shopping', 'manual-not-found']}
+        onPick={(result, action) => {
+          setScanOpen(false);
+          handleScanForShoppingList(result, action, allIng, navigate);
+        }}
+      />
+
       <button
         type="button"
         onClick={() => setAdding((a) => !a)}
