@@ -25,6 +25,7 @@ export interface Ingredient {
   source_image?: string;
   needs_review?: boolean;
   notes?: string;
+  ceagesp_slug?: string;
 }
 
 export interface IngredientsSeed {
