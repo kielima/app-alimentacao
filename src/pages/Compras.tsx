@@ -313,10 +313,6 @@ function QuickAdd({
   const [store, setStore] = useState('');
 
   const handleIngredientSelect = (value: string) => {
-    if (value === '__new__') {
-      navigate('/ingredientes/novo?return=%2Fcompras');
-      return;
-    }
     setSelectValue(value);
     if (value === '') {
       setIngredientId('');
@@ -363,24 +359,19 @@ function QuickAdd({
 
   return (
     <div className="mb-4 rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
-      {/* Ingrediente (unified) */}
       <div className="mb-2">
-        <select
+        <SearchableSelect
           value={selectValue}
-          onChange={(e) => handleIngredientSelect(e.target.value)}
-          className={quickAddInputClass}
-          autoFocus
-        >
-          <option value="" disabled>
-            Selecione um ingrediente…
-          </option>
-          {ingredients.map((i) => (
-            <option key={i.id} value={i.id}>
-              {i.brand ? `${i.brand} — ${i.name}` : i.name}
-            </option>
-          ))}
-          <option value="__new__">➕ Criar novo ingrediente</option>
-        </select>
+          onChange={handleIngredientSelect}
+          options={ingredients.map((i) => ({
+            value: i.id,
+            label: i.brand ? `${i.brand} — ${i.name}` : i.name,
+          }))}
+          placeholder="Selecione um ingrediente…"
+          createLabel="➕ Criar novo ingrediente"
+          onCreate={() => navigate('/ingredientes/novo?return=%2Fcompras')}
+          className="text-sm"
+        />
       </div>
       <div className="mb-2 grid grid-cols-2 gap-2">
         <input
