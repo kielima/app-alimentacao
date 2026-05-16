@@ -6,6 +6,7 @@ const tabs = [
   { to: '/plano', icon: '📅', label: 'Plano' },
   { to: '/refeicoes', icon: '📋', label: 'Refeições' },
   { to: '/receitas', icon: '🍳', label: 'Receitas' },
+  { to: '/ingredientes', icon: '🥕', label: 'Ingredientes' },
   { to: '/dispensa', icon: '🥫', label: 'Dispensa' },
   { to: '/compras', icon: '🛒', label: 'Compras' },
   { to: '/mercados', icon: '🏪', label: 'Mercados' },
