@@ -207,7 +207,7 @@ export default function Ingredientes() {
                         : 'sem dados nutricionais'}
                     </p>
                   </div>
-                  {(ing.needs_review ||
+                  {((ing.needs_review && !ing.tbca_code && !ing.off_barcode) ||
                     !ing.nutrition_per_100 ||
                     (ing.category === 'hortifruti' && !ing.ceagesp_slug)) && (
                     <span
