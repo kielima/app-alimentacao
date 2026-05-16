@@ -33,7 +33,7 @@ export default function Refeicoes() {
   }, [meals, query, slot]);
 
   return (
-    <div className="mx-auto max-w-md px-4 pt-2">
+    <div className="mx-auto max-w-md px-4 pt-2 pb-28">
       {/* ← | search | ⚙️ | + */}
       <div className="mb-2 flex items-center gap-2">
         <Link
@@ -65,13 +65,6 @@ export default function Refeicoes() {
             <span className="absolute right-0.5 top-0.5 h-2.5 w-2.5 rounded-full bg-brand-500 ring-2 ring-white dark:ring-zinc-950" />
           )}
         </button>
-        <Link
-          to="/refeicoes/nova"
-          aria-label="Nova refeição"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500 text-xl font-bold text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
-        >
-          +
-        </Link>
       </div>
 
       {isFiltering && (
@@ -139,6 +132,14 @@ export default function Refeicoes() {
           })}
         </ul>
       )}
+
+      <Link
+        to="/refeicoes/nova"
+        aria-label="Nova refeição"
+        className="fixed bottom-20 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-brand-500 text-3xl font-bold text-white shadow-lg hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
+      >
+        +
+      </Link>
     </div>
   );
 }
