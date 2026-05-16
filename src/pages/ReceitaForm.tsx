@@ -200,7 +200,11 @@ export default function ReceitaForm() {
     const recipe = formToRecipe(state, original, ingredientMap);
     recipe.id = recipeId;
     upsertUserRecipe(recipe);
-    navigate(`/receitas/${recipeId}`);
+    if (editing) {
+      navigate(-1);
+    } else {
+      navigate(`/receitas/${recipeId}`, { replace: true });
+    }
   };
 
   return (
@@ -345,13 +349,14 @@ export default function ReceitaForm() {
         onChange={(items) => setState((s) => ({ ...s, steps_congelada: items }))}
       />
 
-      <Link
-        to={editing ? `/receitas/${id}` : '/receitas'}
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
         aria-label="Cancelar"
         className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-500 text-2xl text-white shadow-lg hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
       >
         ✕
-      </Link>
+      </button>
     </form>
   );
 }

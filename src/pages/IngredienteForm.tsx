@@ -74,13 +74,13 @@ export default function IngredienteForm() {
       });
     }
     if (editing) {
-      navigate(returnPath);
+      navigate(-1);
       return;
     }
     const dest = returnPath.includes('?')
       ? `${returnPath}&ingredient=${id}`
       : `${returnPath}?ingredient=${id}`;
-    navigate(dest);
+    navigate(dest, { replace: true });
   };
 
   return (
@@ -186,13 +186,14 @@ export default function IngredienteForm() {
         </p>
       )}
 
-      <Link
-        to={returnPath}
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
         aria-label="Cancelar"
         className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-500 text-2xl text-white shadow-lg hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
       >
         ✕
-      </Link>
+      </button>
     </form>
   );
 }
