@@ -1,10 +1,11 @@
-import { useEffect, useState, type FormEvent } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useState, type FormEvent } from 'react';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import HeaderSlot from '../components/HeaderSlot';
 import { uniqueSlug } from '../utils/slug';
 import { upsertUserIngredient } from '../data/userIngredients';
-import { allIngredientIds } from '../data/ingredients';
+import { allIngredientIds, findIngredientById } from '../data/ingredients';
 import { upsertOffContribution } from '../data/offContributions';
-import type { IngredientCategory, Unit } from '../types/ingredient';
+import type { Ingredient, IngredientCategory, Unit } from '../types/ingredient';
 import { INGREDIENT_CATEGORIES } from '../types/ingredient';
 
 const unitOptions: { value: Unit; label: string }[] = [
@@ -15,20 +16,32 @@ const unitOptions: { value: Unit; label: string }[] = [
 
 export default function IngredienteForm() {
   const navigate = useNavigate();
+  const { id: paramId } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
-  const returnPath = searchParams.get('return') ?? '/ingredientes';
+  const editing = paramId !== undefined;
+  const existing: Ingredient | undefined = editing ? findIngredientById(paramId!) : undefined;
   const scannedBarcode = searchParams.get('barcode') ?? '';
+  const returnPath =
+    searchParams.get('return') ??
+    (editing && existing ? `/ingredientes/${existing.id}` : '/ingredientes');
 
-  const [name, setName] = useState('');
-  const [brand, setBrand] = useState('');
-  const [unit, setUnit] = useState<Unit>('g');
-  const [category, setCategory] = useState<IngredientCategory | ''>('');
-  const [contributeOff, setContributeOff] = useState(true);
+  const [name, setName] = useState(existing?.name ?? '');
+  const [brand, setBrand] = useState(existing?.brand ?? '');
+  const [unit, setUnit] = useState<Unit>(existing?.default_unit ?? 'g');
+  const [category, setCategory] = useState<IngredientCategory | ''>(existing?.category ?? '');
+  const [contributeOff, setContributeOff] = useState(Boolean(scannedBarcode));
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!scannedBarcode) setContributeOff(false);
-  }, [scannedBarcode]);
+  if (editing && !existing) {
+    return (
+      <div className="mx-auto max-w-md px-4 pt-12 text-center">
+        <p className="mb-4 text-zinc-500 dark:text-zinc-400">Ingrediente não encontrado.</p>
+        <Link to="/ingredientes" className="text-brand-600 underline dark:text-brand-400">
+          Voltar à lista
+        </Link>
+      </div>
+    );
+  }
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -37,17 +50,21 @@ export default function IngredienteForm() {
       setError('Informe o nome do ingrediente');
       return;
     }
-    const id = uniqueSlug(name.trim(), allIngredientIds());
-    upsertUserIngredient({
+    const id = existing?.id ?? uniqueSlug(name.trim(), allIngredientIds());
+    const payload: Ingredient = {
+      ...(existing ?? {}),
       id,
       name: name.trim(),
       brand: brand.trim() || null,
       default_unit: unit,
       category: category || null,
-      nutrition_per_100: null,
-      off_barcode: scannedBarcode || undefined,
-    } as Parameters<typeof upsertUserIngredient>[0]);
-    if (scannedBarcode && contributeOff) {
+      nutrition_per_100: existing?.nutrition_per_100 ?? null,
+    };
+    if (!editing && scannedBarcode) {
+      payload.off_barcode = scannedBarcode;
+    }
+    upsertUserIngredient(payload as Parameters<typeof upsertUserIngredient>[0]);
+    if (!editing && scannedBarcode && contributeOff) {
       upsertOffContribution({
         id: `off-${scannedBarcode}`,
         barcode: scannedBarcode,
@@ -56,6 +73,10 @@ export default function IngredienteForm() {
         created_at: new Date().toISOString(),
       });
     }
+    if (editing) {
+      navigate(returnPath);
+      return;
+    }
     const dest = returnPath.includes('?')
       ? `${returnPath}&ingredient=${id}`
       : `${returnPath}?ingredient=${id}`;
@@ -63,22 +84,19 @@ export default function IngredienteForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mx-auto max-w-md px-4 pb-6">
-      <div className="sticky top-0 z-10 -mx-4 mb-4 flex items-center gap-3 border-b border-zinc-200 bg-zinc-50/95 px-4 py-2 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/95">
-        <Link
-          to={returnPath}
-          className="rounded-full bg-zinc-200/60 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60"
-        >
-          ✕
-        </Link>
-        <h1 className="flex-1 truncate text-lg font-semibold">Novo ingrediente</h1>
+    <form id="ingrediente-form" onSubmit={handleSubmit} className="mx-auto max-w-md px-4 pt-2 pb-28">
+      <HeaderSlot>
+        <h1 className="min-w-0 flex-1 truncate text-lg font-semibold">
+          {editing ? 'Editar ingrediente' : 'Novo ingrediente'}
+        </h1>
         <button
           type="submit"
-          className="rounded-full bg-brand-500 px-4 py-1.5 text-sm font-medium text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
+          form="ingrediente-form"
+          className="shrink-0 rounded-full bg-brand-500 px-4 py-1.5 text-sm font-medium text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
         >
           Salvar
         </button>
-      </div>
+      </HeaderSlot>
 
       {error && (
         <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
@@ -111,7 +129,7 @@ export default function IngredienteForm() {
       <Field label="Marca (opcional)">
         <input
           type="text"
-          value={brand}
+          value={brand ?? ''}
           onChange={(e) => setBrand(e.target.value)}
           className={inputClass}
           placeholder='Ex.: "Urbano"'
@@ -147,7 +165,7 @@ export default function IngredienteForm() {
         </select>
       </Field>
 
-      {scannedBarcode && (
+      {!editing && scannedBarcode && (
         <label className="mb-3 flex items-start gap-2 rounded-xl border border-zinc-200 bg-white p-3 text-xs dark:border-zinc-800 dark:bg-zinc-900">
           <input
             type="checkbox"
@@ -162,9 +180,19 @@ export default function IngredienteForm() {
         </label>
       )}
 
-      <p className="mt-4 text-xs text-zinc-500 dark:text-zinc-400">
-        Dados nutricionais podem ser adicionados depois na página do ingrediente.
-      </p>
+      {!editing && (
+        <p className="mt-4 text-xs text-zinc-500 dark:text-zinc-400">
+          Dados nutricionais podem ser adicionados depois na página do ingrediente.
+        </p>
+      )}
+
+      <Link
+        to={returnPath}
+        aria-label="Cancelar"
+        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-500 text-2xl text-white shadow-lg hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
+      >
+        ✕
+      </Link>
     </form>
   );
 }
