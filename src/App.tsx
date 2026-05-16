@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
-import TabBar from './components/TabBar';
+import NavMenu from './components/NavMenu';
 import HeaderActions from './components/HeaderActions';
 import PinScreen from './components/PinScreen';
 import LoadingSplash from './components/LoadingSplash';
@@ -39,10 +39,11 @@ export default function App() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex items-center justify-end px-4 pt-3">
+      <header className="flex items-center justify-between px-4 pt-3">
+        <NavMenu />
         <HeaderActions onSignOut={signOut} />
       </header>
-      <main className="flex-1 overflow-y-auto pb-20">
+      <main className="flex-1 overflow-y-auto pb-4">
         <Routes>
           <Route path="/" element={<Navigate to="/receitas" replace />} />
           <Route path="/receitas" element={<Receitas />} />
@@ -65,7 +66,6 @@ export default function App() {
           <Route path="*" element={<Navigate to="/receitas" replace />} />
         </Routes>
       </main>
-      <TabBar />
     </div>
   );
 }
