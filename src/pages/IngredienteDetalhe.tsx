@@ -235,7 +235,10 @@ export default function IngredienteDetalhe() {
             {unitSuffix} ({ingredient.serving_description})
           </p>
         )}
-        {(ingredient.needs_review || !ingredient.nutrition_per_100) && (
+        {(!ingredient.nutrition_per_100 ||
+          (ingredient.needs_review &&
+            !ingredient.tbca_code &&
+            !ingredient.off_barcode)) && (
           <p className="mt-2 inline-block rounded-md bg-amber-100 px-2 py-1 text-xs text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
             ⚠️ Valores nutricionais ainda em revisão
           </p>
