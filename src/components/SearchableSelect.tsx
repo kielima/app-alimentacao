@@ -11,7 +11,7 @@ interface Props {
   options: SearchableOption[];
   placeholder?: string;
   createLabel?: string;
-  onCreate?: () => void;
+  onCreate?: (query?: string) => void;
   className?: string;
 }
 
@@ -31,7 +31,7 @@ export default function SearchableSelect({
   const [query, setQuery] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const selectedLabel = options.find((o) => o.value === value)?.label ?? '';
+  const selectedLabel = options.find((o) => o.value === value)?.label ?? value;
   const filtered = query.trim()
     ? options.filter((o) => o.label.toLowerCase().includes(query.toLowerCase()))
     : options;
@@ -106,8 +106,9 @@ export default function SearchableSelect({
                 type="button"
                 onPointerDown={(e) => e.preventDefault()}
                 onClick={() => {
+                  const q = query;
                   close();
-                  onCreate?.();
+                  onCreate?.(q);
                 }}
                 className="w-full px-3 py-2.5 text-left text-sm text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-900/20"
               >
