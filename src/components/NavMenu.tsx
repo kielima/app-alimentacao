@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 
 const tabs = [
   { to: '/plano', icon: '📅', label: 'Plano' },
-  { to: '/refeicoes', icon: '📋', label: 'Minhas Refeições' },
+  { to: '/refeicoes', icon: '📋', label: 'Refeições' },
   { to: '/receitas', icon: '🍳', label: 'Receitas' },
   { to: '/dispensa', icon: '🥫', label: 'Dispensa' },
   { to: '/compras', icon: '🛒', label: 'Compras' },
