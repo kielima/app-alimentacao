@@ -26,10 +26,9 @@ import { PlanoProvider, usePlano } from './contexts/PlanoContext';
 import { DAYS_OF_WEEK, todayDayOfWeek, type DayOfWeek } from './types/mealPlan';
 
 function PlanoHeaderStrip() {
-  const { day, setDay, planType, setPlanType } = usePlano();
-  const isTraining = planType === 'training_day';
+  const { day, setDay } = usePlano();
   return (
-    <div className="flex flex-1 items-center gap-1 mx-2">
+    <div className="flex flex-1 items-center gap-1">
       <button
         type="button"
         onClick={() => setDay((d) => ((d + 6) % 7) as DayOfWeek)}
@@ -58,16 +57,23 @@ function PlanoHeaderStrip() {
       >
         ▶
       </button>
-      <button
-        type="button"
-        onClick={() => setPlanType(isTraining ? 'rest_day' : 'training_day')}
-        className="rounded-full bg-zinc-200/60 px-2 py-1 text-sm transition-colors hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:hover:bg-zinc-700/60"
-        aria-label={`${isTraining ? 'Dia de Treino' : 'Dia de Descanso'}. Clique para alternar.`}
-        title={isTraining ? 'Dia de Treino' : 'Dia de Descanso'}
-      >
-        <span aria-hidden>{isTraining ? '🏋️' : '😴'}</span>
-      </button>
     </div>
+  );
+}
+
+function PlanTypeToggleButton() {
+  const { planType, setPlanType } = usePlano();
+  const isTraining = planType === 'training_day';
+  return (
+    <button
+      type="button"
+      onClick={() => setPlanType(isTraining ? 'rest_day' : 'training_day')}
+      className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-zinc-200/60 px-3 text-sm text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60"
+      aria-label={`${isTraining ? 'Dia de Treino' : 'Dia de Descanso'}. Clique para alternar.`}
+      title={isTraining ? 'Dia de Treino' : 'Dia de Descanso'}
+    >
+      <span aria-hidden>{isTraining ? '🏋️' : '😴'}</span>
+    </button>
   );
 }
 
@@ -129,7 +135,10 @@ export default function App() {
         <header className="mx-auto flex w-full max-w-md items-center px-4 pt-3 gap-2">
           <NavMenu onSignOut={signOut} />
           {isPlano ? (
-            <PlanoHeaderStrip />
+            <>
+              <PlanoHeaderStrip />
+              <PlanTypeToggleButton />
+            </>
           ) : (
             <div id={HEADER_SLOT_ID} className="flex min-w-0 flex-1 items-center gap-2" />
           )}
