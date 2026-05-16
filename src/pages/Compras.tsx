@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import SearchableSelect from '../components/SearchableSelect';
 import {
   upsertShoppingItem,
   deleteShoppingItem,
@@ -309,9 +310,7 @@ function QuickAdd({
   const [unit, setUnit] = useState(initIng?.default_unit ?? '');
   const [price, setPrice] = useState('');
 
-  // Store dropdown
-  const [storeSelect, setStoreSelect] = useState('');
-  const [storeCustom, setStoreCustom] = useState('');
+  const [store, setStore] = useState('');
 
   const handleIngredientSelect = (value: string) => {
     if (value === '__new__') {
@@ -331,33 +330,19 @@ function QuickAdd({
     }
   };
 
-  const storeSelectDisplayValue =
-    storeSelect === '__outro__' || (!knownStores.includes(storeSelect) && storeSelect !== '')
-      ? '__outro__'
-      : storeSelect;
-
-  useEffect(() => {
-    if (storeSelect !== '' && storeSelect !== '__outro__' && !knownStores.includes(storeSelect)) {
-      setStoreCustom(storeSelect);
-      setStoreSelect('__outro__');
-    }
-  }, [knownStores]);
-
   const effectiveRaw = rawText;
 
   const canAdd = ingredientId !== '';
 
   const handleAdd = () => {
     if (!canAdd) return;
-    const storeValue =
-      storeSelect === '__outro__' ? storeCustom.trim() || null : storeSelect || null;
     upsertShoppingItem({
       id: `shopping-${Date.now()}`,
       ingredient_id: ingredientId || null,
       raw_text: effectiveRaw || rawText.trim(),
       quantity: quantity ? Number(quantity) : null,
       unit: unit || null,
-      store: storeValue,
+      store: store || null,
       price: price ? Number(price) : null,
       checked: false,
       source: 'manual',
@@ -368,8 +353,7 @@ function QuickAdd({
     setIngredientId('');
     setQuantity('');
     setUnit('');
-    setStoreSelect('');
-    setStoreCustom('');
+    setStore('');
     setPrice('');
     onDone();
   };
@@ -421,34 +405,16 @@ function QuickAdd({
           ))}
         </select>
       </div>
-      {/* Store dropdown (Change B) */}
       <div className="mb-2">
-        <select
-          value={storeSelectDisplayValue}
-          onChange={(e) => {
-            setStoreSelect(e.target.value);
-            if (e.target.value !== '__outro__') setStoreCustom('');
-          }}
-          className={quickAddInputClass}
-        >
-          <option value="">— Sem mercado</option>
-          {knownStores.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-          <option value="__outro__">➕ Outro...</option>
-        </select>
-        {storeSelect === '__outro__' && (
-          <input
-            type="text"
-            value={storeCustom}
-            onChange={(e) => setStoreCustom(e.target.value)}
-            className={`${quickAddInputClass} mt-2`}
-            placeholder='Ex.: "Pão de Açúcar"'
-            autoFocus
-          />
-        )}
+        <SearchableSelect
+          value={store}
+          onChange={setStore}
+          options={knownStores.map((s) => ({ value: s, label: s }))}
+          placeholder="— Sem mercado"
+          createLabel="➕ Outro mercado…"
+          onCreate={(q) => { if (q?.trim()) setStore(q.trim()); }}
+          className="text-sm"
+        />
       </div>
       <div className="mb-2">
         <input
