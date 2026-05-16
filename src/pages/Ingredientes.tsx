@@ -18,13 +18,28 @@ const filters: { value: IngredientFilter; label: string }[] = [
   { value: 'todos', label: 'Todos' },
   { value: 'marcas', label: 'Marcas' },
   { value: 'genericos', label: 'Genéricos' },
+  { value: 'a-verificar', label: 'A verificar' },
 ];
 
 export default function Ingredientes() {
-  const { list, query, setQuery, filter, setFilter, total } = useIngredients();
-  const [showFilters, setShowFilters] = useState(false);
   const shoppingItems = useShoppingItems();
   const pantryItems = usePantryItems();
+
+  const listedIngredientIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const item of shoppingItems) {
+      if (item.ingredient_id) set.add(item.ingredient_id);
+    }
+    for (const item of pantryItems) {
+      if (item.ingredient_id) set.add(item.ingredient_id);
+    }
+    return set;
+  }, [shoppingItems, pantryItems]);
+
+  const { list, query, setQuery, filter, setFilter, total } = useIngredients({
+    listedIngredientIds,
+  });
+  const [showFilters, setShowFilters] = useState(false);
 
   const hasActiveFilters = filter !== 'todos';
   const isFiltering = hasActiveFilters || !!query.trim();

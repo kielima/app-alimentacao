@@ -3,7 +3,11 @@ import { useAllIngredients } from '../data/ingredients';
 import { matches } from '../utils/search';
 import type { Ingredient } from '../types/ingredient';
 
-export type IngredientFilter = 'todos' | 'marcas' | 'genericos';
+export type IngredientFilter = 'todos' | 'marcas' | 'genericos' | 'a-verificar';
+
+interface UseIngredientsOptions {
+  listedIngredientIds?: Set<string>;
+}
 
 interface UseIngredientsResult {
   list: Ingredient[];
@@ -14,7 +18,8 @@ interface UseIngredientsResult {
   total: number;
 }
 
-export function useIngredients(): UseIngredientsResult {
+export function useIngredients(options: UseIngredientsOptions = {}): UseIngredientsResult {
+  const { listedIngredientIds } = options;
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<IngredientFilter>('todos');
   const allIngredients = useAllIngredients();
@@ -24,11 +29,12 @@ export function useIngredients(): UseIngredientsResult {
       .filter((i) => {
         if (filter === 'marcas') return Boolean(i.brand);
         if (filter === 'genericos') return !i.brand;
+        if (filter === 'a-verificar') return !listedIngredientIds?.has(i.id);
         return true;
       })
       .filter((i) => matches(`${i.name} ${i.brand ?? ''}`, query))
       .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
-  }, [query, filter, allIngredients]);
+  }, [query, filter, allIngredients, listedIngredientIds]);
 
   return { list, query, setQuery, filter, setFilter, total: allIngredients.length };
 }
