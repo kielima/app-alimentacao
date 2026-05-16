@@ -129,18 +129,21 @@ export default function Plano() {
           📅
         </span>
         <h1 className="text-lg font-semibold">Plano Alimentar</h1>
-        <button
-          type="button"
-          onClick={() => setEditing((e) => !e)}
-          className={`ml-auto rounded-full px-3 py-1.5 text-sm font-medium ${
-            editing
-              ? 'bg-zinc-200/60 text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200'
-              : 'bg-brand-500 text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500'
-          }`}
-        >
-          {editing ? '✓ Concluir' : '✏️ Editar'}
-        </button>
       </div>
+
+      <button
+        type="button"
+        onClick={() => setEditing((e) => !e)}
+        aria-label={editing ? 'Concluir edição' : 'Editar plano'}
+        className={`fixed bottom-20 left-4 z-40 flex h-14 w-14 items-center justify-center rounded-full text-2xl shadow-lg transition-colors ${
+          editing
+            ? 'bg-zinc-200 text-zinc-700 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-600'
+            : 'bg-brand-500 text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500'
+        }`}
+      >
+        {editing ? '✓' : '✏️'}
+      </button>
+
 
       <div className="mb-3 flex items-center gap-2">
         <button

@@ -88,24 +88,24 @@ export default function Compras() {
 
   return (
     <div className="mx-auto max-w-md px-4 pt-2">
-      {/* count | + toggle */}
-      <div className="mb-2 flex items-center gap-2">
-        <span className="flex-1 text-xs text-zinc-400 dark:text-zinc-500">
-          {items.length > 0 ? `${items.length} item${items.length !== 1 ? 's' : ''}` : ''}
-        </span>
-        <button
-          type="button"
-          onClick={() => setAdding((a) => !a)}
-          aria-label={adding ? 'Fechar' : 'Adicionar item'}
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xl font-bold transition-colors ${
-            adding
-              ? 'bg-zinc-200 text-zinc-600 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600'
-              : 'bg-brand-500 text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500'
-          }`}
-        >
-          {adding ? '✕' : '+'}
-        </button>
-      </div>
+      {items.length > 0 && (
+        <p className="mb-2 text-xs text-zinc-400 dark:text-zinc-500">
+          {items.length} item{items.length !== 1 ? 's' : ''}
+        </p>
+      )}
+
+      <button
+        type="button"
+        onClick={() => setAdding((a) => !a)}
+        aria-label={adding ? 'Fechar' : 'Adicionar item'}
+        className={`fixed bottom-20 left-4 z-40 flex h-14 w-14 items-center justify-center rounded-full text-3xl font-bold shadow-lg transition-colors ${
+          adding
+            ? 'bg-zinc-200 text-zinc-600 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600'
+            : 'bg-brand-500 text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500'
+        }`}
+      >
+        {adding ? '✕' : '+'}
+      </button>
 
       {totalEstimated > 0 && (
         <div className="mb-3 rounded-xl bg-zinc-100 px-4 py-2 text-sm dark:bg-zinc-800">
