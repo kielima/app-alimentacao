@@ -58,12 +58,6 @@ export default function Mercados() {
         />
       </HeaderSlot>
 
-      {markets.length > 0 && (
-        <p className="mb-2 text-xs text-zinc-400 dark:text-zinc-500">
-          {filtered.length} mercado{filtered.length !== 1 ? 's' : ''}
-        </p>
-      )}
-
       {filtered.length === 0 ? (
         <div className="mt-12 text-center">
           <p className="mb-2 text-sm text-zinc-500 dark:text-zinc-400">

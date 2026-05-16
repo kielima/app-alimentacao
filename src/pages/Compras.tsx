@@ -94,12 +94,6 @@ export default function Compras() {
 
   return (
     <div className="mx-auto max-w-md px-4 pt-2 pb-28">
-      {items.length > 0 && (
-        <p className="mb-2 text-xs text-zinc-400 dark:text-zinc-500">
-          {items.length} item{items.length !== 1 ? 's' : ''}
-        </p>
-      )}
-
       <button
         type="button"
         onClick={() => setAdding((a) => !a)}
