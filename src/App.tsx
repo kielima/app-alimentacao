@@ -40,8 +40,8 @@ export default function App() {
   return (
     <div className="flex h-full flex-col">
       <header className="flex items-center justify-between px-4 pt-3">
-        <NavMenu />
-        <HeaderActions onSignOut={signOut} />
+        <NavMenu onSignOut={signOut} />
+        <HeaderActions />
       </header>
       <main className="flex-1 overflow-y-auto pb-4">
         <Routes>
