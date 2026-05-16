@@ -13,6 +13,9 @@ import {
   deletePantryItem,
   usePantryItems,
 } from '../data/pantry';
+import { useAllRecipes, recipeCategories } from '../data/recipes';
+import { useAllMeals } from '../data/meals';
+import { MEAL_TYPES } from '../types/mealPlan';
 import type { NutritionPer100 } from '../types/ingredient';
 
 const macroLabels: { key: keyof NutritionPer100; label: string; unit: string }[] = [
@@ -52,6 +55,8 @@ export default function IngredienteDetalhe() {
   const [showExtras, setShowExtras] = useState(false);
   const shoppingItems = useShoppingItems();
   const pantryItems = usePantryItems();
+  const allRecipes = useAllRecipes();
+  const allMeals = useAllMeals();
 
   const handleDelete = () => {
     if (!id) return;
@@ -121,6 +126,31 @@ export default function IngredienteDetalhe() {
       added_at: new Date().toISOString(),
     });
   };
+
+  const recipesUsingIngredient = useMemo(() => {
+    if (!ingredient) return [];
+    return allRecipes
+      .filter((r) => {
+        const inMain = r.ingredients?.some((i) => i.ingredient_id === ingredient.id);
+        const inMolho = r.ingredients_molho?.some((i) => i.ingredient_id === ingredient.id);
+        return inMain || inMolho;
+      })
+      .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+  }, [allRecipes, ingredient]);
+
+  const mealsUsingIngredient = useMemo(() => {
+    if (!ingredient) return [];
+    const recipeIds = new Set(recipesUsingIngredient.map((r) => r.id));
+    return allMeals
+      .filter((m) =>
+        m.items.some(
+          (it) =>
+            (it.kind === 'ingredient' && it.ingredient_id === ingredient.id) ||
+            (it.kind === 'recipe' && it.recipe_id && recipeIds.has(it.recipe_id)),
+        ),
+      )
+      .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+  }, [allMeals, ingredient, recipesUsingIngredient]);
 
   const factor = quantity / 100;
 
@@ -312,6 +342,60 @@ export default function IngredienteDetalhe() {
           </div>
         )}
       </section>
+
+      {recipesUsingIngredient.length > 0 && (
+        <section className="mb-4 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            Receitas com este ingrediente ({recipesUsingIngredient.length})
+          </h2>
+          <ul className="space-y-1.5">
+            {recipesUsingIngredient.map((r) => {
+              const cat = recipeCategories.find((c) => c.id === r.category);
+              return (
+                <li key={r.id}>
+                  <Link
+                    to={`/receitas/${r.id}`}
+                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  >
+                    <span aria-hidden className="text-lg">
+                      {cat?.icon ?? '🍽️'}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate">{r.name}</span>
+                    <span className="text-zinc-400 dark:text-zinc-500">›</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
+      {mealsUsingIngredient.length > 0 && (
+        <section className="mb-4 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            Refeições com este ingrediente ({mealsUsingIngredient.length})
+          </h2>
+          <ul className="space-y-1.5">
+            {mealsUsingIngredient.map((m) => {
+              const slotDef = MEAL_TYPES.find((t) => t.value === m.meal_type);
+              return (
+                <li key={m.id}>
+                  <Link
+                    to={`/refeicoes/${m.id}`}
+                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  >
+                    <span aria-hidden className="text-lg">
+                      {slotDef?.icon ?? '🍽️'}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate">{m.name}</span>
+                    <span className="text-zinc-400 dark:text-zinc-500">›</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       {(ingredient.ingredients_text || ingredient.allergens) && (
         <section className="mb-4 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
