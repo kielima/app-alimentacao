@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import HeaderSlot from '../components/HeaderSlot';
 import { findIngredientById, isSeedIngredient } from '../data/ingredients';
 import { deleteUserIngredient, getUserIngredientById } from '../data/userIngredients';
 import { hideIngredient } from '../data/hiddenIngredients';
@@ -183,15 +184,8 @@ export default function IngredienteDetalhe() {
 
   return (
     <div className="mx-auto max-w-md px-4 pt-2 pb-6">
-      <div className="mb-4 flex items-center gap-2">
-        <Link
-          to="/ingredientes"
-          className="rounded-full bg-zinc-200/60 px-2 py-1 text-sm text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60"
-          aria-label="Voltar"
-        >
-          ←
-        </Link>
-        <h1 className="flex-1 truncate text-lg font-semibold">{ingredient.name}</h1>
+      <HeaderSlot>
+        <h1 className="min-w-0 flex-1 truncate text-lg font-semibold">{ingredient.name}</h1>
         <button
           type="button"
           onClick={handleToggleCart}
@@ -227,7 +221,7 @@ export default function IngredienteDetalhe() {
         >
           🗑️
         </button>
-      </div>
+      </HeaderSlot>
 
       <div className="mb-4">
         {ingredient.brand && (
