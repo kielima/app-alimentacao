@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import HeaderSlot from '../components/HeaderSlot';
 import SearchableSelect from '../components/SearchableSelect';
 import { useAllIngredients, getAllIngredients, findIngredientById } from '../data/ingredients';
 import { getPantryItem, upsertPantryItem, deletePantryItem, usePantryItems } from '../data/pantry';
@@ -176,22 +177,16 @@ export default function DispensaForm() {
       : storeSelect;
 
   return (
-    <form onSubmit={handleSubmit} className="mx-auto max-w-md px-4 pb-6">
-      <div className="sticky top-0 z-10 -mx-4 mb-4 flex items-center gap-3 border-b border-zinc-200 bg-zinc-50/95 px-4 py-2 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/95">
-        <Link
-          to="/dispensa"
-          className="rounded-full bg-zinc-200/60 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60"
-        >
-          ✕
-        </Link>
-        <h1 className="flex-1 truncate text-lg font-semibold">
+    <form id="dispensa-form" onSubmit={handleSubmit} className="mx-auto max-w-md px-4 pt-2 pb-28">
+      <HeaderSlot>
+        <h1 className="min-w-0 flex-1 truncate text-lg font-semibold">
           {editing ? 'Editar item' : 'Novo item'}
         </h1>
         {editing && (
           <button
             type="button"
             onClick={handleDelete}
-            className="rounded-full bg-zinc-200/60 px-3 py-1.5 text-sm text-zinc-700 hover:bg-red-100 hover:text-red-700 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-red-900/30 dark:hover:text-red-300"
+            className="shrink-0 rounded-full bg-zinc-200/60 px-3 py-1.5 text-sm text-zinc-700 hover:bg-red-100 hover:text-red-700 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-red-900/30 dark:hover:text-red-300"
             aria-label="Excluir"
           >
             🗑️
@@ -199,11 +194,12 @@ export default function DispensaForm() {
         )}
         <button
           type="submit"
-          className="rounded-full bg-brand-500 px-4 py-1.5 text-sm font-medium text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
+          form="dispensa-form"
+          className="shrink-0 rounded-full bg-brand-500 px-4 py-1.5 text-sm font-medium text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
         >
           Salvar
         </button>
-      </div>
+      </HeaderSlot>
 
       {error && (
         <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
@@ -313,6 +309,14 @@ export default function DispensaForm() {
           </section>
         ) : null;
       })()}
+
+      <Link
+        to="/dispensa"
+        aria-label="Cancelar"
+        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-500 text-2xl text-white shadow-lg hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
+      >
+        ✕
+      </Link>
     </form>
   );
 }
