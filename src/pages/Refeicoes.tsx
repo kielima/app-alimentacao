@@ -15,6 +15,10 @@ export default function Refeicoes() {
   const meals = useAllMeals();
   const [query, setQuery] = useState('');
   const [slot, setSlot] = useState<SlotFilter>('todas');
+  const [showFilters, setShowFilters] = useState(false);
+
+  const hasActiveFilters = slot !== 'todas';
+  const isFiltering = hasActiveFilters || !!query.trim();
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -30,49 +34,72 @@ export default function Refeicoes() {
 
   return (
     <div className="mx-auto max-w-md px-4 pt-2">
-      <div className="mb-3 flex items-center gap-2">
+      {/* ← | search | ⚙️ | + */}
+      <div className="mb-2 flex items-center gap-2">
         <Link
           to="/plano"
-          className="rounded-full bg-zinc-200/60 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60"
+          aria-label="Voltar ao plano"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-sm text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
         >
-          ← Plano
+          ←
         </Link>
-        <h1 className="text-lg font-semibold">🍽️ Refeições</h1>
-        <span className="text-xs text-zinc-500 dark:text-zinc-400">
-          {filtered.length} de {meals.length}
-        </span>
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="🔍 Buscar refeição…"
+          className="min-w-0 flex-1 rounded-xl border border-zinc-200 bg-white px-4 py-2 text-base placeholder:text-zinc-400 focus:border-brand-500 focus:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
+        />
+        <button
+          type="button"
+          onClick={() => setShowFilters((f) => !f)}
+          aria-label="Filtros"
+          className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg transition-colors ${
+            showFilters
+              ? 'bg-brand-500 dark:bg-brand-600'
+              : 'bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700'
+          }`}
+        >
+          ⚙️
+          {hasActiveFilters && !showFilters && (
+            <span className="absolute right-0.5 top-0.5 h-2.5 w-2.5 rounded-full bg-brand-500 ring-2 ring-white dark:ring-zinc-950" />
+          )}
+        </button>
         <Link
           to="/refeicoes/nova"
-          className="ml-auto rounded-full bg-brand-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
+          aria-label="Nova refeição"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500 text-xl font-bold text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
         >
-          + Nova
+          +
         </Link>
       </div>
 
-      <input
-        type="search"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="🔍 Buscar refeição…"
-        className="mb-3 w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-base placeholder:text-zinc-400 focus:border-brand-500 focus:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
-      />
+      {isFiltering && (
+        <p className="mb-2 text-xs text-zinc-400 dark:text-zinc-500">
+          {filtered.length} de {meals.length} refeição{meals.length !== 1 ? 'ões' : ''}
+        </p>
+      )}
 
-      <div className="-mx-4 mb-3 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {slotChips.map((c) => (
-            <button
-              key={c.value}
-              type="button"
-              onClick={() => setSlot(c.value)}
-              className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                slot === c.value
-                  ? 'bg-brand-500 text-white dark:bg-brand-600'
-                  : 'bg-zinc-200/60 text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60'
-              }`}
-            >
-              <span aria-hidden>{c.icon}</span> {c.label}
-            </button>
-          ))}
+      {showFilters && (
+        <div className="mb-3">
+          <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {slotChips.map((c) => (
+              <button
+                key={c.value}
+                type="button"
+                onClick={() => setSlot(c.value)}
+                className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                  slot === c.value
+                    ? 'bg-brand-500 text-white dark:bg-brand-600'
+                    : 'bg-zinc-200/60 text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60'
+                }`}
+              >
+                <span aria-hidden>{c.icon}</span> {c.label}
+              </button>
+            ))}
+          </div>
         </div>
+      )}
 
       {filtered.length === 0 ? (
         <p className="mt-12 text-center text-sm text-zinc-500 dark:text-zinc-400">
