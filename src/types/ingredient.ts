@@ -26,6 +26,8 @@ export interface Ingredient {
   needs_review?: boolean;
   notes?: string;
   ceagesp_slug?: string;
+  tbca_code?: string;
+  off_barcode?: string;
 }
 
 export interface IngredientsSeed {
