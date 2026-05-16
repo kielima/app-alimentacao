@@ -142,15 +142,6 @@ export default function Plano() {
         </button>
       </div>
 
-      <div className="mb-3">
-        <Link
-          to="/refeicoes"
-          className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-brand-50 hover:text-brand-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-brand-900/30 dark:hover:text-brand-300"
-        >
-          📋 Minhas Refeições
-        </Link>
-      </div>
-
       <div className="mb-3 flex items-center gap-2">
         <button
           type="button"
