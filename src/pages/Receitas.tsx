@@ -53,7 +53,7 @@ export default function Receitas() {
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="🔍 Buscar receita…"
+          placeholder="Buscar receita…"
           className="h-9 min-w-0 flex-1 rounded-xl border border-zinc-200 bg-white px-3 text-sm placeholder:text-zinc-400 focus:border-brand-500 focus:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
         />
         <button
