@@ -4,25 +4,35 @@
 
 Dois pipelines populam `seed/ingredients.json` automaticamente.
 
-### `npm run import:tbca` — ingredientes genéricos via TBCA
+### `npm run scrape:tbca` — ingredientes genéricos via TBCA (sem CSV)
 
-Usa a **Tabela Brasileira de Composição de Alimentos** (USP/FoRC) — http://www.tbca.net.br.
+Faz scraping direto do site http://www.tbca.net.br. **Não precisa baixar nada.**
 
-**Setup:**
-
-1. Baixe o CSV em https://www.kaggle.com/datasets/proflucassoares/alimentos-brasileiros-com-dados-da-tbca (precisa login Kaggle).
-2. Salve em `scripts/data/tbca.csv` (já está no `.gitignore`).
-3. `npm run import:tbca -- --dry` pra ver o que seria mudado.
-4. `npm run import:tbca` pra escrever no seed.
+```
+npm run scrape:tbca -- --dry        # preview
+npm run scrape:tbca                 # escreve no seed
+npm run scrape:tbca -- --code-only  # só preenche tbca_code (preserva nutri existente)
+```
 
 **Como o matching funciona:**
 
+- Baixa todas as ~59 páginas de listagem (~5800 alimentos).
 - Nome normalizado (sem acento, sem palavras genéricas tipo "cru/cozido").
-- Jaro-Winkler ≥ 0.92 + margem de 0.02 sobre o segundo melhor → auto-match.
-- Entre 0.75 e 0.92 → gravado em `scripts/data/tbca-candidates.json` pra revisão manual (formato `[{ingredient_id, ingredient_name, score, tbca_code, tbca_name}]`).
-- Tudo que é auto-preenchido recebe `needs_review: true` — filtre no app antes de tirar o flag.
+- Jaro-Winkler ≥ 0.92 + margem de 0.02 sobre o segundo melhor.
+- **Token check:** todos os tokens significativos do nome do ingrediente
+  precisam aparecer no nome TBCA — evita falsos positivos do tipo
+  "farinha-de-trigo → Farinha de rosca".
+- Pros matches restantes, baixa a página de composição e extrai os valores.
+- Tudo que é auto-preenchido recebe `needs_review: true`.
 
 Idempotente: rodar de novo só toca em ingredientes sem `tbca_code`.
+
+### `npm run import:tbca` — via CSV do Kaggle (alternativa)
+
+Funciona igual ao `scrape:tbca` mas a partir do CSV em
+https://www.kaggle.com/datasets/proflucassoares/alimentos-brasileiros-com-dados-da-tbca
+(precisa login Kaggle). Salve em `scripts/data/tbca.csv` e rode
+`npm run import:tbca`. Útil se o site da TBCA estiver fora do ar.
 
 ### `npm run import:off` — produtos com marca via Open Food Facts
 

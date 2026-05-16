@@ -12,6 +12,7 @@
     "icons": "node scripts/generate-icons.mjs",
     "seed:firestore": "node scripts/seedFirestore.mjs",
     "import:tbca": "node scripts/import-tbca.mjs",
+    "scrape:tbca": "node scripts/scrape-tbca.mjs",
     "import:off": "node scripts/import-off.mjs"
   },
   "dependencies": {
