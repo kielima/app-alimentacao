@@ -435,6 +435,38 @@ export default function IngredienteDetalhe() {
         </p>
       )}
 
+      {ingredient.tbca_code && (
+        <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
+          <span aria-hidden>🍽️ </span>
+          Composição nutricional baseada na{' '}
+          <a
+            href="http://www.tbca.net.br"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-brand-600 underline hover:no-underline dark:text-brand-400"
+          >
+            TBCA — Tabela Brasileira de Composição de Alimentos
+          </a>{' '}
+          (USP/FoRC), código <code className="font-mono">{ingredient.tbca_code}</code>.
+        </p>
+      )}
+
+      {ingredient.off_barcode && (
+        <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
+          <span aria-hidden>🏷️ </span>
+          Dados do rótulo via{' '}
+          <a
+            href={`https://br.openfoodfacts.org/produto/${ingredient.off_barcode}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-brand-600 underline hover:no-underline dark:text-brand-400"
+          >
+            Open Food Facts
+          </a>
+          .
+        </p>
+      )}
+
       <p className="mt-6 text-center text-xs text-zinc-400 dark:text-zinc-600">
         Substitutos · em breve
       </p>
