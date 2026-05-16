@@ -158,10 +158,11 @@ export default function Dispensa() {
                         e.stopPropagation();
                         sendToList(item);
                       }}
-                      className="shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-500 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-brand-900/30 dark:hover:text-brand-400"
+                      className="shrink-0 rounded-full bg-zinc-100 px-2 py-1 text-sm leading-none text-zinc-500 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-brand-900/30 dark:hover:text-brand-400"
                       aria-label="Adicionar à lista de compras"
+                      title="Adicionar à lista de compras"
                     >
-                      + compras
+                      🛒
                     </button>
                   </div>
                 </div>
