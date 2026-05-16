@@ -1,16 +1,20 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import { useMarkets } from '../data/markets';
 import { useShoppingItems } from '../data/shoppingList';
 import { useAllIngredients } from '../data/ingredients';
+import { createUIStore } from '../utils/persistentUIState';
+
+const ui = createUIStore({ query: '' });
 
 export default function Mercados() {
   const markets = useMarkets();
   const shoppingItems = useShoppingItems();
   const allIng = useAllIngredients();
   const navigate = useNavigate();
-  const [query, setQuery] = useState('');
+  const { query } = ui.useStore();
+  const setQuery = (q: string) => ui.set('query', q);
 
   const ingNameMap = useMemo(() => {
     const m = new Map<string, string>();

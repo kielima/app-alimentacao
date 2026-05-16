@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import { useAllMeals } from '../data/meals';
 import { MEAL_TYPES, type MealType } from '../types/mealPlan';
+import { createUIStore } from '../utils/persistentUIState';
 
 type SlotFilter = 'todas' | MealType | 'sem-slot';
 
@@ -12,11 +13,19 @@ const slotChips: { value: SlotFilter; label: string; icon: string }[] = [
   { value: 'sem-slot', label: 'Sem slot', icon: '➖' },
 ];
 
+const ui = createUIStore({
+  query: '',
+  slot: 'todas' as SlotFilter,
+  showFilters: false,
+});
+
 export default function Refeicoes() {
   const meals = useAllMeals();
-  const [query, setQuery] = useState('');
-  const [slot, setSlot] = useState<SlotFilter>('todas');
-  const [showFilters, setShowFilters] = useState(false);
+  const { query, slot, showFilters } = ui.useStore();
+  const setQuery = (q: string) => ui.set('query', q);
+  const setSlot = (s: SlotFilter) => ui.set('slot', s);
+  const setShowFilters = (s: boolean | ((prev: boolean) => boolean)) =>
+    ui.set('showFilters', s);
 
   const hasActiveFilters = slot !== 'todas';
   const isFiltering = hasActiveFilters || !!query.trim();
@@ -67,7 +76,7 @@ export default function Refeicoes() {
       )}
 
       {showFilters && (
-        <div className="mb-3">
+        <div className="sticky top-0 z-10 -mx-4 mb-3 bg-zinc-50/95 px-4 pb-2 pt-2 backdrop-blur supports-[backdrop-filter]:bg-zinc-50/80 dark:bg-zinc-950/95 dark:supports-[backdrop-filter]:bg-zinc-950/80">
           <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {slotChips.map((c) => (
               <button

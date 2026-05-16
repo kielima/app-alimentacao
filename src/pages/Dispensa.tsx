@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import { usePantry, type PantryFilter } from '../hooks/usePantry';
@@ -18,8 +17,17 @@ const filterChips: { value: PantryFilter; label: string }[] = [
 
 export default function Dispensa() {
   const navigate = useNavigate();
-  const { list, query, setQuery, filter, setFilter, total, countsByStatus } = usePantry();
-  const [showFilters, setShowFilters] = useState(false);
+  const {
+    list,
+    query,
+    setQuery,
+    filter,
+    setFilter,
+    showFilters,
+    setShowFilters,
+    total,
+    countsByStatus,
+  } = usePantry();
 
   const hasActiveFilters = filter !== 'todos';
   const isFiltering = hasActiveFilters || !!query.trim();
@@ -75,7 +83,7 @@ export default function Dispensa() {
       )}
 
       {showFilters && (
-        <div className="mb-3">
+        <div className="sticky top-0 z-10 -mx-4 mb-3 bg-zinc-50/95 px-4 pb-2 pt-2 backdrop-blur supports-[backdrop-filter]:bg-zinc-50/80 dark:bg-zinc-950/95 dark:supports-[backdrop-filter]:bg-zinc-950/80">
           <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {filterChips.map((c) => {
               const count =

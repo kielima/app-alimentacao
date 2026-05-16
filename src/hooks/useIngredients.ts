@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useReducer } from 'react';
+import { useMemo } from 'react';
 import { useAllIngredients } from '../data/ingredients';
 import { matches } from '../utils/search';
+import { createUIStore } from '../utils/persistentUIState';
 import type { Ingredient } from '../types/ingredient';
 
 export type IngredientFilter = 'todos' | 'marcas' | 'genericos' | 'a-verificar';
@@ -20,44 +21,16 @@ interface UseIngredientsResult {
   total: number;
 }
 
-const uiState = {
+const ui = createUIStore({
   query: '',
   filter: 'todos' as IngredientFilter,
   showFilters: false,
-};
-const listeners = new Set<() => void>();
-function emit() {
-  listeners.forEach((l) => l());
-}
-function setQueryState(q: string) {
-  if (uiState.query === q) return;
-  uiState.query = q;
-  emit();
-}
-function setFilterState(f: IngredientFilter) {
-  if (uiState.filter === f) return;
-  uiState.filter = f;
-  emit();
-}
-function setShowFiltersState(s: boolean | ((prev: boolean) => boolean)) {
-  const next = typeof s === 'function' ? s(uiState.showFilters) : s;
-  if (uiState.showFilters === next) return;
-  uiState.showFilters = next;
-  emit();
-}
+});
 
 export function useIngredients(options: UseIngredientsOptions = {}): UseIngredientsResult {
   const { listedIngredientIds } = options;
-  const [, force] = useReducer((x: number) => x + 1, 0);
-  useEffect(() => {
-    listeners.add(force);
-    return () => {
-      listeners.delete(force);
-    };
-  }, []);
+  const { query, filter, showFilters } = ui.useStore();
   const allIngredients = useAllIngredients();
-
-  const { query, filter, showFilters } = uiState;
 
   const list = useMemo(() => {
     return allIngredients
@@ -74,11 +47,11 @@ export function useIngredients(options: UseIngredientsOptions = {}): UseIngredie
   return {
     list,
     query,
-    setQuery: setQueryState,
+    setQuery: (q) => ui.set('query', q),
     filter,
-    setFilter: setFilterState,
+    setFilter: (f) => ui.set('filter', f),
     showFilters,
-    setShowFilters: setShowFiltersState,
+    setShowFilters: (s) => ui.set('showFilters', s),
     total: allIngredients.length,
   };
 }
