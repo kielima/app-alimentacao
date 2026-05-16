@@ -1,17 +1,39 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
-import SearchableSelect from '../components/SearchableSelect';
-import { useAllIngredients, getAllIngredients, findIngredientById } from '../data/ingredients';
+import {
+  getAllIngredients,
+  findIngredientById,
+  allIngredientIds,
+} from '../data/ingredients';
+import { upsertUserIngredient } from '../data/userIngredients';
 import { getPantryItem, upsertPantryItem, deletePantryItem, usePantryItems } from '../data/pantry';
 import { useShoppingItems } from '../data/shoppingList';
 import { useMarkets } from '../data/markets';
 import { UNIT_OPTIONS } from '../utils/units';
+import { uniqueSlug } from '../utils/slug';
 import NutritionTable from '../components/NutritionTable';
 import type { PantryItem } from '../types/pantry';
+import type { Unit } from '../types/ingredient';
+
+const INGREDIENT_SEPARATOR = ' — ';
+
+function ingredientToDisplay(name: string, brand?: string | null): string {
+  return brand ? `${brand}${INGREDIENT_SEPARATOR}${name}` : name;
+}
+
+function parseIngredientDisplay(text: string): { brand: string | null; name: string } {
+  const trimmed = text.trim();
+  const idx = trimmed.indexOf(INGREDIENT_SEPARATOR);
+  if (idx > -1) {
+    const brand = trimmed.substring(0, idx).trim();
+    const name = trimmed.substring(idx + INGREDIENT_SEPARATOR.length).trim();
+    if (brand && name) return { brand, name };
+  }
+  return { brand: null, name: trimmed };
+}
 
 interface FormState {
-  raw_text: string;
   ingredient_id: string;
   quantity: string;
   unit: string;
@@ -22,7 +44,6 @@ interface FormState {
 function itemToForm(item: PantryItem | undefined): FormState {
   if (!item) {
     return {
-      raw_text: '',
       ingredient_id: '',
       quantity: '',
       unit: '',
@@ -31,7 +52,6 @@ function itemToForm(item: PantryItem | undefined): FormState {
     };
   }
   return {
-    raw_text: item.raw_text,
     ingredient_id: item.ingredient_id ?? '',
     quantity: item.quantity?.toString() ?? '',
     unit: item.unit ?? '',
@@ -49,11 +69,6 @@ export default function DispensaForm() {
 
   // Hooks must be called before early return
   const returnIngredientId = searchParams.get('ingredient');
-  const allIng = useAllIngredients();
-  const sortedIngredients = useMemo(
-    () => [...allIng].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
-    [allIng],
-  );
 
   const pantryItems = usePantryItems();
   const shoppingItems = useShoppingItems();
@@ -75,16 +90,19 @@ export default function DispensaForm() {
       return {
         ...base,
         ingredient_id: returnIngredientId,
-        raw_text: ing ? (ing.brand ? `${ing.brand} — ${ing.name}` : ing.name) : base.raw_text,
         unit: base.unit || (ing?.default_unit ?? ''),
       };
     }
     return base;
   });
 
-  const [selectValue, setSelectValue] = useState<string>(() => {
-    if (returnIngredientId) return returnIngredientId;
-    return original?.ingredient_id ?? '';
+  const [ingredientText, setIngredientText] = useState<string>(() => {
+    const linkedId = returnIngredientId ?? original?.ingredient_id ?? '';
+    if (linkedId) {
+      const ing = getAllIngredients().find((i) => i.id === linkedId);
+      if (ing) return ingredientToDisplay(ing.name, ing.brand);
+    }
+    return original?.raw_text ?? '';
   });
 
   const [error, setError] = useState<string | null>(null);
@@ -111,48 +129,51 @@ export default function DispensaForm() {
     );
   }
 
-  const returnPath = editing ? `/dispensa/${id}/editar` : '/dispensa/novo';
-
-  const handleIngredientSelect = (value: string) => {
-    setSelectValue(value);
-    if (value === '') {
-      setState((s) => ({ ...s, ingredient_id: '', unit: s.unit }));
-    } else {
-      const matched = sortedIngredients.find((i) => i.id === value);
-      setState((s) => ({
-        ...s,
-        ingredient_id: value,
-        raw_text: matched
-          ? matched.brand
-            ? `${matched.brand} — ${matched.name}`
-            : matched.name
-          : s.raw_text,
-        unit: matched && !s.unit ? matched.default_unit : s.unit,
-      }));
-    }
-  };
-
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!state.ingredient_id) {
-      setError('Selecione um ingrediente');
+    const display = ingredientText.trim();
+    if (!display) {
+      setError('Informe o nome do ingrediente');
       return;
     }
-    const linkedIngredient = sortedIngredients.find((i) => i.id === state.ingredient_id);
-    const rawText =
-      state.raw_text.trim() ||
-      (linkedIngredient
-        ? linkedIngredient.brand
-          ? `${linkedIngredient.brand} — ${linkedIngredient.name}`
-          : linkedIngredient.name
-        : '');
+
+    const { brand, name } = parseIngredientDisplay(display);
+    const normalizedBrand = brand ?? null;
+    let ingredientId: string | null = state.ingredient_id || null;
+
+    const linked = ingredientId ? findIngredientById(ingredientId) : undefined;
+    if (linked) {
+      const currentBrand = linked.brand ?? null;
+      if (linked.name !== name || currentBrand !== normalizedBrand) {
+        upsertUserIngredient({
+          ...linked,
+          name,
+          brand: normalizedBrand,
+        });
+      }
+    } else {
+      const fallbackUnit: Unit =
+        state.unit === 'g' || state.unit === 'ml' || state.unit === 'unit'
+          ? state.unit
+          : 'g';
+      const newId = uniqueSlug(name, allIngredientIds());
+      upsertUserIngredient({
+        id: newId,
+        name,
+        brand: normalizedBrand,
+        default_unit: fallbackUnit,
+        nutrition_per_100: null,
+      });
+      ingredientId = newId;
+    }
+
     const storeValue =
       storeSelect === '__outro__' ? storeCustom.trim() || null : storeSelect || null;
     const item: PantryItem = {
       id: original?.id ?? `pantry-${Date.now()}`,
-      ingredient_id: state.ingredient_id || null,
-      raw_text: rawText,
+      ingredient_id: ingredientId,
+      raw_text: display,
       quantity: state.quantity ? Number(state.quantity) : null,
       unit: state.unit || null,
       expiry_date: state.expiry_date || null,
@@ -208,16 +229,13 @@ export default function DispensaForm() {
       )}
 
       <Field label="Ingrediente">
-        <SearchableSelect
-          value={selectValue}
-          onChange={handleIngredientSelect}
-          options={sortedIngredients.map((i) => ({
-            value: i.id,
-            label: i.brand ? `${i.brand} — ${i.name}` : i.name,
-          }))}
-          placeholder="Selecione um ingrediente…"
-          createLabel="➕ Criar novo ingrediente"
-          onCreate={() => navigate(`/ingredientes/novo?return=${encodeURIComponent(returnPath)}`)}
+        <input
+          type="text"
+          value={ingredientText}
+          onChange={(e) => setIngredientText(e.target.value)}
+          className={inputClass}
+          placeholder='Ex.: "Urbano — Arroz integral" ou "Arroz"'
+          autoFocus={!editing}
         />
       </Field>
 
