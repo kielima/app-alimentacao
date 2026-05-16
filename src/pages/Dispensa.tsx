@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import ScanButton from '../components/ScanButton';
+import FilterButton from '../components/FilterButton';
 import BarcodeScannerModal from '../components/BarcodeScannerModal';
 import { usePantry, type PantryFilter } from '../hooks/usePantry';
 import { expiryStatus, expiryLabel, statusColor, statusIcon } from '../utils/expiry';
@@ -67,21 +68,11 @@ export default function Dispensa() {
           className="h-9 min-w-0 flex-1 rounded-xl border border-zinc-200 bg-white px-3 text-sm placeholder:text-zinc-400 focus:border-brand-500 focus:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
         />
         <ScanButton onClick={() => setScanOpen(true)} />
-        <button
-          type="button"
+        <FilterButton
+          active={showFilters}
+          hasActiveFilters={hasActiveFilters}
           onClick={() => setShowFilters((f) => !f)}
-          aria-label="Filtros"
-          className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg transition-colors ${
-            showFilters
-              ? 'bg-brand-500 dark:bg-brand-600'
-              : 'bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700'
-          }`}
-        >
-          ⚙️
-          {hasActiveFilters && !showFilters && (
-            <span className="absolute right-0.5 top-0.5 h-2.5 w-2.5 rounded-full bg-brand-500 ring-2 ring-white dark:ring-zinc-950" />
-          )}
-        </button>
+        />
       </HeaderSlot>
 
       <BarcodeScannerModal
