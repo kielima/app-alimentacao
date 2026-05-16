@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import HeaderSlot from '../components/HeaderSlot';
 import { findRecipeById, findCategory, isSeedRecipe } from '../data/recipes';
 import { findIngredientById } from '../data/ingredients';
 import { useRecipeNutrition } from '../hooks/useRecipeNutrition';
@@ -113,42 +114,28 @@ export default function ReceitaDetalhe() {
   const category = findCategory(recipe.category);
 
   return (
-    <div className="mx-auto max-w-md px-4 pt-2 pb-6">
-      <div className="mb-3 flex items-center gap-2">
-        <Link
-          to="/receitas"
-          className="rounded-full bg-zinc-200/60 px-2 py-1 text-sm text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60"
-          aria-label="Voltar"
-        >
-          ←
-        </Link>
-        <h1 className="flex-1 truncate text-lg font-semibold">{recipe.name}</h1>
-        <Link
-          to={`/receitas/${recipe.id}/editar`}
-          className="rounded-full bg-zinc-200/60 px-3 py-1 text-sm text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60"
-          aria-label="Editar receita"
-        >
-          ✏️
-        </Link>
-        <button
-          type="button"
-          onClick={handleDelete}
-          className="rounded-full bg-zinc-200/60 px-3 py-1 text-sm text-zinc-700 hover:bg-red-100 hover:text-red-700 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-red-900/30 dark:hover:text-red-300"
-          aria-label="Excluir receita"
-        >
-          🗑️
-        </button>
+    <div className="mx-auto max-w-md px-4 pt-2 pb-28">
+      <HeaderSlot>
+        <h1 className="min-w-0 flex-1 truncate text-lg font-semibold">{recipe.name}</h1>
         {canRevert && (
           <button
             type="button"
             onClick={handleRevert}
-            className="rounded-full bg-zinc-200/60 px-3 py-1 text-sm text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60"
+            className="shrink-0 rounded-full bg-zinc-200/60 px-3 py-1 text-sm text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60"
             title="Descartar edições e voltar ao original"
           >
             ↺
           </button>
         )}
-      </div>
+        <button
+          type="button"
+          onClick={handleDelete}
+          className="shrink-0 rounded-full bg-zinc-200/60 px-3 py-1 text-sm text-zinc-700 hover:bg-red-100 hover:text-red-700 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-red-900/30 dark:hover:text-red-300"
+          aria-label="Excluir receita"
+        >
+          🗑️
+        </button>
+      </HeaderSlot>
 
       {isUserOverlay && isSeedRecipe(recipe.id) && (
         <div className="mb-3 rounded-lg bg-brand-50 px-3 py-1.5 text-[11px] text-brand-700 dark:bg-brand-900/30 dark:text-brand-300">
@@ -296,6 +283,14 @@ export default function ReceitaDetalhe() {
             (linhas {recipe.source_lines[0]}–{recipe.source_lines[1]}).
           </p>
         )}
+
+      <Link
+        to={`/receitas/${recipe.id}/editar`}
+        aria-label="Editar receita"
+        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-500 text-2xl shadow-lg hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
+      >
+        ✏️
+      </Link>
     </div>
   );
 }
