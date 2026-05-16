@@ -66,13 +66,6 @@ export default function Dispensa() {
             <span className="absolute right-0.5 top-0.5 h-2.5 w-2.5 rounded-full bg-brand-500 ring-2 ring-white dark:ring-zinc-950" />
           )}
         </button>
-        <Link
-          to="/dispensa/novo"
-          aria-label="Novo item na dispensa"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500 text-xl font-bold text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
-        >
-          +
-        </Link>
       </div>
 
       {isFiltering && (
@@ -107,6 +100,14 @@ export default function Dispensa() {
           </div>
         </div>
       )}
+
+      <Link
+        to="/dispensa/novo"
+        aria-label="Novo item na dispensa"
+        className="fixed bottom-20 left-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-brand-500 text-3xl font-bold text-white shadow-lg hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
+      >
+        +
+      </Link>
 
       {total === 0 ? (
         <div className="mt-12 text-center">
