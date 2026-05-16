@@ -36,6 +36,8 @@ export interface Ingredient {
   notes?: string;
   ceagesp_slug?: string;
   category?: IngredientCategory | null;
+  tbca_code?: string;
+  off_barcode?: string;
 }
 
 export interface IngredientsSeed {

@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "lint": "tsc -b --noEmit",
     "icons": "node scripts/generate-icons.mjs",
-    "seed:firestore": "node scripts/seedFirestore.mjs"
+    "seed:firestore": "node scripts/seedFirestore.mjs",
+    "import:tbca": "node scripts/import-tbca.mjs",
+    "import:off": "node scripts/import-off.mjs"
   },
   "dependencies": {
     "firebase": "^12.13.0",
