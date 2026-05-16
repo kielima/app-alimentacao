@@ -47,15 +47,8 @@ export default function Receitas() {
 
   return (
     <div className="mx-auto max-w-md px-4 pt-2 pb-28">
-      {/* Linha única: 🥕 | busca | ⚙️ | + */}
+      {/* Linha única: busca | ⚙️ | + */}
       <div className="mb-2 flex items-center gap-2">
-        <Link
-          to="/ingredientes"
-          aria-label="Base de ingredientes"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-lg hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700"
-        >
-          🥕
-        </Link>
         <input
           type="search"
           value={query}
