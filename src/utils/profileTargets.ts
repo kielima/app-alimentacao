@@ -3,10 +3,41 @@ import {
   FAT_PCT_OF_KCAL,
   GOAL_KCAL_DELTA,
   PROTEIN_PER_KG,
+  type Goal,
   type NutritionTargets,
   type Sex,
   type UserProfile,
 } from '../types/userProfile';
+
+export function getEffectiveProteinPerKg(p: Pick<UserProfile, 'goal' | 'proteinPerKgOverride'>): {
+  value: number;
+  isOverride: boolean;
+} {
+  const defaultValue = p.goal ? PROTEIN_PER_KG[p.goal] : PROTEIN_PER_KG.maintain;
+  if (p.proteinPerKgOverride != null && p.proteinPerKgOverride > 0) {
+    return { value: p.proteinPerKgOverride, isOverride: true };
+  }
+  return { value: defaultValue, isOverride: false };
+}
+
+export function getEffectiveFatPct(p: Pick<UserProfile, 'goal' | 'fatPctOverride'>): {
+  value: number;
+  isOverride: boolean;
+} {
+  const defaultValue = p.goal ? FAT_PCT_OF_KCAL[p.goal] : FAT_PCT_OF_KCAL.maintain;
+  if (p.fatPctOverride != null && p.fatPctOverride > 0) {
+    return { value: p.fatPctOverride, isOverride: true };
+  }
+  return { value: defaultValue, isOverride: false };
+}
+
+export function getDefaultProteinPerKg(goal: Goal): number {
+  return PROTEIN_PER_KG[goal];
+}
+
+export function getDefaultFatPct(goal: Goal): number {
+  return FAT_PCT_OF_KCAL[goal];
+}
 
 interface CompleteProfile {
   weightKg: number;
@@ -47,8 +78,11 @@ export function computeTargets(p: UserProfile | null): NutritionTargets | null {
   const tdee = bmr * ACTIVITY_FACTORS[p.activity];
   const calories = Math.round(tdee * (1 + GOAL_KCAL_DELTA[p.goal]));
 
-  const protein = Math.round(p.weightKg * PROTEIN_PER_KG[p.goal]);
-  const fatKcal = calories * FAT_PCT_OF_KCAL[p.goal];
+  const proteinPerKg = getEffectiveProteinPerKg(p).value;
+  const fatPct = getEffectiveFatPct(p).value;
+
+  const protein = Math.round(p.weightKg * proteinPerKg);
+  const fatKcal = calories * fatPct;
   const fat = Math.round(fatKcal / 9);
 
   const remainingKcal = calories - protein * 4 - fat * 9;
