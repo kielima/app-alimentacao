@@ -6,6 +6,7 @@ import { uniqueSlug } from '../utils/slug';
 import { upsertUserIngredient } from '../data/userIngredients';
 import { allIngredientIds, findIngredientById, useAllIngredients } from '../data/ingredients';
 import { upsertOffContribution } from '../data/offContributions';
+import { useMarkets, upsertMarket } from '../data/markets';
 import type { Ingredient, IngredientCategory, Unit } from '../types/ingredient';
 import { INGREDIENT_CATEGORIES, getCategoryLabel } from '../types/ingredient';
 
@@ -32,6 +33,35 @@ export default function IngredienteForm() {
   const [category, setCategory] = useState<IngredientCategory | ''>(existing?.category ?? '');
   const [contributeOff, setContributeOff] = useState(Boolean(scannedBarcode));
   const [error, setError] = useState<string | null>(null);
+
+  const markets = useMarkets();
+  const initialMarketIds = useMemo(() => {
+    if (!existing) return new Set<string>();
+    return new Set(markets.filter((m) => m.ingredient_ids.includes(existing.id)).map((m) => m.id));
+  }, [markets, existing]);
+  const [marketIds, setMarketIds] = useState<Set<string>>(initialMarketIds);
+  const [marketSearch, setMarketSearch] = useState('');
+
+  const sortedMarkets = useMemo(
+    () => [...markets].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
+    [markets],
+  );
+  const filteredMarkets = useMemo(() => {
+    if (!marketSearch.trim()) return sortedMarkets;
+    const q = marketSearch.toLowerCase();
+    return sortedMarkets.filter(
+      (m) => m.name.toLowerCase().includes(q) || m.address?.toLowerCase().includes(q),
+    );
+  }, [sortedMarkets, marketSearch]);
+
+  const toggleMarket = (mId: string) => {
+    setMarketIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(mId)) next.delete(mId);
+      else next.add(mId);
+      return next;
+    });
+  };
 
   const allIngs = useAllIngredients();
   const categoryOptions = useMemo(() => {
@@ -87,6 +117,15 @@ export default function IngredienteForm() {
       payload.off_barcode = scannedBarcode;
     }
     upsertUserIngredient(payload as Parameters<typeof upsertUserIngredient>[0]);
+    for (const market of markets) {
+      const wasIn = market.ingredient_ids.includes(id);
+      const shouldBeIn = marketIds.has(market.id);
+      if (wasIn === shouldBeIn) continue;
+      const nextIds = shouldBeIn
+        ? [...market.ingredient_ids, id]
+        : market.ingredient_ids.filter((mid) => mid !== id);
+      upsertMarket({ ...market, ingredient_ids: nextIds });
+    }
     if (!editing && scannedBarcode && contributeOff) {
       upsertOffContribution({
         id: `off-${scannedBarcode}`,
@@ -187,6 +226,64 @@ export default function IngredienteForm() {
           }}
         />
       </Field>
+
+      {markets.length > 0 && (
+        <section className="mb-4">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              Mercados onde encontro
+            </span>
+            {marketIds.size > 0 && (
+              <span className="text-xs text-brand-600 dark:text-brand-400">
+                {marketIds.size} selecionado{marketIds.size !== 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
+          {markets.length > 5 && (
+            <input
+              type="search"
+              value={marketSearch}
+              onChange={(e) => setMarketSearch(e.target.value)}
+              placeholder="Buscar mercado…"
+              className="mb-2 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
+            />
+          )}
+          <div className="max-h-52 overflow-y-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+            {filteredMarkets.length === 0 ? (
+              <p className="px-3 py-3 text-sm text-zinc-400 dark:text-zinc-500">
+                Nenhum mercado encontrado.
+              </p>
+            ) : (
+              filteredMarkets.map((m) => {
+                const checked = marketIds.has(m.id);
+                return (
+                  <label
+                    key={m.id}
+                    className={`flex cursor-pointer items-center gap-3 px-3 py-2.5 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50 ${
+                      checked ? 'bg-brand-50/60 dark:bg-brand-900/20' : ''
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleMarket(m.id)}
+                      className="h-4 w-4 rounded accent-brand-500"
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm">{m.name}</span>
+                      {m.address && (
+                        <span className="block truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+                          {m.address}
+                        </span>
+                      )}
+                    </span>
+                  </label>
+                );
+              })
+            )}
+          </div>
+        </section>
+      )}
 
       {!editing && scannedBarcode && (
         <label className="mb-3 flex items-start gap-2 rounded-xl border border-zinc-200 bg-white p-3 text-xs dark:border-zinc-800 dark:bg-zinc-900">
