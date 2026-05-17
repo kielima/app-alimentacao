@@ -48,10 +48,10 @@ async function renderIcon(size, { padding = 0.12, rounded = true } = {}) {
 }
 
 const targets = [
-  { name: 'icon-192.png', size: 192, padding: 0.12, rounded: true },
-  { name: 'icon-512.png', size: 512, padding: 0.12, rounded: true },
-  { name: 'icon-512-maskable.png', size: 512, padding: 0.18, rounded: false },
-  { name: 'apple-touch-icon.png', size: 180, padding: 0.12, rounded: true },
+  { name: 'icon-192.png', size: 192, padding: 0.05, rounded: true },
+  { name: 'icon-512.png', size: 512, padding: 0.05, rounded: true },
+  { name: 'icon-512-maskable.png', size: 512, padding: 0.12, rounded: false },
+  { name: 'apple-touch-icon.png', size: 180, padding: 0.05, rounded: true },
 ];
 
 for (const { name, size, padding, rounded } of targets) {
@@ -66,7 +66,7 @@ const b64 = sourceBuf.toString('base64');
 
 const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <rect width="512" height="512" rx="96" fill="${BG_HEX}"/>
-  <image href="data:image/png;base64,${b64}" x="61" y="61" width="390" height="390"/>
+  <image href="data:image/png;base64,${b64}" x="26" y="26" width="460" height="460"/>
 </svg>
 `;
 writeFileSync(resolve(publicDir, 'icon.svg'), iconSvg);
@@ -74,7 +74,7 @@ console.log('✓ icon.svg');
 
 const faviconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <rect width="64" height="64" rx="14" fill="${BG_HEX}"/>
-  <image href="data:image/png;base64,${b64}" x="8" y="8" width="48" height="48"/>
+  <image href="data:image/png;base64,${b64}" x="3" y="3" width="58" height="58"/>
 </svg>
 `;
 writeFileSync(resolve(publicDir, 'favicon.svg'), faviconSvg);
