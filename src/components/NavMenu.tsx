@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme';
 import { useOffContributions } from '../data/offContributions';
 
-const tabs = [
+type Tab = { to: string; label: string };
+
+const defaultTabs: Tab[] = [
   { to: '/plano', label: 'Plano Alimentar' },
   { to: '/refeicoes', label: 'Lista de Refeições' },
   { to: '/receitas', label: 'Livro de Receitas' },
@@ -14,6 +16,31 @@ const tabs = [
   { to: '/perfil', label: 'Dados pessoais' },
 ];
 
+const ORDER_STORAGE_KEY = 'app-alimentacao:nav-order';
+
+function loadStoredOrder(): Tab[] {
+  try {
+    const raw = localStorage.getItem(ORDER_STORAGE_KEY);
+    if (!raw) return defaultTabs;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return defaultTabs;
+    const remaining = new Map(defaultTabs.map((t) => [t.to, t]));
+    const ordered: Tab[] = [];
+    for (const to of parsed) {
+      if (typeof to !== 'string') continue;
+      const t = remaining.get(to);
+      if (t) {
+        ordered.push(t);
+        remaining.delete(to);
+      }
+    }
+    for (const t of remaining.values()) ordered.push(t);
+    return ordered;
+  } catch {
+    return defaultTabs;
+  }
+}
+
 export default function NavMenu({ onSignOut }: { onSignOut: () => void }) {
   const [open, setOpen] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -22,6 +49,23 @@ export default function NavMenu({ onSignOut }: { onSignOut: () => void }) {
   const nextTheme = theme === 'dark' ? 'light' : theme === 'light' ? 'system' : 'dark';
   const themeLabel = theme === 'dark' ? 'Escuro' : theme === 'light' ? 'Claro' : 'Sistema';
   const themeIcon = theme === 'dark' ? '🌙' : theme === 'light' ? '☀️' : '🖥️';
+
+  const [tabs, setTabs] = useState<Tab[]>(() => loadStoredOrder());
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [itemHeight, setItemHeight] = useState(0);
+  const itemRefs = useRef<Array<HTMLLIElement | null>>([]);
+  const dragPointerIdRef = useRef<number | null>(null);
+  const dragStartYRef = useRef(0);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(tabs.map((t) => t.to)));
+    } catch {
+      // ignore storage errors (quota, private mode)
+    }
+  }, [tabs]);
 
   useEffect(() => {
     if (!open) return;
@@ -43,6 +87,62 @@ export default function NavMenu({ onSignOut }: { onSignOut: () => void }) {
       setOpen(false);
     }
   }
+
+  function startDrag(e: React.PointerEvent<HTMLButtonElement>, index: number) {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    const li = itemRefs.current[index];
+    if (!li) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    dragPointerIdRef.current = e.pointerId;
+    dragStartYRef.current = e.clientY;
+    setItemHeight(li.getBoundingClientRect().height);
+    setDragIndex(index);
+    setHoverIndex(index);
+    setDragOffset(0);
+  }
+
+  function moveDrag(e: React.PointerEvent<HTMLButtonElement>) {
+    if (dragPointerIdRef.current !== e.pointerId) return;
+    if (dragIndex === null || itemHeight === 0) return;
+    const dy = e.clientY - dragStartYRef.current;
+    setDragOffset(dy);
+    const steps = Math.round(dy / itemHeight);
+    const next = Math.max(0, Math.min(tabs.length - 1, dragIndex + steps));
+    if (next !== hoverIndex) setHoverIndex(next);
+  }
+
+  function endDrag(e: React.PointerEvent<HTMLButtonElement>) {
+    if (dragPointerIdRef.current !== e.pointerId) return;
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+    if (dragIndex !== null && hoverIndex !== null && hoverIndex !== dragIndex) {
+      setTabs((prev) => {
+        const next = [...prev];
+        const [moved] = next.splice(dragIndex, 1);
+        next.splice(hoverIndex, 0, moved);
+        return next;
+      });
+    }
+    dragPointerIdRef.current = null;
+    setDragIndex(null);
+    setHoverIndex(null);
+    setDragOffset(0);
+  }
+
+  function computeShift(index: number): number {
+    if (dragIndex === null || hoverIndex === null) return 0;
+    if (index === dragIndex) return dragOffset;
+    if (dragIndex < hoverIndex && index > dragIndex && index <= hoverIndex) return -itemHeight;
+    if (dragIndex > hoverIndex && index >= hoverIndex && index < dragIndex) return itemHeight;
+    return 0;
+  }
+
+  const isDragging = dragIndex !== null;
 
   return (
     <>
@@ -87,23 +187,69 @@ export default function NavMenu({ onSignOut }: { onSignOut: () => void }) {
 
         <nav className="flex-1 overflow-y-auto px-3 py-2">
           <ul className="space-y-1">
-            {tabs.map((tab) => (
-              <li key={tab.to}>
-                <NavLink
-                  to={tab.to}
-                  onClick={() => setOpen(false)}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 rounded-2xl px-4 py-3 text-base font-medium transition-colors ${
-                      isActive
-                        ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100'
-                        : 'text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800/50'
-                    }`
-                  }
+            {tabs.map((tab, index) => {
+              const shift = computeShift(index);
+              const dragging = dragIndex === index;
+              return (
+                <li
+                  key={tab.to}
+                  ref={(el) => {
+                    itemRefs.current[index] = el;
+                  }}
+                  className="relative"
+                  style={{
+                    transform: shift ? `translateY(${shift}px)` : undefined,
+                    transition: dragging ? 'none' : 'transform 180ms ease',
+                    zIndex: dragging ? 10 : undefined,
+                  }}
                 >
-                  <span>{tab.label}</span>
-                </NavLink>
-              </li>
-            ))}
+                  <div
+                    className={`flex items-center gap-1 rounded-2xl ${
+                      dragging ? 'bg-white shadow-lg ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700' : ''
+                    }`}
+                  >
+                    <NavLink
+                      to={tab.to}
+                      onClick={(e) => {
+                        if (isDragging) {
+                          e.preventDefault();
+                          return;
+                        }
+                        setOpen(false);
+                      }}
+                      className={({ isActive }) =>
+                        `flex flex-1 items-center gap-3 rounded-2xl px-4 py-3 text-base font-medium transition-colors ${
+                          isActive
+                            ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100'
+                            : 'text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800/50'
+                        }`
+                      }
+                    >
+                      <span>{tab.label}</span>
+                    </NavLink>
+                    <button
+                      type="button"
+                      aria-label={`Reordenar ${tab.label}`}
+                      onPointerDown={(e) => startDrag(e, index)}
+                      onPointerMove={moveDrag}
+                      onPointerUp={endDrag}
+                      onPointerCancel={endDrag}
+                      className="flex h-11 w-10 shrink-0 items-center justify-center rounded-full text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+                      style={{ touchAction: 'none', cursor: dragging ? 'grabbing' : 'grab' }}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                        <circle cx="9" cy="6" r="1.6" />
+                        <circle cx="15" cy="6" r="1.6" />
+                        <circle cx="9" cy="12" r="1.6" />
+                        <circle cx="15" cy="12" r="1.6" />
+                        <circle cx="9" cy="18" r="1.6" />
+                        <circle cx="15" cy="18" r="1.6" />
+                      </svg>
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </nav>
 
