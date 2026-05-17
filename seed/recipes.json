@@ -2239,7 +2239,7 @@
         },
         {
           "raw_text": "Molhos a gosto (mostarda, ketchup, maionese light)",
-          "ingredient_id": "tempero",
+          "ingredient_id": "molhos-prontos",
           "quantity": null,
           "unit": "a_gosto"
         }
@@ -2660,7 +2660,7 @@
         },
         {
           "raw_text": "Orégano a gosto",
-          "ingredient_id": "tempero",
+          "ingredient_id": "oregano",
           "quantity": null,
           "unit": "a_gosto"
         }

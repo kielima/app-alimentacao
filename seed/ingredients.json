@@ -621,6 +621,20 @@
       "nutrition_per_100": null
     },
     {
+      "id": "molhos-prontos",
+      "name": "Molhos prontos (mostarda, ketchup, maionese)",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
+      "id": "oregano",
+      "name": "Orégano",
+      "brand": null,
+      "default_unit": "g",
+      "nutrition_per_100": null
+    },
+    {
       "id": "tomate",
       "name": "Tomate",
       "brand": null,
