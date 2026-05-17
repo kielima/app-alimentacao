@@ -186,7 +186,7 @@ function HiddenRecipesPanel() {
               <button
                 type="button"
                 onClick={() => unhideRecipe(r.id)}
-                className="rounded-full bg-zinc-200/60 px-2 py-0.5 text-xs text-zinc-700 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-brand-900/30 dark:hover:text-brand-400"
+                className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-700 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-brand-900/30 dark:hover:text-brand-400"
                 aria-label={`Restaurar ${r.name}`}
               >
                 ↺ restaurar
@@ -228,7 +228,7 @@ function Chip({
       className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
         active
           ? 'bg-brand-500 text-white dark:bg-brand-600'
-          : 'bg-zinc-200/60 text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60'
+          : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700'
       }`}
     >
       {children}

@@ -192,7 +192,7 @@ export default function IngredienteDetalhe() {
           className={`shrink-0 rounded-full px-3 py-1 text-base leading-none transition-colors ${
             addedToCart
               ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-              : 'bg-zinc-200/60 text-zinc-700 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-brand-900/30 dark:hover:text-brand-400'
+              : 'bg-zinc-100 text-zinc-700 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-brand-900/30 dark:hover:text-brand-400'
           }`}
           aria-label={addedToCart ? 'Remover da lista de compras' : 'Adicionar à lista de compras'}
           title={addedToCart ? 'Remover da lista de compras' : 'Adicionar à lista de compras'}
@@ -205,7 +205,7 @@ export default function IngredienteDetalhe() {
           className={`shrink-0 rounded-full px-3 py-1 text-base leading-none transition-colors ${
             addedToPantry
               ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-              : 'bg-zinc-200/60 text-zinc-700 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-brand-900/30 dark:hover:text-brand-400'
+              : 'bg-zinc-100 text-zinc-700 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-brand-900/30 dark:hover:text-brand-400'
           }`}
           aria-label={addedToPantry ? 'Remover da dispensa' : 'Adicionar à dispensa'}
           title={addedToPantry ? 'Remover da dispensa' : 'Adicionar à dispensa'}
@@ -215,7 +215,7 @@ export default function IngredienteDetalhe() {
         <button
           type="button"
           onClick={handleDelete}
-          className="shrink-0 rounded-full bg-zinc-200/60 px-3 py-1 text-base leading-none text-zinc-700 transition-colors hover:bg-red-100 hover:text-red-700 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-red-900/30 dark:hover:text-red-300"
+          className="shrink-0 rounded-full bg-zinc-100 px-3 py-1 text-base leading-none text-zinc-700 transition-colors hover:bg-red-100 hover:text-red-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-red-900/30 dark:hover:text-red-300"
           aria-label="Excluir ingrediente"
           title="Excluir ingrediente"
         >
@@ -264,7 +264,7 @@ export default function IngredienteDetalhe() {
             <button
               type="button"
               onClick={() => setQuantity(ingredient.serving_size_g!)}
-              className="ml-auto rounded-md bg-zinc-200/60 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60"
+              className="ml-auto rounded-md bg-zinc-100 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
             >
               1 porção ({ingredient.serving_size_g}
               {unitSuffix})

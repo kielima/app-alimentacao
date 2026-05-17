@@ -99,7 +99,7 @@ export default function MercadoForm() {
           <button
             type="button"
             onClick={handleDelete}
-            className="shrink-0 rounded-full bg-zinc-200/60 px-3 py-1.5 text-sm text-zinc-700 hover:bg-red-100 hover:text-red-700 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-red-900/30 dark:hover:text-red-300"
+            className="shrink-0 rounded-full bg-zinc-100 px-3 py-1.5 text-sm text-zinc-700 hover:bg-red-100 hover:text-red-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-red-900/30 dark:hover:text-red-300"
             aria-label="Excluir"
           >
             <span aria-hidden="true" className="text-xl font-bold leading-none text-red-600 dark:text-red-400">×</span>

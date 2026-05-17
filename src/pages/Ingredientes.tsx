@@ -169,7 +169,7 @@ export default function Ingredientes() {
                 className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                   filter === f.value
                     ? 'bg-brand-500 text-white dark:bg-brand-600'
-                    : 'bg-zinc-200/60 text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60'
+                    : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700'
                 }`}
               >
                 {f.label}
