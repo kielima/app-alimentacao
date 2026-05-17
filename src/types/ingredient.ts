@@ -1,6 +1,6 @@
 export type Unit = 'g' | 'ml' | 'unit';
 
-export type IngredientCategory = 'lacticinios' | 'hortifruti' | 'carnes' | 'enlatados';
+export type IngredientCategory = string;
 
 export const INGREDIENT_CATEGORIES: { value: IngredientCategory; label: string }[] = [
   { value: 'lacticinios', label: 'Lacticínios' },
@@ -8,6 +8,11 @@ export const INGREDIENT_CATEGORIES: { value: IngredientCategory; label: string }
   { value: 'carnes', label: 'Carnes' },
   { value: 'enlatados', label: 'Enlatados' },
 ];
+
+export function getCategoryLabel(value: string): string {
+  const preset = INGREDIENT_CATEGORIES.find((c) => c.value === value);
+  return preset?.label ?? value;
+}
 
 export interface NutritionPer100 {
   calories: number;
