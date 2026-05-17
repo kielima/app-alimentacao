@@ -22,6 +22,7 @@ import RefeicaoForm from './pages/RefeicaoForm';
 import RefeicaoDetalhe from './pages/RefeicaoDetalhe';
 import Mercados from './pages/Mercados';
 import MercadoForm from './pages/MercadoForm';
+import Perfil from './pages/Perfil';
 import { useTheme } from './hooks/useTheme';
 import { usePinAuth } from './hooks/usePinAuth';
 import { PlanoProvider, usePlano } from './contexts/PlanoContext';
@@ -173,6 +174,7 @@ export default function App() {
             <Route path="/mercados" element={<Mercados />} />
             <Route path="/mercados/novo" element={<MercadoForm />} />
             <Route path="/mercados/:id/editar" element={<MercadoForm />} />
+            <Route path="/perfil" element={<Perfil />} />
             <Route path="*" element={<Navigate to="/receitas" replace />} />
           </Routes>
         </main>
