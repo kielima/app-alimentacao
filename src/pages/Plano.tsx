@@ -137,7 +137,24 @@ export default function Plano() {
             : 'bg-brand-cream text-brand-700 hover:bg-brand-100 dark:bg-brand-cream dark:text-brand-700 dark:hover:bg-brand-100'
         }`}
       >
-        {editing ? '✓' : '✏️'}
+        {editing ? (
+          '✓'
+        ) : (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-7 w-7"
+            aria-hidden
+          >
+            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+            <path d="M15 5l4 4" />
+          </svg>
+        )}
       </button>
 
       <DaySummary

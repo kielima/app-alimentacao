@@ -129,9 +129,20 @@ export default function Refeicoes() {
       <Link
         to="/refeicoes/nova"
         aria-label="Nova refeição"
-        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-cream text-3xl font-bold text-brand-700 shadow-lg hover:bg-brand-100 dark:bg-brand-cream dark:text-brand-700 dark:hover:bg-brand-100"
+        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-cream text-brand-700 shadow-lg hover:bg-brand-100 dark:bg-brand-cream dark:text-brand-700 dark:hover:bg-brand-100"
       >
-        +
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          className="h-7 w-7"
+          aria-hidden
+        >
+          <path d="M12 5v14M5 12h14" />
+        </svg>
       </Link>
     </div>
   );
