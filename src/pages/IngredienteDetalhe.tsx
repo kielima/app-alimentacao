@@ -219,7 +219,7 @@ export default function IngredienteDetalhe() {
           aria-label="Excluir ingrediente"
           title="Excluir ingrediente"
         >
-          🗑️
+          <span aria-hidden="true" className="text-xl font-bold leading-none text-red-600 dark:text-red-400">×</span>
         </button>
       </HeaderSlot>
 
