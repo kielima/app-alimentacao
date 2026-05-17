@@ -4,7 +4,12 @@ import { matches } from '../utils/search';
 import { createUIStore } from '../utils/persistentUIState';
 import type { Ingredient } from '../types/ingredient';
 
-export type IngredientFilter = 'todos' | 'marcas' | 'genericos' | 'a-verificar';
+export type IngredientFilter = 'todos' | 'marcas' | 'genericos' | 'a-verificar' | 'revisar';
+
+export function ingredientNeedsReview(i: Ingredient): boolean {
+  if (!i.nutrition_per_100) return true;
+  return !i.tbca_code && !i.off_barcode;
+}
 
 interface UseIngredientsOptions {
   listedIngredientIds?: Set<string>;
@@ -38,6 +43,7 @@ export function useIngredients(options: UseIngredientsOptions = {}): UseIngredie
         if (filter === 'marcas') return Boolean(i.brand);
         if (filter === 'genericos') return !i.brand;
         if (filter === 'a-verificar') return !listedIngredientIds?.has(i.id);
+        if (filter === 'revisar') return ingredientNeedsReview(i);
         return true;
       })
       .filter((i) => matches(`${i.name} ${i.brand ?? ''}`, query))
