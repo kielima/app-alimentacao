@@ -72,16 +72,19 @@ export default function PinScreen({ mode, onSubmit }: Props) {
   const subtitle = isCreate && stage === 'enter' ? `${PIN_MIN} a ${PIN_MAX} dígitos` : null;
 
   return (
-    <div className="flex h-full flex-col items-center justify-center px-6">
+    <div className="flex h-full flex-col items-center justify-center bg-[#F1F4E6] px-6 text-zinc-900">
       <div className="mb-8 text-center">
-        <div className="mb-2 text-5xl" aria-hidden>
-          🍳
-        </div>
+        <img
+          src={`${import.meta.env.BASE_URL}icon-source.png`}
+          alt=""
+          aria-hidden
+          className="mx-auto mb-2 h-20 w-20"
+        />
         <h1 className="text-xl font-semibold">App de Alimentação</h1>
       </div>
 
-      <p className="mb-2 text-base font-medium text-zinc-700 dark:text-zinc-200">{title}</p>
-      {subtitle && <p className="mb-4 text-xs text-zinc-500 dark:text-zinc-400">{subtitle}</p>}
+      <p className="mb-2 text-base font-medium text-zinc-700">{title}</p>
+      {subtitle && <p className="mb-4 text-xs text-zinc-500">{subtitle}</p>}
 
       <div className="mb-3 flex gap-2" role="status" aria-label={`${current.length} de ${PIN_MAX} dígitos`}>
         {Array.from({ length: PIN_MAX }).map((_, i) => (
@@ -90,7 +93,7 @@ export default function PinScreen({ mode, onSubmit }: Props) {
             className={`h-3 w-3 rounded-full border ${
               i < current.length
                 ? 'border-brand-500 bg-brand-500'
-                : 'border-zinc-300 bg-transparent dark:border-zinc-700'
+                : 'border-zinc-300 bg-transparent'
             }`}
           />
         ))}
@@ -134,7 +137,7 @@ function PinButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="h-16 w-16 rounded-full bg-zinc-100 text-2xl font-medium text-zinc-900 transition-colors hover:bg-zinc-200 active:bg-zinc-300 disabled:opacity-30 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:active:bg-zinc-600"
+      className="h-16 w-16 rounded-full bg-white/60 text-2xl font-medium text-zinc-900 transition-colors hover:bg-white active:bg-zinc-100 disabled:opacity-30"
     >
       {children}
     </button>
