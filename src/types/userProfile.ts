@@ -11,6 +11,8 @@ export interface UserProfile {
   sex: Sex | null;
   activity: ActivityLevel | null;
   goal: Goal | null;
+  proteinPerKgOverride?: number | null;
+  fatPctOverride?: number | null;
   updatedAt?: string;
 }
 
@@ -75,4 +77,6 @@ export const EMPTY_USER_PROFILE: UserProfile = {
   sex: null,
   activity: null,
   goal: null,
+  proteinPerKgOverride: null,
+  fatPctOverride: null,
 };

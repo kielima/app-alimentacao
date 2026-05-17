@@ -1,7 +1,13 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import HeaderSlot from '../components/HeaderSlot';
 import { setUserProfile, useUserProfile } from '../data/userProfile';
-import { computeTargets } from '../utils/profileTargets';
+import {
+  computeTargets,
+  getDefaultFatPct,
+  getDefaultProteinPerKg,
+  getEffectiveFatPct,
+  getEffectiveProteinPerKg,
+} from '../utils/profileTargets';
 import {
   ACTIVITY_OPTIONS,
   EMPTY_USER_PROFILE,
@@ -20,9 +26,14 @@ function parseNumber(value: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-function formatNumberInput(value: number | null): string {
+function formatNumberInput(value: number | null | undefined): string {
   if (value == null) return '';
   return String(value);
+}
+
+function formatPctInput(decimal: number | null | undefined): string {
+  if (decimal == null) return '';
+  return String(Math.round(decimal * 1000) / 10);
 }
 
 const RANGES = {
@@ -41,6 +52,10 @@ export default function Perfil() {
   const [sex, setSex] = useState<Sex | ''>(current.sex ?? '');
   const [activity, setActivity] = useState<ActivityLevel | ''>(current.activity ?? '');
   const [goal, setGoal] = useState<Goal | ''>(current.goal ?? '');
+  const [proteinPerKgStr, setProteinPerKgStr] = useState(() =>
+    formatNumberInput(current.proteinPerKgOverride),
+  );
+  const [fatPctStr, setFatPctStr] = useState(() => formatPctInput(current.fatPctOverride));
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
 
@@ -52,7 +67,13 @@ export default function Perfil() {
     setSex(stored.sex ?? '');
     setActivity(stored.activity ?? '');
     setGoal(stored.goal ?? '');
+    setProteinPerKgStr(formatNumberInput(stored.proteinPerKgOverride));
+    setFatPctStr(formatPctInput(stored.fatPctOverride));
   }, [stored]);
+
+  const proteinOverride = parseNumber(proteinPerKgStr);
+  const fatPctParsed = parseNumber(fatPctStr);
+  const fatPctOverride = fatPctParsed != null ? fatPctParsed / 100 : null;
 
   const draft: UserProfile = {
     weightKg: parseNumber(weightStr),
@@ -61,9 +82,13 @@ export default function Perfil() {
     sex: sex || null,
     activity: activity || null,
     goal: goal || null,
+    proteinPerKgOverride: proteinOverride,
+    fatPctOverride,
   };
 
   const previewTargets = computeTargets(draft);
+  const effectiveProtein = getEffectiveProteinPerKg(draft);
+  const effectiveFat = getEffectiveFatPct(draft);
 
   function validate(): string | null {
     for (const key of ['weightKg', 'heightCm', 'ageYears'] as const) {
@@ -73,6 +98,12 @@ export default function Perfil() {
       if (v < range.min || v > range.max) {
         return `Valor de ${range.label} fora do intervalo (${range.min}–${range.max}).`;
       }
+    }
+    if (proteinOverride != null && (proteinOverride <= 0 || proteinOverride > 5)) {
+      return 'Proteína por kg fora do intervalo (0–5).';
+    }
+    if (fatPctParsed != null && (fatPctParsed <= 0 || fatPctParsed >= 100)) {
+      return 'Percentual de gordura fora do intervalo (0–100).';
     }
     return null;
   }
@@ -201,11 +232,75 @@ export default function Perfil() {
               {previewTargets.calories.toLocaleString('pt-BR')}{' '}
               <span className="text-sm font-normal text-zinc-500 dark:text-zinc-400">kcal/dia</span>
             </div>
-            <div className="mt-3 grid grid-cols-3 gap-2 text-sm">
-              <Macro label="Proteína" value={previewTargets.protein} />
-              <Macro label="Carbos" value={previewTargets.carbs} />
-              <Macro label="Gordura" value={previewTargets.fat} />
-            </div>
+
+            <ul className="mt-3 space-y-2 text-sm">
+              <MacroRow
+                label="Proteína"
+                value={previewTargets.protein}
+                formula={
+                  <>
+                    <FormulaInput
+                      value={proteinPerKgStr}
+                      onChange={setProteinPerKgStr}
+                      placeholder={String(
+                        goal ? getDefaultProteinPerKg(goal) : effectiveProtein.value,
+                      )}
+                      suffix="g/kg"
+                      ariaLabel="Proteína por kg de peso corporal"
+                    />
+                    <span className="text-zinc-500 dark:text-zinc-400">
+                      × {draft.weightKg ?? '—'} kg
+                    </span>
+                    {effectiveProtein.isOverride && goal && (
+                      <ResetButton
+                        onClick={() => setProteinPerKgStr('')}
+                        title={`Restaurar padrão (${getDefaultProteinPerKg(goal)} g/kg)`}
+                      />
+                    )}
+                  </>
+                }
+              />
+
+              <MacroRow
+                label="Gordura"
+                value={previewTargets.fat}
+                formula={
+                  <>
+                    <FormulaInput
+                      value={fatPctStr}
+                      onChange={setFatPctStr}
+                      placeholder={String(
+                        Math.round(
+                          (goal ? getDefaultFatPct(goal) : effectiveFat.value) * 1000,
+                        ) / 10,
+                      )}
+                      suffix="% das kcal"
+                      ariaLabel="Percentual de gordura sobre as kcal"
+                    />
+                    <span className="text-zinc-500 dark:text-zinc-400">÷ 9</span>
+                    {effectiveFat.isOverride && goal && (
+                      <ResetButton
+                        onClick={() => setFatPctStr('')}
+                        title={`Restaurar padrão (${
+                          Math.round(getDefaultFatPct(goal) * 1000) / 10
+                        }%)`}
+                      />
+                    )}
+                  </>
+                }
+              />
+
+              <MacroRow
+                label="Carbos"
+                value={previewTargets.carbs}
+                formula={
+                  <span className="text-zinc-500 dark:text-zinc-400">
+                    Restante das kcal ÷ 4
+                  </span>
+                }
+              />
+            </ul>
+
             <p className="mt-3 text-[11px] text-zinc-500 dark:text-zinc-400">
               TMB {previewTargets.bmr.toLocaleString('pt-BR')} kcal · Gasto total{' '}
               {previewTargets.tdee.toLocaleString('pt-BR')} kcal (Mifflin-St Jeor).
@@ -243,15 +338,69 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function Macro({ label, value }: { label: string; value: number }) {
+function MacroRow({
+  label,
+  value,
+  formula,
+}: {
+  label: string;
+  value: number;
+  formula: React.ReactNode;
+}) {
   return (
-    <div className="rounded-lg bg-white px-2 py-2 text-center dark:bg-zinc-900">
-      <div className="text-xs text-zinc-500 dark:text-zinc-400">{label}</div>
-      <div className="text-base font-semibold">
-        {value}
-        <span className="text-xs font-normal text-zinc-500 dark:text-zinc-400">g</span>
+    <li className="rounded-lg bg-white px-3 py-2 dark:bg-zinc-900">
+      <div className="flex items-baseline justify-between">
+        <span className="text-xs text-zinc-500 dark:text-zinc-400">{label}</span>
+        <span className="text-base font-semibold">
+          {value}
+          <span className="text-xs font-normal text-zinc-500 dark:text-zinc-400">g</span>
+        </span>
       </div>
-    </div>
+      <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px]">{formula}</div>
+    </li>
+  );
+}
+
+function FormulaInput({
+  value,
+  onChange,
+  placeholder,
+  suffix,
+  ariaLabel,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  suffix: string;
+  ariaLabel: string;
+}) {
+  return (
+    <span className="inline-flex items-center gap-1">
+      <input
+        type="text"
+        inputMode="decimal"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        aria-label={ariaLabel}
+        className="w-14 rounded border border-zinc-300 bg-zinc-50 px-1.5 py-0.5 text-center text-[11px] focus:border-brand-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800"
+      />
+      <span className="text-zinc-500 dark:text-zinc-400">{suffix}</span>
+    </span>
+  );
+}
+
+function ResetButton({ onClick, title }: { onClick: () => void; title: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      aria-label={title}
+      className="ml-1 rounded px-1 text-[11px] text-brand-600 hover:underline dark:text-brand-400"
+    >
+      ↺ padrão
+    </button>
   );
 }
 
