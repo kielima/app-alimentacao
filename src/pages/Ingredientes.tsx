@@ -4,7 +4,11 @@ import HeaderSlot from '../components/HeaderSlot';
 import ScanButton from '../components/ScanButton';
 import FilterButton from '../components/FilterButton';
 import BarcodeScannerModal from '../components/BarcodeScannerModal';
-import { useIngredients, type IngredientFilter } from '../hooks/useIngredients';
+import {
+  useIngredients,
+  ingredientNeedsReview,
+  type IngredientFilter,
+} from '../hooks/useIngredients';
 import {
   upsertShoppingItem,
   deleteShoppingItem,
@@ -24,6 +28,7 @@ const filters: { value: IngredientFilter; label: string }[] = [
   { value: 'marcas', label: 'Marcas' },
   { value: 'genericos', label: 'Genéricos' },
   { value: 'a-verificar', label: 'A verificar' },
+  { value: 'revisar', label: 'Revisar' },
 ];
 
 export default function Ingredientes() {
@@ -198,9 +203,7 @@ export default function Ingredientes() {
                         : 'sem dados nutricionais'}
                     </p>
                   </div>
-                  {((ing.needs_review && !ing.tbca_code && !ing.off_barcode) ||
-                    !ing.nutrition_per_100 ||
-                    (ing.category === 'hortifruti' && !ing.ceagesp_slug)) && (
+                  {ingredientNeedsReview(ing) && (
                     <span
                       className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
                       title={
