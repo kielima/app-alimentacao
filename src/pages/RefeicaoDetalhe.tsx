@@ -139,9 +139,22 @@ export default function RefeicaoDetalhe() {
       <Link
         to={`/refeicoes/${meal.id}/editar`}
         aria-label="Editar refeição"
-        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-500 text-2xl shadow-lg hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
+        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-cream text-brand-700 shadow-lg hover:bg-brand-100 dark:bg-brand-cream dark:text-brand-700 dark:hover:bg-brand-100"
       >
-        ✏️
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-7 w-7"
+          aria-hidden
+        >
+          <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+          <path d="M15 5l4 4" />
+        </svg>
       </Link>
     </div>
   );

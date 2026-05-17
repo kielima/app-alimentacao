@@ -35,7 +35,7 @@ export default function OffContribuicoes() {
       <div className="mb-4 flex items-center gap-3">
         <Link
           to="/ingredientes"
-          className="rounded-full bg-zinc-200/60 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200"
+          className="rounded-full bg-zinc-100 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
         >
           ←
         </Link>
@@ -88,7 +88,7 @@ export default function OffContribuicoes() {
                       onClick={() =>
                         upsertOffContribution({ ...d, submitted_at: new Date().toISOString() })
                       }
-                      className="rounded-full bg-zinc-200/60 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200"
+                      className="rounded-full bg-zinc-100 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
                     >
                       Marcar enviado
                     </button>

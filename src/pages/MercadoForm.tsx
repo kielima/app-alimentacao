@@ -99,7 +99,7 @@ export default function MercadoForm() {
           <button
             type="button"
             onClick={handleDelete}
-            className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-zinc-200/60 px-3 text-sm text-zinc-700 transition-colors hover:bg-red-100 hover:text-red-700 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-red-900/30 dark:hover:text-red-300"
+            className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 px-3 text-sm text-zinc-700 transition-colors hover:bg-red-100 hover:text-red-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-red-900/30 dark:hover:text-red-300"
             aria-label="Excluir"
           >
             <svg
@@ -256,7 +256,7 @@ export default function MercadoForm() {
       <Link
         to="/mercados"
         aria-label="Cancelar"
-        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-500 text-2xl text-white shadow-lg hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
+        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-cream text-2xl text-brand-700 shadow-lg hover:bg-brand-100 dark:bg-brand-cream dark:text-brand-700 dark:hover:bg-brand-100"
       >
         ✕
       </Link>

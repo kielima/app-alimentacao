@@ -134,10 +134,27 @@ export default function Plano() {
         className={`fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full text-2xl shadow-lg transition-colors ${
           editing
             ? 'bg-zinc-200 text-zinc-700 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-600'
-            : 'bg-brand-500 text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500'
+            : 'bg-brand-cream text-brand-700 hover:bg-brand-100 dark:bg-brand-cream dark:text-brand-700 dark:hover:bg-brand-100'
         }`}
       >
-        {editing ? '✓' : '✏️'}
+        {editing ? (
+          '✓'
+        ) : (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-7 w-7"
+            aria-hidden
+          >
+            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+            <path d="M15 5l4 4" />
+          </svg>
+        )}
       </button>
 
       <DaySummary

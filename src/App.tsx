@@ -35,7 +35,7 @@ function PlanoHeaderStrip() {
       <button
         type="button"
         onClick={() => setDay((d) => ((d + 6) % 7) as DayOfWeek)}
-        className="rounded-full bg-zinc-200/60 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200"
+        className="rounded-full bg-zinc-100 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
         aria-label="Dia anterior"
       >
         ◀
@@ -55,7 +55,7 @@ function PlanoHeaderStrip() {
       <button
         type="button"
         onClick={() => setDay((d) => ((d + 1) % 7) as DayOfWeek)}
-        className="rounded-full bg-zinc-200/60 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200"
+        className="rounded-full bg-zinc-100 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
         aria-label="Próximo dia"
       >
         ▶
@@ -71,7 +71,7 @@ function PlanTypeToggleButton() {
     <button
       type="button"
       onClick={() => setPlanType(isTraining ? 'rest_day' : 'training_day')}
-      className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-zinc-200/60 px-3 text-sm text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60"
+      className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 px-3 text-sm text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
       aria-label={`${isTraining ? 'Dia de Treino' : 'Dia de Descanso'}. Clique para alternar.`}
       title={isTraining ? 'Dia de Treino' : 'Dia de Descanso'}
     >

@@ -158,7 +158,7 @@ export default function Compras() {
               className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                 storeFilter === ALL_STORES
                   ? 'bg-brand-500 text-white dark:bg-brand-600'
-                  : 'bg-zinc-200/60 text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60'
+                  : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700'
               }`}
             >
               Todos {items.length > 0 && <span className="opacity-70">({items.length})</span>}
@@ -171,7 +171,7 @@ export default function Compras() {
                 className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                   storeFilter === opt.value
                     ? 'bg-brand-500 text-white dark:bg-brand-600'
-                    : 'bg-zinc-200/60 text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60'
+                    : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700'
                 }`}
               >
                 {opt.value === UNGROUPED ? '🏪 Sem mercado' : `🏪 ${opt.value}`}{' '}
@@ -192,13 +192,28 @@ export default function Compras() {
         type="button"
         onClick={() => setAdding((a) => !a)}
         aria-label={adding ? 'Fechar' : 'Adicionar item'}
-        className={`fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full text-3xl font-bold shadow-lg transition-colors ${
+        className={`fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full text-2xl shadow-lg transition-colors ${
           adding
             ? 'bg-zinc-200 text-zinc-600 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600'
-            : 'bg-brand-500 text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500'
+            : 'bg-brand-cream text-brand-700 hover:bg-brand-100 dark:bg-brand-cream dark:text-brand-700 dark:hover:bg-brand-100'
         }`}
       >
-        {adding ? '✕' : '+'}
+        {adding ? (
+          '✕'
+        ) : (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            className="h-7 w-7"
+            aria-hidden
+          >
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        )}
       </button>
 
       {totalEstimated > 0 && (
@@ -531,7 +546,7 @@ function QuickAdd({
         <button
           type="button"
           onClick={onDone}
-          className="rounded-full bg-zinc-200/60 px-4 py-2 text-sm text-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-200"
+          className="rounded-full bg-zinc-100 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
         >
           Cancelar
         </button>

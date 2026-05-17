@@ -378,7 +378,7 @@ export default function ReceitaForm() {
               className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                 state.difficulty === d.value
                   ? 'bg-brand-500 text-white dark:bg-brand-600'
-                  : 'bg-zinc-200/60 text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60'
+                  : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700'
               }`}
             >
               {d.label}
@@ -435,7 +435,7 @@ export default function ReceitaForm() {
         type="button"
         onClick={() => navigate(-1)}
         aria-label="Cancelar"
-        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-500 text-2xl text-white shadow-lg hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
+        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-cream text-2xl text-brand-700 shadow-lg hover:bg-brand-100 dark:bg-brand-cream dark:text-brand-700 dark:hover:bg-brand-100"
       >
         ✕
       </button>

@@ -152,9 +152,20 @@ export default function Receitas() {
       <Link
         to="/receitas/nova"
         aria-label="Nova receita"
-        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-500 text-3xl font-bold text-white shadow-lg hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
+        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-cream text-brand-700 shadow-lg hover:bg-brand-100 dark:bg-brand-cream dark:text-brand-700 dark:hover:bg-brand-100"
       >
-        +
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          className="h-7 w-7"
+          aria-hidden
+        >
+          <path d="M12 5v14M5 12h14" />
+        </svg>
       </Link>
     </div>
   );
@@ -186,7 +197,7 @@ function HiddenRecipesPanel() {
               <button
                 type="button"
                 onClick={() => unhideRecipe(r.id)}
-                className="rounded-full bg-zinc-200/60 px-2 py-0.5 text-xs text-zinc-700 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-brand-900/30 dark:hover:text-brand-400"
+                className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-700 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-brand-900/30 dark:hover:text-brand-400"
                 aria-label={`Restaurar ${r.name}`}
               >
                 ↺ restaurar
@@ -228,7 +239,7 @@ function Chip({
       className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
         active
           ? 'bg-brand-500 text-white dark:bg-brand-600'
-          : 'bg-zinc-200/60 text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60'
+          : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700'
       }`}
     >
       {children}

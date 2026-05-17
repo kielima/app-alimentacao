@@ -121,7 +121,7 @@ export default function ReceitaDetalhe() {
           <button
             type="button"
             onClick={handleRevert}
-            className="shrink-0 rounded-full bg-zinc-200/60 px-3 py-1 text-sm text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60"
+            className="shrink-0 rounded-full bg-zinc-100 px-3 py-1 text-sm text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
             title="Descartar edições e voltar ao original"
           >
             ↺
@@ -130,7 +130,7 @@ export default function ReceitaDetalhe() {
         <button
           type="button"
           onClick={handleDelete}
-          className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-zinc-200/60 px-3 text-sm text-zinc-700 transition-colors hover:bg-red-100 hover:text-red-700 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-red-900/30 dark:hover:text-red-300"
+          className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 px-3 text-sm text-zinc-700 transition-colors hover:bg-red-100 hover:text-red-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-red-900/30 dark:hover:text-red-300"
           aria-label="Excluir receita"
         >
           <svg
@@ -203,7 +203,7 @@ export default function ReceitaDetalhe() {
             <button
               type="button"
               onClick={() => handleAddToShoppingList(true)}
-              className="rounded-full bg-zinc-200/60 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60"
+              className="rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
             >
               🛒 Só os faltantes
             </button>
@@ -299,9 +299,22 @@ export default function ReceitaDetalhe() {
       <Link
         to={`/receitas/${recipe.id}/editar`}
         aria-label="Editar receita"
-        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-500 text-2xl shadow-lg hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
+        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-cream text-brand-700 shadow-lg hover:bg-brand-100 dark:bg-brand-cream dark:text-brand-700 dark:hover:bg-brand-100"
       >
-        ✏️
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-7 w-7"
+          aria-hidden
+        >
+          <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+          <path d="M15 5l4 4" />
+        </svg>
       </Link>
     </div>
   );

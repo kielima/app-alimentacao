@@ -149,7 +149,7 @@ export default function NavMenu({ onSignOut }: { onSignOut: () => void }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-zinc-200/60 px-3 text-sm text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60"
+        className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 px-3 text-sm text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
         aria-label="Abrir menu de navegação"
         aria-expanded={open}
       >

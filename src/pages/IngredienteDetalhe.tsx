@@ -192,7 +192,7 @@ export default function IngredienteDetalhe() {
           className={`shrink-0 rounded-full px-3 py-1 text-base leading-none transition-colors ${
             addedToCart
               ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-              : 'bg-zinc-200/60 text-zinc-700 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-brand-900/30 dark:hover:text-brand-400'
+              : 'bg-zinc-100 text-zinc-700 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-brand-900/30 dark:hover:text-brand-400'
           }`}
           aria-label={addedToCart ? 'Remover da lista de compras' : 'Adicionar à lista de compras'}
           title={addedToCart ? 'Remover da lista de compras' : 'Adicionar à lista de compras'}
@@ -205,7 +205,7 @@ export default function IngredienteDetalhe() {
           className={`shrink-0 rounded-full px-3 py-1 text-base leading-none transition-colors ${
             addedToPantry
               ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-              : 'bg-zinc-200/60 text-zinc-700 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-brand-900/30 dark:hover:text-brand-400'
+              : 'bg-zinc-100 text-zinc-700 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-brand-900/30 dark:hover:text-brand-400'
           }`}
           aria-label={addedToPantry ? 'Remover da dispensa' : 'Adicionar à dispensa'}
           title={addedToPantry ? 'Remover da dispensa' : 'Adicionar à dispensa'}
@@ -215,7 +215,7 @@ export default function IngredienteDetalhe() {
         <button
           type="button"
           onClick={handleDelete}
-          className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-zinc-200/60 px-3 text-sm text-zinc-700 transition-colors hover:bg-red-100 hover:text-red-700 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-red-900/30 dark:hover:text-red-300"
+          className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 px-3 text-sm text-zinc-700 transition-colors hover:bg-red-100 hover:text-red-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-red-900/30 dark:hover:text-red-300"
           aria-label="Excluir ingrediente"
           title="Excluir ingrediente"
         >
@@ -276,7 +276,7 @@ export default function IngredienteDetalhe() {
             <button
               type="button"
               onClick={() => setQuantity(ingredient.serving_size_g!)}
-              className="ml-auto rounded-md bg-zinc-200/60 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60"
+              className="ml-auto rounded-md bg-zinc-100 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
             >
               1 porção ({ingredient.serving_size_g}
               {unitSuffix})
@@ -486,9 +486,22 @@ export default function IngredienteDetalhe() {
       <Link
         to={`/ingredientes/${ingredient.id}/editar`}
         aria-label="Editar ingrediente"
-        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-500 text-2xl shadow-lg hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
+        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-cream text-brand-700 shadow-lg hover:bg-brand-100 dark:bg-brand-cream dark:text-brand-700 dark:hover:bg-brand-100"
       >
-        ✏️
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-7 w-7"
+          aria-hidden
+        >
+          <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+          <path d="M15 5l4 4" />
+        </svg>
       </Link>
     </div>
   );
