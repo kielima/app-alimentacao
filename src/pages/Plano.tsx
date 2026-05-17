@@ -448,10 +448,22 @@ function PlanMealCard({
                     <button
                       type="button"
                       onClick={() => removeItem(idx)}
-                      className="rounded-md bg-zinc-100 px-2 text-zinc-400 hover:bg-red-100 hover:text-red-700 dark:bg-zinc-800 dark:hover:bg-red-900/30"
+                      className="inline-flex items-center justify-center rounded-md bg-zinc-100 px-2 py-1 text-zinc-400 hover:bg-red-100 hover:text-red-700 dark:bg-zinc-800 dark:hover:bg-red-900/30"
                       aria-label="Remover"
                     >
-                      <span aria-hidden="true" className="text-xl font-bold leading-none text-red-600 dark:text-red-400">×</span>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="h-4 w-4"
+                        aria-hidden
+                      >
+                        <path d="M6 6l12 12M18 6L6 18" />
+                      </svg>
                     </button>
                   </div>
                 </li>
