@@ -255,7 +255,7 @@ export default function Compras() {
                           e.stopPropagation();
                           toggleChecked(item);
                         }}
-                        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors ${
+                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors ${
                           item.checked
                             ? 'border-brand-500 bg-brand-500 text-white dark:border-brand-400 dark:bg-brand-600'
                             : 'border-zinc-300 dark:border-zinc-600'
@@ -301,7 +301,7 @@ export default function Compras() {
                         </div>
                       </button>
                       <label
-                        className="flex shrink-0 cursor-pointer items-center rounded-md px-1.5 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                        className="flex h-5 shrink-0 cursor-pointer items-center rounded-md px-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                         onClick={(e) => e.stopPropagation()}
                         aria-label="Definir validade"
                       >
@@ -343,7 +343,7 @@ export default function Compras() {
                           e.stopPropagation();
                           deleteShoppingItem(item.id);
                         }}
-                        className="shrink-0 px-2 text-zinc-400 hover:text-red-500"
+                        className="flex h-5 shrink-0 items-center px-2 text-zinc-400 hover:text-red-500"
                         aria-label="Remover"
                       >
                         ✕
