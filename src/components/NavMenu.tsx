@@ -11,7 +11,7 @@ const tabs = [
   { to: '/dispensa', label: 'Lista da Dispensa' },
   { to: '/compras', label: 'Lista de Compras' },
   { to: '/mercados', label: 'Lista de Mercados' },
-  { to: '/perfil', label: 'Perfil' },
+  { to: '/perfil', label: 'Dados pessoais' },
 ];
 
 export default function NavMenu({ onSignOut }: { onSignOut: () => void }) {

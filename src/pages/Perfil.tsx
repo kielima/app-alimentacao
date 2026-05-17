@@ -125,7 +125,7 @@ export default function Perfil() {
   return (
     <form id="perfil-form" onSubmit={handleSubmit} className="mx-auto max-w-md px-4 pt-2 pb-28">
       <HeaderSlot>
-        <h1 className="min-w-0 flex-1 truncate text-lg font-semibold">Perfil</h1>
+        <h1 className="min-w-0 flex-1 truncate text-lg font-semibold">Dados pessoais</h1>
         <button
           type="submit"
           form="perfil-form"
@@ -147,7 +147,7 @@ export default function Perfil() {
         </div>
       )}
 
-      <Section title="Dados pessoais">
+      <section className="mb-6">
         <Field label="Peso (kg)">
           <input
             type="text"
@@ -192,9 +192,9 @@ export default function Perfil() {
             ))}
           </select>
         </Field>
-      </Section>
+      </section>
 
-      <Section title="Atividade e objetivo">
+      <section className="mb-6">
         <Field label="Nível de atividade">
           <select
             value={activity}
@@ -223,7 +223,7 @@ export default function Perfil() {
             ))}
           </select>
         </Field>
-      </Section>
+      </section>
 
       <Section title="Metas diárias calculadas">
         {previewTargets ? (
