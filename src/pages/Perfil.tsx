@@ -301,7 +301,7 @@ export default function Perfil() {
               />
             </ul>
 
-            <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="mt-3 text-[11px] text-zinc-500 dark:text-zinc-400">
               TMB {previewTargets.bmr.toLocaleString('pt-BR')} kcal · Gasto total{' '}
               {previewTargets.tdee.toLocaleString('pt-BR')} kcal (Mifflin-St Jeor).
             </p>
