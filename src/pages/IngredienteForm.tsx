@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
+import SearchableSelect from '../components/SearchableSelect';
 import { uniqueSlug } from '../utils/slug';
 import { upsertUserIngredient } from '../data/userIngredients';
 import { allIngredientIds, findIngredientById } from '../data/ingredients';
@@ -151,18 +152,15 @@ export default function IngredienteForm() {
       </Field>
 
       <Field label="Categoria">
-        <select
+        <SearchableSelect
           value={category}
-          onChange={(e) => setCategory(e.target.value as IngredientCategory | '')}
-          className={inputClass}
-        >
-          <option value="">Sem categoria</option>
-          {INGREDIENT_CATEGORIES.map((c) => (
-            <option key={c.value} value={c.value}>
-              {c.label}
-            </option>
-          ))}
-        </select>
+          onChange={(v) => setCategory(v as IngredientCategory | '')}
+          options={[
+            { value: '', label: 'Sem categoria' },
+            ...INGREDIENT_CATEGORIES.map((c) => ({ value: c.value, label: c.label })),
+          ]}
+          placeholder="Sem categoria"
+        />
       </Field>
 
       {!editing && scannedBarcode && (
