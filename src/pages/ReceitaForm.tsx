@@ -1,5 +1,5 @@
-import { useMemo, useState, type FormEvent } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import { useAllIngredients } from '../data/ingredients';
 import SearchableSelect from '../components/SearchableSelect';
@@ -35,6 +35,21 @@ interface FormIngredient {
   quantity: string;
   unit: string;
 }
+
+type IngredientSection = 'main' | 'molho';
+
+interface PendingSlot {
+  section: IngredientSection;
+  index: number;
+}
+
+interface Draft {
+  state: FormState;
+  pendingSlot: PendingSlot | null;
+  editingId: string | null;
+}
+
+const DRAFT_KEY = 'receita-form-draft';
 
 interface FormState {
   name: string;
@@ -151,6 +166,8 @@ function formToRecipe(
 export default function ReceitaForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const editing = id !== undefined;
   const original = editing ? findRecipeById(id) : undefined;
@@ -162,8 +179,70 @@ export default function ReceitaForm() {
   );
   const ingredientMap = useMemo(() => new Map(allIng.map((i) => [i.id, i])), [allIng]);
 
-  const [state, setState] = useState<FormState>(() => recipeToForm(original));
+  const [state, setState] = useState<FormState>(() => {
+    const newIngredientId = searchParams.get('ingredient');
+    try {
+      const saved = sessionStorage.getItem(DRAFT_KEY);
+      if (saved) {
+        const draft = JSON.parse(saved) as Draft;
+        if (draft.editingId === (id ?? null)) {
+          let restored = draft.state;
+          if (newIngredientId && draft.pendingSlot) {
+            const { section, index } = draft.pendingSlot;
+            if (section === 'molho') {
+              const list = [...restored.ingredients_molho];
+              if (list[index]) {
+                list[index] = {
+                  ...list[index],
+                  ingredient_id: newIngredientId,
+                };
+              }
+              restored = { ...restored, ingredients_molho: list };
+            } else {
+              const list = [...restored.ingredients];
+              if (list[index]) {
+                list[index] = {
+                  ...list[index],
+                  ingredient_id: newIngredientId,
+                };
+              }
+              restored = { ...restored, ingredients: list };
+            }
+          }
+          return restored;
+        }
+      }
+    } catch {
+      // ignore corrupted draft
+    }
+    return recipeToForm(original);
+  });
   const [error, setError] = useState<string | null>(null);
+
+  const stateRef = useRef(state);
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+
+  useEffect(() => {
+    sessionStorage.removeItem(DRAFT_KEY);
+    if (searchParams.get('ingredient')) {
+      const next = new URLSearchParams(searchParams);
+      next.delete('ingredient');
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleCreateNewIngredient = (section: IngredientSection, index: number) => {
+    const draft: Draft = {
+      state: stateRef.current,
+      pendingSlot: { section, index },
+      editingId: id ?? null,
+    };
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    navigate(`/ingredientes/novo?return=${encodeURIComponent(location.pathname)}`);
+  };
 
   if (editing && !original) {
     return (
@@ -200,6 +279,7 @@ export default function ReceitaForm() {
     const recipe = formToRecipe(state, original, ingredientMap);
     recipe.id = recipeId;
     upsertUserRecipe(recipe);
+    sessionStorage.removeItem(DRAFT_KEY);
     if (editing) {
       navigate(-1);
     } else {
@@ -322,6 +402,7 @@ export default function ReceitaForm() {
         items={state.ingredients}
         sortedIngredients={sortedIngredients}
         onChange={(items) => setState((s) => ({ ...s, ingredients: items }))}
+        onCreateNew={(idx) => handleCreateNewIngredient('main', idx)}
       />
 
       <ExtraIngredientsSection
@@ -329,6 +410,7 @@ export default function ReceitaForm() {
         items={state.ingredients_molho}
         sortedIngredients={sortedIngredients}
         onChange={(items) => setState((s) => ({ ...s, ingredients_molho: items }))}
+        onCreateNew={(idx) => handleCreateNewIngredient('molho', idx)}
       />
 
       <StepsSection
@@ -366,11 +448,13 @@ function IngredientsSection({
   items,
   sortedIngredients,
   onChange,
+  onCreateNew,
 }: {
   title: string;
   items: FormIngredient[];
   sortedIngredients: Ingredient[];
   onChange: (items: FormIngredient[]) => void;
+  onCreateNew: (index: number) => void;
 }) {
   const updateItem = (idx: number, patch: Partial<FormIngredient>) =>
     onChange(items.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
@@ -391,6 +475,7 @@ function IngredientsSection({
             sortedIngredients={sortedIngredients}
             onUpdate={(patch) => updateItem(idx, patch)}
             onRemove={() => removeItem(idx)}
+            onCreateNew={() => onCreateNew(idx)}
           />
         ))}
       </ul>
@@ -410,11 +495,13 @@ function ExtraIngredientsSection({
   items,
   sortedIngredients,
   onChange,
+  onCreateNew,
 }: {
   title: string;
   items: FormIngredient[];
   sortedIngredients: Ingredient[];
   onChange: (items: FormIngredient[]) => void;
+  onCreateNew: (index: number) => void;
 }) {
   if (items.length === 0) {
     return (
@@ -433,6 +520,7 @@ function ExtraIngredientsSection({
       items={items}
       sortedIngredients={sortedIngredients}
       onChange={onChange}
+      onCreateNew={onCreateNew}
     />
   );
 }
@@ -442,13 +530,14 @@ function IngredientRow({
   sortedIngredients,
   onUpdate,
   onRemove,
+  onCreateNew,
 }: {
   ing: FormIngredient;
   sortedIngredients: Ingredient[];
   onUpdate: (patch: Partial<FormIngredient>) => void;
   onRemove: () => void;
+  onCreateNew: () => void;
 }) {
-  const navigate = useNavigate();
   return (
     <li className="rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
       <div className="mb-2 grid grid-cols-[1fr,auto] gap-2">
@@ -467,7 +556,7 @@ function IngredientRow({
           }))}
           placeholder="— Selecione um ingrediente —"
           createLabel="➕ Criar novo ingrediente"
-          onCreate={() => navigate('/ingredientes/novo')}
+          onCreate={onCreateNew}
         />
         <button
           type="button"
