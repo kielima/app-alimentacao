@@ -10,8 +10,9 @@ interface Props {
   onChange: (value: string) => void;
   options: SearchableOption[];
   placeholder?: string;
-  createLabel?: string;
+  createLabel?: string | ((query: string) => string);
   onCreate?: (query?: string) => void;
+  createMode?: 'always' | 'whenEmpty';
   className?: string;
 }
 
@@ -25,6 +26,7 @@ export default function SearchableSelect({
   placeholder = '— Selecione —',
   createLabel,
   onCreate,
+  createMode = 'always',
   className = '',
 }: Props) {
   const [open, setOpen] = useState(false);
@@ -95,27 +97,44 @@ export default function SearchableSelect({
               </button>
             </li>
           ))}
-          {filtered.length === 0 && (
-            <li className="px-3 py-2.5 text-sm text-zinc-400 dark:text-zinc-500">
-              Nenhum resultado
-            </li>
-          )}
-          {createLabel && (
-            <li className="border-t border-zinc-100 dark:border-zinc-800">
-              <button
-                type="button"
-                onPointerDown={(e) => e.preventDefault()}
-                onClick={() => {
-                  const q = query;
-                  close();
-                  onCreate?.(q);
-                }}
-                className="w-full px-3 py-2.5 text-left text-sm text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-900/20"
-              >
-                {createLabel}
-              </button>
-            </li>
-          )}
+          {(() => {
+            const showCreate =
+              !!createLabel &&
+              (createMode === 'always' ||
+                (filtered.length === 0 && query.trim() !== ''));
+            const resolvedLabel = showCreate
+              ? typeof createLabel === 'function'
+                ? createLabel(query)
+                : createLabel
+              : null;
+            const showEmptyMessage =
+              filtered.length === 0 && (createMode === 'always' || !showCreate);
+            return (
+              <>
+                {showEmptyMessage && (
+                  <li className="px-3 py-2.5 text-sm text-zinc-400 dark:text-zinc-500">
+                    Nenhum resultado
+                  </li>
+                )}
+                {showCreate && resolvedLabel && (
+                  <li className="border-t border-zinc-100 dark:border-zinc-800">
+                    <button
+                      type="button"
+                      onPointerDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        const q = query;
+                        close();
+                        onCreate?.(q);
+                      }}
+                      className="w-full px-3 py-2.5 text-left text-sm text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-900/20"
+                    >
+                      {resolvedLabel}
+                    </button>
+                  </li>
+                )}
+              </>
+            );
+          })()}
         </ul>
       )}
     </div>

@@ -1,13 +1,13 @@
-import { useState, type FormEvent } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import SearchableSelect from '../components/SearchableSelect';
 import { uniqueSlug } from '../utils/slug';
 import { upsertUserIngredient } from '../data/userIngredients';
-import { allIngredientIds, findIngredientById } from '../data/ingredients';
+import { allIngredientIds, findIngredientById, useAllIngredients } from '../data/ingredients';
 import { upsertOffContribution } from '../data/offContributions';
 import type { Ingredient, IngredientCategory, Unit } from '../types/ingredient';
-import { INGREDIENT_CATEGORIES } from '../types/ingredient';
+import { INGREDIENT_CATEGORIES, getCategoryLabel } from '../types/ingredient';
 
 const unitOptions: { value: Unit; label: string }[] = [
   { value: 'g', label: 'g (gramas)' },
@@ -32,6 +32,28 @@ export default function IngredienteForm() {
   const [category, setCategory] = useState<IngredientCategory | ''>(existing?.category ?? '');
   const [contributeOff, setContributeOff] = useState(Boolean(scannedBarcode));
   const [error, setError] = useState<string | null>(null);
+
+  const allIngs = useAllIngredients();
+  const categoryOptions = useMemo(() => {
+    const seen = new Map<string, { value: string; label: string }>();
+    for (const preset of INGREDIENT_CATEGORIES) {
+      seen.set(preset.value.toLowerCase(), preset);
+    }
+    for (const ing of allIngs) {
+      if (ing.category) {
+        const key = ing.category.toLowerCase();
+        if (!seen.has(key)) {
+          seen.set(key, { value: ing.category, label: getCategoryLabel(ing.category) });
+        }
+      }
+    }
+    return [
+      { value: '', label: 'Sem categoria' },
+      ...Array.from(seen.values()).sort((a, b) =>
+        a.label.localeCompare(b.label, 'pt-BR'),
+      ),
+    ];
+  }, [allIngs]);
 
   if (editing && !existing) {
     return (
@@ -154,12 +176,15 @@ export default function IngredienteForm() {
       <Field label="Categoria">
         <SearchableSelect
           value={category}
-          onChange={(v) => setCategory(v as IngredientCategory | '')}
-          options={[
-            { value: '', label: 'Sem categoria' },
-            ...INGREDIENT_CATEGORIES.map((c) => ({ value: c.value, label: c.label })),
-          ]}
+          onChange={(v) => setCategory(v)}
+          options={categoryOptions}
           placeholder="Sem categoria"
+          createLabel={(q) => `➕ Adicionar "${q.trim()}"`}
+          createMode="whenEmpty"
+          onCreate={(q) => {
+            const trimmed = (q ?? '').trim();
+            if (trimmed) setCategory(trimmed);
+          }}
         />
       </Field>
 
