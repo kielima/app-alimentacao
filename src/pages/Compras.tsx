@@ -240,22 +240,15 @@ export default function Compras() {
         </p>
       ) : (
         <>
-          {grouped.map(([store, list]) => (
-            <section
-              key={store}
-              className="mb-4 rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900"
-            >
-              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                {store === UNGROUPED ? '🏪 Sem mercado' : `🏪 ${store}`}
-              </h2>
-              <ul className="space-y-1">
-                {list.map((item) => {
-                  const recipe =
-                    item.source === 'from_recipe' && item.source_ref
-                      ? findRecipeById(item.source_ref)
-                      : undefined;
-                  return (
-                    <li key={item.id} className="flex items-start gap-2 py-1">
+          <section className="mb-4 rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
+            <ul className="space-y-1">
+              {filteredItems.map((item) => {
+                const recipe =
+                  item.source === 'from_recipe' && item.source_ref
+                    ? findRecipeById(item.source_ref)
+                    : undefined;
+                return (
+                  <li key={item.id} className="flex items-start gap-2 py-1">
                       <button
                         type="button"
                         onClick={(e) => {
@@ -328,9 +321,20 @@ export default function Compras() {
                             {shortDate(item.expiry_date)}
                           </span>
                         ) : (
-                          <span className="text-zinc-400" aria-hidden>
-                            📅
-                          </span>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="h-4 w-4 text-zinc-400"
+                            aria-hidden
+                          >
+                            <path d="M8 2v4M16 2v4M3 10h18M21 14V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9" />
+                            <path d="m16 20 2 2 4-4" />
+                          </svg>
                         )}
                       </label>
                       <button
@@ -344,12 +348,11 @@ export default function Compras() {
                       >
                         ✕
                       </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          ))}
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
 
           {totalChecked > 0 && (
             <div className="mb-3 rounded-xl border border-brand-200 bg-brand-50 p-3 dark:border-brand-900/40 dark:bg-brand-900/20">
