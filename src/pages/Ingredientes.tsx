@@ -179,6 +179,14 @@ export default function Ingredientes() {
         </div>
       )}
 
+      <Link
+        to="/ingredientes/novo"
+        aria-label="Novo ingrediente"
+        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-500 text-3xl font-bold text-white shadow-lg hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
+      >
+        +
+      </Link>
+
       {list.length === 0 ? (
         <p className="mt-12 text-center text-sm text-zinc-500 dark:text-zinc-400">
           Nenhum ingrediente encontrado.
