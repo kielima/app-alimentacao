@@ -21,15 +21,21 @@ const sourceBuf = readFileSync(sourcePath);
 const BG = { r: 241, g: 244, b: 230, alpha: 1 };
 const BG_HEX = '#F1F4E6';
 
+// Pequeno ajuste óptico do logo (frações do canvas).
+const SHIFT_X = 0.01; // direita
+const SHIFT_Y = -0.02; // cima
+
 async function renderIcon(size, { padding = 0.12, rounded = true } = {}) {
   const inner = Math.round(size * (1 - 2 * padding));
-  const offset = Math.round((size - inner) / 2);
+  const baseOffset = Math.round((size - inner) / 2);
+  const top = baseOffset + Math.round(size * SHIFT_Y);
+  const left = baseOffset + Math.round(size * SHIFT_X);
   const innerBuf = await sharp(sourceBuf)
     .resize(inner, inner, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .png()
     .toBuffer();
 
-  const composites = [{ input: innerBuf, top: offset, left: offset }];
+  const composites = [{ input: innerBuf, top, left }];
 
   if (rounded) {
     const r = Math.round(size * 0.1875);
@@ -66,7 +72,7 @@ const b64 = sourceBuf.toString('base64');
 
 const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <rect width="512" height="512" rx="96" fill="${BG_HEX}"/>
-  <image href="data:image/png;base64,${b64}" x="26" y="26" width="460" height="460"/>
+  <image href="data:image/png;base64,${b64}" x="31" y="16" width="460" height="460"/>
 </svg>
 `;
 writeFileSync(resolve(publicDir, 'icon.svg'), iconSvg);
@@ -74,7 +80,7 @@ console.log('✓ icon.svg');
 
 const faviconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <rect width="64" height="64" rx="14" fill="${BG_HEX}"/>
-  <image href="data:image/png;base64,${b64}" x="3" y="3" width="58" height="58"/>
+  <image href="data:image/png;base64,${b64}" x="3.6" y="1.7" width="58" height="58"/>
 </svg>
 `;
 writeFileSync(resolve(publicDir, 'favicon.svg'), faviconSvg);
