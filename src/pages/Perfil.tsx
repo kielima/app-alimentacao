@@ -301,7 +301,7 @@ export default function Perfil() {
               />
             </ul>
 
-            <p className="mt-3 text-[11px] text-zinc-500 dark:text-zinc-400">
+            <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
               TMB {previewTargets.bmr.toLocaleString('pt-BR')} kcal · Gasto total{' '}
               {previewTargets.tdee.toLocaleString('pt-BR')} kcal (Mifflin-St Jeor).
             </p>
@@ -356,7 +356,7 @@ function MacroRow({
           <span className="text-xs font-normal text-zinc-500 dark:text-zinc-400">g</span>
         </span>
       </div>
-      <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px]">{formula}</div>
+      <div className="mt-1 flex flex-wrap items-center gap-1 text-sm">{formula}</div>
     </li>
   );
 }
@@ -383,7 +383,7 @@ function FormulaInput({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         aria-label={ariaLabel}
-        className="w-14 rounded border border-zinc-300 bg-zinc-50 px-1.5 py-0.5 text-center text-[11px] focus:border-brand-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800"
+        className="w-16 rounded border border-zinc-300 bg-zinc-50 px-2 py-1 text-center text-sm focus:border-brand-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800"
       />
       <span className="text-zinc-500 dark:text-zinc-400">{suffix}</span>
     </span>
@@ -397,7 +397,7 @@ function ResetButton({ onClick, title }: { onClick: () => void; title: string })
       onClick={onClick}
       title={title}
       aria-label={title}
-      className="ml-1 rounded px-1 text-[11px] text-brand-600 hover:underline dark:text-brand-400"
+      className="ml-1 rounded px-1 text-sm text-brand-600 hover:underline dark:text-brand-400"
     >
       ↺ padrão
     </button>
