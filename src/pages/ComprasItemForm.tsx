@@ -10,6 +10,9 @@ import { upsertUserIngredient } from '../data/userIngredients';
 import { getShoppingItem, upsertShoppingItem, deleteShoppingItem, useShoppingItems } from '../data/shoppingList';
 import { usePantryItems } from '../data/pantry';
 import { useMarkets } from '../data/markets';
+import { useAllRecipes, recipeCategories } from '../data/recipes';
+import { useAllMeals } from '../data/meals';
+import { MEAL_TYPES } from '../types/mealPlan';
 import { UNIT_OPTIONS } from '../utils/units';
 import { uniqueSlug } from '../utils/slug';
 import NutritionTable from '../components/NutritionTable';
@@ -72,6 +75,8 @@ export default function ComprasItemForm() {
   const pantryItems = usePantryItems();
   const shoppingItems = useShoppingItems();
   const markets = useMarkets();
+  const allRecipes = useAllRecipes();
+  const allMeals = useAllMeals();
   const knownStores = useMemo(() => {
     const fromItems = [...pantryItems, ...shoppingItems]
       .map((i) => i.store)
@@ -117,6 +122,31 @@ export default function ComprasItemForm() {
       setStoreSelect('__outro__');
     }
   }, [knownStores]); // intentionally only runs when knownStores changes (first load)
+
+  const recipesUsingIngredient = useMemo(() => {
+    if (!state.ingredient_id) return [];
+    return allRecipes
+      .filter((r) => {
+        const inMain = r.ingredients?.some((i) => i.ingredient_id === state.ingredient_id);
+        const inMolho = r.ingredients_molho?.some((i) => i.ingredient_id === state.ingredient_id);
+        return inMain || inMolho;
+      })
+      .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+  }, [allRecipes, state.ingredient_id]);
+
+  const mealsUsingIngredient = useMemo(() => {
+    if (!state.ingredient_id) return [];
+    const recipeIds = new Set(recipesUsingIngredient.map((r) => r.id));
+    return allMeals
+      .filter((m) =>
+        m.items.some(
+          (it) =>
+            (it.kind === 'ingredient' && it.ingredient_id === state.ingredient_id) ||
+            (it.kind === 'recipe' && it.recipe_id && recipeIds.has(it.recipe_id)),
+        ),
+      )
+      .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+  }, [allMeals, state.ingredient_id, recipesUsingIngredient]);
 
   if (id !== undefined && !original) {
     return (
@@ -322,6 +352,60 @@ export default function ComprasItemForm() {
           </section>
         ) : null;
       })()}
+
+      {recipesUsingIngredient.length > 0 && (
+        <section className="mt-3 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            Receitas com este ingrediente ({recipesUsingIngredient.length})
+          </h2>
+          <ul className="space-y-1.5">
+            {recipesUsingIngredient.map((r) => {
+              const cat = recipeCategories.find((c) => c.id === r.category);
+              return (
+                <li key={r.id}>
+                  <Link
+                    to={`/receitas/${r.id}`}
+                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  >
+                    <span aria-hidden className="text-lg">
+                      {cat?.icon ?? '🍽️'}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate">{r.name}</span>
+                    <span className="text-zinc-400 dark:text-zinc-500">›</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
+      {mealsUsingIngredient.length > 0 && (
+        <section className="mt-3 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            Refeições com este ingrediente ({mealsUsingIngredient.length})
+          </h2>
+          <ul className="space-y-1.5">
+            {mealsUsingIngredient.map((m) => {
+              const slotDef = MEAL_TYPES.find((t) => t.value === m.meal_type);
+              return (
+                <li key={m.id}>
+                  <Link
+                    to={`/refeicoes/${m.id}`}
+                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  >
+                    <span aria-hidden className="text-lg">
+                      {slotDef?.icon ?? '🍽️'}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate">{m.name}</span>
+                    <span className="text-zinc-400 dark:text-zinc-500">›</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       <Link
         to="/compras"
