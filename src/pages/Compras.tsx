@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import SearchableSelect from '../components/SearchableSelect';
 import ScanButton from '../components/ScanButton';
+import FilterButton from '../components/FilterButton';
 import BarcodeScannerModal from '../components/BarcodeScannerModal';
 import {
   upsertShoppingItem,
@@ -16,10 +17,17 @@ import { useMarkets } from '../data/markets';
 import { findRecipeById } from '../data/recipes';
 import { handleScanForShoppingList } from '../lib/scanActions';
 import { UNIT_OPTIONS, unitLabel } from '../utils/units';
+import { createUIStore } from '../utils/persistentUIState';
 import type { ShoppingItem } from '../types/shoppingList';
 import type { Ingredient } from '../types/ingredient';
 
 const UNGROUPED = '__sem-mercado__';
+const ALL_STORES = '__todos__';
+
+const ui = createUIStore({
+  storeFilter: ALL_STORES as string,
+  showFilters: false,
+});
 
 function shortDate(iso: string): string {
   const [, m, d] = iso.split('-');
@@ -36,6 +44,10 @@ export default function Compras() {
   const returnIngredientId = searchParams.get('ingredient') ?? undefined;
   const [adding, setAdding] = useState(() => Boolean(returnIngredientId));
   const [scanOpen, setScanOpen] = useState(false);
+  const { storeFilter, showFilters } = ui.useStore();
+  const setStoreFilter = (s: string) => ui.set('storeFilter', s);
+  const setShowFilters = (s: boolean | ((prev: boolean) => boolean)) =>
+    ui.set('showFilters', s);
 
   const sortedIngredients = useMemo(
     () => [...allIng].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
@@ -52,7 +64,7 @@ export default function Compras() {
     );
   }, [pantryItems, items, markets]);
 
-  const grouped = useMemo(() => {
+  const allGrouped = useMemo(() => {
     const map = new Map<string, ShoppingItem[]>();
     for (const item of items) {
       const key = item.store ?? UNGROUPED;
@@ -66,8 +78,26 @@ export default function Compras() {
     });
   }, [items]);
 
-  const totalEstimated = items.reduce((sum, i) => sum + (i.price ?? 0), 0);
-  const totalChecked = items.filter((i) => i.checked).length;
+  const storeOptions = useMemo(
+    () => allGrouped.map(([store, list]) => ({ value: store, count: list.length })),
+    [allGrouped],
+  );
+
+  const grouped = useMemo(() => {
+    if (storeFilter === ALL_STORES) return allGrouped;
+    return allGrouped.filter(([store]) => store === storeFilter);
+  }, [allGrouped, storeFilter]);
+
+  const filteredItems = useMemo(
+    () => grouped.flatMap(([, list]) => list),
+    [grouped],
+  );
+
+  const hasActiveFilters = storeFilter !== ALL_STORES;
+  const isFiltering = hasActiveFilters;
+
+  const totalEstimated = filteredItems.reduce((sum, i) => sum + (i.price ?? 0), 0);
+  const totalChecked = filteredItems.filter((i) => i.checked).length;
 
   const toggleChecked = (item: ShoppingItem) => {
     upsertShoppingItem({ ...item, checked: !item.checked });
@@ -102,6 +132,11 @@ export default function Compras() {
       <HeaderSlot>
         <div className="flex-1" />
         <ScanButton onClick={() => setScanOpen(true)} />
+        <FilterButton
+          active={showFilters}
+          hasActiveFilters={hasActiveFilters}
+          onClick={() => setShowFilters((f) => !f)}
+        />
       </HeaderSlot>
 
       <BarcodeScannerModal
@@ -113,6 +148,45 @@ export default function Compras() {
           handleScanForShoppingList(result, action, allIng, navigate);
         }}
       />
+
+      {showFilters && (
+        <div className="sticky top-0 z-10 -mx-4 mb-3 bg-zinc-50/95 px-4 pb-2 pt-2 backdrop-blur supports-[backdrop-filter]:bg-zinc-50/80 dark:bg-zinc-950/95 dark:supports-[backdrop-filter]:bg-zinc-950/80">
+          <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <button
+              type="button"
+              onClick={() => setStoreFilter(ALL_STORES)}
+              className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                storeFilter === ALL_STORES
+                  ? 'bg-brand-500 text-white dark:bg-brand-600'
+                  : 'bg-zinc-200/60 text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60'
+              }`}
+            >
+              Todos {items.length > 0 && <span className="opacity-70">({items.length})</span>}
+            </button>
+            {storeOptions.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setStoreFilter(opt.value)}
+                className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                  storeFilter === opt.value
+                    ? 'bg-brand-500 text-white dark:bg-brand-600'
+                    : 'bg-zinc-200/60 text-zinc-700 hover:bg-zinc-300/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:hover:bg-zinc-700/60'
+                }`}
+              >
+                {opt.value === UNGROUPED ? '🏪 Sem mercado' : `🏪 ${opt.value}`}{' '}
+                <span className="opacity-70">({opt.count})</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {isFiltering && items.length > 0 && (
+        <p className="mb-2 text-xs text-zinc-400 dark:text-zinc-500">
+          {filteredItems.length} de {items.length} item{items.length !== 1 ? 's' : ''}
+        </p>
+      )}
 
       <button
         type="button"
@@ -160,6 +234,10 @@ export default function Compras() {
             Adicione itens a partir de uma receita →
           </Link>
         </div>
+      ) : grouped.length === 0 ? (
+        <p className="mt-12 text-center text-sm text-zinc-500 dark:text-zinc-400">
+          Nenhum item nesse filtro.
+        </p>
       ) : (
         <>
           {grouped.map(([store, list]) => (
