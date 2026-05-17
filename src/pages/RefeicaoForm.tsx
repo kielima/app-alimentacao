@@ -265,7 +265,7 @@ export default function RefeicaoForm() {
                   className="ml-auto rounded-md bg-zinc-100 px-2 py-1 text-zinc-500 hover:bg-red-100 hover:text-red-700 dark:bg-zinc-800 dark:hover:bg-red-900/30"
                   aria-label="Remover"
                 >
-                  🗑️
+                  <span aria-hidden="true" className="text-xl font-bold leading-none text-red-600 dark:text-red-400">×</span>
                 </button>
               </div>
               <SearchableSelect

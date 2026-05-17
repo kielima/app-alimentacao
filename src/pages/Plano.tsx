@@ -434,7 +434,7 @@ function PlanMealCard({
                       className="rounded-md bg-zinc-100 px-2 text-zinc-400 hover:bg-red-100 hover:text-red-700 dark:bg-zinc-800 dark:hover:bg-red-900/30"
                       aria-label="Remover"
                     >
-                      🗑️
+                      <span aria-hidden="true" className="text-xl font-bold leading-none text-red-600 dark:text-red-400">×</span>
                     </button>
                   </div>
                 </li>
