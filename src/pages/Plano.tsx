@@ -23,6 +23,8 @@ import { useAllMeals } from '../data/meals';
 import { findRecipeById } from '../data/recipes';
 import { findIngredientById } from '../data/ingredients';
 import { computePlanItemsNutrition, type NutritionBreakdown } from '../utils/nutrition';
+import { useNutritionTargets } from '../hooks/useNutritionTargets';
+import type { NutritionTargets } from '../types/userProfile';
 import type { Meal } from '../types/meal';
 
 // ── Done-tracking helpers ──────────────────────────────────────────────────
@@ -78,6 +80,7 @@ export default function Plano() {
   };
 
   const allMeals = useAllMeals();
+  const targets = useNutritionTargets();
 
   const dayPlan = useMemo(() => {
     const found = plans.find((p) => p.day_of_week === day && p.plan_type === planType);
@@ -144,6 +147,7 @@ export default function Plano() {
         totalCount={totalMealsWithItems}
         isToday={isToday}
         dayLabel={dayLabel}
+        targets={targets}
       />
 
       <ul className="mt-4 space-y-3">
@@ -184,6 +188,7 @@ function DaySummary({
   totalCount,
   isToday,
   dayLabel,
+  targets,
 }: {
   nutrition: NutritionBreakdown | null;
   consumed: NutritionBreakdown | null;
@@ -191,6 +196,7 @@ function DaySummary({
   totalCount: number;
   isToday: boolean;
   dayLabel: string;
+  targets: NutritionTargets | null;
 }) {
   if (!nutrition || nutrition.counted === 0) {
     return (
@@ -261,12 +267,33 @@ function DaySummary({
         </div>
       )}
 
+      {/* Daily target line */}
+      {targets && (
+        <div className="mt-1 flex items-center justify-between text-[10px] text-zinc-500 dark:text-zinc-400">
+          <span>Meta: {fmt(targets.calories)} kcal</span>
+          {hasConsumed && (
+            <span>
+              {pct(consumed!.totals.calories, targets.calories) ?? 0}% da meta
+            </span>
+          )}
+        </div>
+      )}
+      {!targets && (
+        <Link
+          to="/perfil"
+          className="mt-1 block text-[10px] text-brand-600 hover:underline dark:text-brand-400"
+        >
+          Defina seu perfil para ver metas diárias →
+        </Link>
+      )}
+
       {/* Macros */}
       <div className="mt-2 grid grid-cols-3 gap-1 text-xs text-zinc-600 dark:text-zinc-300">
         {macros.map(({ key, label }) => {
           const total = nutrition.totals[key];
           const cons = consumed?.totals[key];
           const p = pct(cons, total);
+          const target = targets?.[key];
           return (
             <div key={key}>
               {hasConsumed ? (
@@ -281,6 +308,11 @@ function DaySummary({
               ) : (
                 <div>
                   {label}: {fmt(total, 1)}g
+                </div>
+              )}
+              {target != null && (
+                <div className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                  Meta: {target}g
                 </div>
               )}
             </div>

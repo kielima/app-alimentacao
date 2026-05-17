@@ -1,11 +1,13 @@
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { signInAnonymously, onAuthStateChanged, type User } from 'firebase/auth';
 import { auth, db, firebaseConfigured } from './firebase';
+import type { UserProfile } from '../types/userProfile';
 
 const HOUSEHOLD_ID = 'main';
 
 export interface HouseholdDoc {
   pinHash: string;
+  profile?: UserProfile;
   createdAt?: unknown;
   updatedAt?: unknown;
 }
@@ -44,9 +46,13 @@ export async function writeHouseholdPin(pinHash: string): Promise<void> {
   }
   await ensureAnonAuth();
   const existing = await readHousehold();
-  await setDoc(doc(db, 'household', HOUSEHOLD_ID), {
-    pinHash,
-    createdAt: existing?.createdAt ?? serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
+  await setDoc(
+    doc(db, 'household', HOUSEHOLD_ID),
+    {
+      pinHash,
+      createdAt: existing?.createdAt ?? serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true },
+  );
 }
