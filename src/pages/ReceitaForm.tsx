@@ -283,9 +283,17 @@ export default function ReceitaForm() {
     sessionStorage.removeItem(DRAFT_KEY);
     if (editing) {
       navigate(-1);
-    } else {
-      navigate(`/receitas/${recipeId}`, { replace: true });
+      return;
     }
+    const returnPath = searchParams.get('return');
+    if (returnPath) {
+      const dest = returnPath.includes('?')
+        ? `${returnPath}&recipe=${recipeId}`
+        : `${returnPath}?recipe=${recipeId}`;
+      navigate(dest, { replace: true });
+      return;
+    }
+    navigate(`/receitas/${recipeId}`, { replace: true });
   };
 
   return (

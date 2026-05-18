@@ -1,5 +1,5 @@
-import { useMemo, useState, type FormEvent } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import SearchableSelect from '../components/SearchableSelect';
 import TrashIcon from '../components/TrashIcon';
@@ -38,6 +38,15 @@ interface FormState {
   notes: string;
   items: FormItem[];
 }
+
+interface Draft {
+  state: FormState;
+  pendingItemId: string | null;
+  pendingKind: MealItemKind | null;
+  editingId: string | null;
+}
+
+const DRAFT_KEY = 'refeicao-form-draft';
 
 function emptyItem(kind: MealItemKind = 'recipe'): FormItem {
   return {
@@ -100,6 +109,8 @@ function formToMeal(state: FormState, original: Meal | undefined): Meal {
 export default function RefeicaoForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const editing = id !== undefined;
   const original = editing ? findMealById(id) : undefined;
@@ -116,8 +127,73 @@ export default function RefeicaoForm() {
     [ingredients],
   );
 
-  const [state, setState] = useState<FormState>(() => mealToForm(original));
+  const [state, setState] = useState<FormState>(() => {
+    const newRecipeId = searchParams.get('recipe');
+    const newIngredientId = searchParams.get('ingredient');
+    try {
+      const saved = sessionStorage.getItem(DRAFT_KEY);
+      if (saved) {
+        const draft = JSON.parse(saved) as Draft;
+        if (draft.editingId === (id ?? null)) {
+          let restored = draft.state;
+          if (draft.pendingItemId) {
+            const incomingId =
+              draft.pendingKind === 'recipe'
+                ? newRecipeId
+                : draft.pendingKind === 'ingredient'
+                  ? newIngredientId
+                  : null;
+            if (incomingId) {
+              restored = {
+                ...restored,
+                items: restored.items.map((it) => {
+                  if (it.id !== draft.pendingItemId) return it;
+                  const nextKind = draft.pendingKind ?? it.kind;
+                  let nextUnit = it.unit;
+                  if (nextKind === 'ingredient' && !it.unit) {
+                    const matched = ingredients.find((i) => i.id === incomingId);
+                    if (matched) nextUnit = matched.default_unit;
+                  }
+                  return {
+                    ...it,
+                    kind: nextKind,
+                    ref_id: incomingId,
+                    unit: nextUnit,
+                  };
+                }),
+              };
+            }
+          }
+          return restored;
+        }
+      }
+    } catch {
+      // ignore corrupted draft
+    }
+    return mealToForm(original);
+  });
   const [error, setError] = useState<string | null>(null);
+
+  const stateRef = useRef(state);
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+
+  useEffect(() => {
+    sessionStorage.removeItem(DRAFT_KEY);
+    const next = new URLSearchParams(searchParams);
+    let dirty = false;
+    if (next.has('recipe')) {
+      next.delete('recipe');
+      dirty = true;
+    }
+    if (next.has('ingredient')) {
+      next.delete('ingredient');
+      dirty = true;
+    }
+    if (dirty) setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (editing && !original) {
     return (
@@ -146,6 +222,7 @@ export default function RefeicaoForm() {
     const meal = formToMeal(state, original);
     meal.id = mealId;
     upsertUserMeal(meal);
+    sessionStorage.removeItem(DRAFT_KEY);
     if (editing) {
       navigate(-1);
     } else {
@@ -311,7 +388,14 @@ export default function RefeicaoForm() {
                 placeholder="— Selecione —"
                 createLabel={`➕ Criar ${it.kind === 'recipe' ? 'nova receita' : 'novo ingrediente'}`}
                 onCreate={() => {
-                  const ret = encodeURIComponent(window.location.pathname);
+                  const draft: Draft = {
+                    state: stateRef.current,
+                    pendingItemId: it.id,
+                    pendingKind: it.kind,
+                    editingId: id ?? null,
+                  };
+                  sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+                  const ret = encodeURIComponent(location.pathname);
                   navigate(
                     it.kind === 'recipe'
                       ? `/receitas/nova?return=${ret}`
