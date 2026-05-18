@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import FilterButton from '../components/FilterButton';
 import { useAllMeals } from '../data/meals';
+import { getMealSlots } from '../types/meal';
 import { MEAL_TYPES, type MealType } from '../types/mealPlan';
 import { createUIStore } from '../utils/persistentUIState';
 
@@ -35,8 +36,9 @@ export default function Refeicoes() {
     const q = query.trim().toLowerCase();
     return meals
       .filter((m) => {
-        if (slot === 'sem-slot') return !m.meal_type;
-        if (slot !== 'todas' && m.meal_type !== slot) return false;
+        const slots = getMealSlots(m);
+        if (slot === 'sem-slot') return slots.length === 0;
+        if (slot !== 'todas' && !slots.includes(slot)) return false;
         return true;
       })
       .filter((m) => !q || m.name.toLowerCase().includes(q))
@@ -94,7 +96,15 @@ export default function Refeicoes() {
       ) : (
         <ul className="space-y-2">
           {filtered.map((m) => {
-            const slotDef = MEAL_TYPES.find((t) => t.value === m.meal_type);
+            const slots = getMealSlots(m);
+            const slotDefs = slots
+              .map((s) => MEAL_TYPES.find((t) => t.value === s))
+              .filter((t): t is (typeof MEAL_TYPES)[number] => !!t);
+            const iconStack = slotDefs.length > 0 ? slotDefs.map((s) => s.icon).join('') : '🍽️';
+            const slotsLabel =
+              slotDefs.length === 0
+                ? 'Sem slot'
+                : slotDefs.map((s) => s.label).join(' · ');
             const recipes = m.items.filter((i) => i.kind === 'recipe').length;
             const ingredients = m.items.filter((i) => i.kind === 'ingredient').length;
             return (
@@ -107,12 +117,12 @@ export default function Refeicoes() {
                     className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-2xl dark:bg-zinc-800"
                     aria-hidden
                   >
-                    {slotDef?.icon ?? '🍽️'}
+                    {iconStack}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium leading-tight">{m.name}</p>
                     <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-                      {slotDef?.label ?? 'Sem slot'} ·{' '}
+                      {slotsLabel} ·{' '}
                       {recipes ? `${recipes} receita${recipes > 1 ? 's' : ''}` : ''}
                       {recipes && ingredients ? ' + ' : ''}
                       {ingredients ? `${ingredients} ingrediente${ingredients > 1 ? 's' : ''}` : ''}

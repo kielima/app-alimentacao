@@ -17,6 +17,7 @@ import {
 } from '../data/pantry';
 import { useAllRecipes, recipeCategories } from '../data/recipes';
 import { useAllMeals } from '../data/meals';
+import { getMealSlots } from '../types/meal';
 import { MEAL_TYPES } from '../types/mealPlan';
 import type { NutritionPer100 } from '../types/ingredient';
 
@@ -410,7 +411,10 @@ export default function IngredienteDetalhe() {
           </h2>
           <ul className="space-y-1.5">
             {mealsUsingIngredient.map((m) => {
-              const slotDef = MEAL_TYPES.find((t) => t.value === m.meal_type);
+              const firstSlot = getMealSlots(m)[0];
+              const slotDef = firstSlot
+                ? MEAL_TYPES.find((t) => t.value === firstSlot)
+                : undefined;
               return (
                 <li key={m.id}>
                   <Link

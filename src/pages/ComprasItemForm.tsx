@@ -13,6 +13,7 @@ import { usePantryItems } from '../data/pantry';
 import { useMarkets } from '../data/markets';
 import { useAllRecipes, recipeCategories } from '../data/recipes';
 import { useAllMeals } from '../data/meals';
+import { getMealSlots } from '../types/meal';
 import { MEAL_TYPES } from '../types/mealPlan';
 import { UNIT_OPTIONS } from '../utils/units';
 import { uniqueSlug } from '../utils/slug';
@@ -388,7 +389,10 @@ export default function ComprasItemForm() {
           </h2>
           <ul className="space-y-1.5">
             {mealsUsingIngredient.map((m) => {
-              const slotDef = MEAL_TYPES.find((t) => t.value === m.meal_type);
+              const firstSlot = getMealSlots(m)[0];
+              const slotDef = firstSlot
+                ? MEAL_TYPES.find((t) => t.value === firstSlot)
+                : undefined;
               return (
                 <li key={m.id}>
                   <Link

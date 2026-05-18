@@ -27,7 +27,7 @@ import { findIngredientById, useAllIngredients } from '../data/ingredients';
 import { computePlanItemsNutrition, type NutritionBreakdown } from '../utils/nutrition';
 import { useNutritionTargets } from '../hooks/useNutritionTargets';
 import type { NutritionTargets } from '../types/userProfile';
-import type { Meal } from '../types/meal';
+import { getMealSlots, type Meal } from '../types/meal';
 import type { Recipe } from '../types/recipe';
 import type { Ingredient } from '../types/ingredient';
 
@@ -385,7 +385,10 @@ function PlanMealCard({
 
   const filteredMeals = useMemo(() => {
     return [...allMeals]
-      .filter((m) => !m.meal_type || m.meal_type === meal.meal_type)
+      .filter((m) => {
+        const slots = getMealSlots(m);
+        return slots.length === 0 || slots.includes(meal.meal_type);
+      })
       .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
   }, [allMeals, meal.meal_type]);
 
