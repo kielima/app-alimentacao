@@ -227,6 +227,25 @@ export function computePlanItemsNutrition(
   const byId = new Map(meals.map((m) => [m.id, m]));
 
   for (const planItem of planItems) {
+    if (planItem.kind === 'recipe' || planItem.kind === 'ingredient') {
+      // Reutiliza accumulateMealItem tratando o slot do plano como um MealItem.
+      const ok = accumulateMealItem(
+        {
+          id: planItem.id,
+          kind: planItem.kind,
+          recipe_id: planItem.recipe_id ?? undefined,
+          ingredient_id: planItem.ingredient_id ?? undefined,
+          quantity: planItem.quantity,
+          unit: planItem.unit ?? null,
+        },
+        totals,
+        skippedReasons,
+      );
+      if (ok) counted++;
+      else skipped++;
+      continue;
+    }
+    // kind === 'meal'
     if (!planItem.meal_id) {
       skipped++;
       skippedReasons.push({ raw: '(slot)', reason: 'sem refeição selecionada' });

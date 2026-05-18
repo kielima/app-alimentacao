@@ -9,10 +9,16 @@ export type MealType =
   | 'jantar'
   | 'ceia';
 
+export type PlanMealItemKind = 'meal' | 'recipe' | 'ingredient';
+
 export interface PlanMealItem {
   id: string;
-  meal_id: string | null;
+  kind: PlanMealItemKind;
+  meal_id?: string | null;
+  recipe_id?: string | null;
+  ingredient_id?: string | null;
   quantity: number | null;
+  unit?: string | null;
 }
 
 export interface PlanMeal {
