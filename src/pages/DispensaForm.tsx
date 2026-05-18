@@ -13,6 +13,7 @@ import { useMarkets } from '../data/markets';
 import { UNIT_OPTIONS } from '../utils/units';
 import { uniqueSlug } from '../utils/slug';
 import NutritionTable from '../components/NutritionTable';
+import TrashIcon from '../components/TrashIcon';
 import type { PantryItem } from '../types/pantry';
 import type { Unit } from '../types/ingredient';
 
@@ -210,19 +211,7 @@ export default function DispensaForm() {
             className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 px-3 text-sm text-zinc-700 transition-colors hover:bg-red-100 hover:text-red-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-red-900/30 dark:hover:text-red-300"
             aria-label="Excluir"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-4 w-4"
-              aria-hidden
-            >
-              <path d="M6 6l12 12M18 6L6 18" />
-            </svg>
+            <TrashIcon className="h-4 w-4" />
           </button>
         )}
         <button
