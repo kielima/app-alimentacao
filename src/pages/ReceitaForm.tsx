@@ -549,7 +549,7 @@ function IngredientRow({
 }) {
   return (
     <li className="rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="mb-2 grid grid-cols-[1fr,auto] gap-2">
+      <div className="mb-2 grid grid-cols-[minmax(0,1fr),auto] gap-2">
         <SearchableSelect
           value={ing.ingredient_id}
           onChange={(newId) => {
