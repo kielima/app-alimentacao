@@ -562,7 +562,7 @@ function IngredientRow({
         <button
           type="button"
           onClick={onRemove}
-          className="inline-flex items-center justify-center rounded-md bg-zinc-100 px-2 py-1 text-zinc-500 hover:bg-red-100 hover:text-red-700 dark:bg-zinc-800 dark:hover:bg-red-900/30 dark:hover:text-red-300"
+          className="inline-flex items-center justify-center rounded-md bg-red-100 px-2 py-1 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
           aria-label="Remover ingrediente"
         >
           <TrashIcon className="h-4 w-4" />
@@ -653,7 +653,7 @@ function StepsSection({
               <button
                 type="button"
                 onClick={() => removeStep(idx)}
-                className="ml-auto inline-flex items-center justify-center text-zinc-400 hover:text-red-500"
+                className="ml-auto inline-flex items-center justify-center text-red-500 hover:text-red-700"
                 aria-label="Remover passo"
               >
                 <TrashIcon className="h-4 w-4" />

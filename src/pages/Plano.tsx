@@ -449,7 +449,7 @@ function PlanMealCard({
                     <button
                       type="button"
                       onClick={() => removeItem(idx)}
-                      className="inline-flex items-center justify-center rounded-md bg-zinc-100 px-2 py-1 text-zinc-400 hover:bg-red-100 hover:text-red-700 dark:bg-zinc-800 dark:hover:bg-red-900/30"
+                      className="inline-flex items-center justify-center rounded-md bg-red-100 px-2 py-1 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
                       aria-label="Remover"
                     >
                       <TrashIcon className="h-4 w-4" />
