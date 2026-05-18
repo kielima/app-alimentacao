@@ -485,7 +485,13 @@ function QuickAdd({
           }))}
           placeholder="Selecione um ingrediente…"
           createLabel="➕ Criar novo ingrediente"
-          onCreate={() => navigate('/ingredientes/novo?return=%2Fcompras')}
+          onCreate={(q) => {
+            const params = new URLSearchParams();
+            params.set('return', '/compras');
+            const trimmed = q?.trim();
+            if (trimmed) params.set('name', trimmed);
+            navigate(`/ingredientes/novo?${params.toString()}`);
+          }}
           className="text-sm"
         />
       </div>

@@ -27,7 +27,8 @@ export default function IngredienteForm() {
     searchParams.get('return') ??
     (editing && existing ? `/ingredientes/${existing.id}` : '/ingredientes');
 
-  const [name, setName] = useState(existing?.name ?? '');
+  const initialName = searchParams.get('name') ?? '';
+  const [name, setName] = useState(existing?.name ?? initialName);
   const [brand, setBrand] = useState(existing?.brand ?? '');
   const [unit, setUnit] = useState<Unit>(existing?.default_unit ?? 'g');
   const [category, setCategory] = useState<IngredientCategory | ''>(existing?.category ?? '');
