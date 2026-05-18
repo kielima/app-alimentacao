@@ -50,7 +50,9 @@ interface Draft {
   editingId: string | null;
 }
 
-const DRAFT_KEY = 'receita-form-draft';
+function draftKeyFor(id: string | undefined) {
+  return `receita-form-draft:${id ?? 'new'}`;
+}
 
 interface FormState {
   name: string;
@@ -180,11 +182,13 @@ export default function ReceitaForm() {
   );
   const ingredientMap = useMemo(() => new Map(allIng.map((i) => [i.id, i])), [allIng]);
 
+  const draftKey = draftKeyFor(id);
+
   const [state, setState] = useState<FormState>(() => {
     const newIngredientId = searchParams.get('ingredient');
     const initialName = searchParams.get('name') ?? '';
     try {
-      const saved = sessionStorage.getItem(DRAFT_KEY);
+      const saved = sessionStorage.getItem(draftKey);
       if (saved) {
         const draft = JSON.parse(saved) as Draft;
         if (draft.editingId === (id ?? null)) {
@@ -227,7 +231,6 @@ export default function ReceitaForm() {
   }, [state]);
 
   useEffect(() => {
-    sessionStorage.removeItem(DRAFT_KEY);
     const next = new URLSearchParams(searchParams);
     let dirty = false;
     if (next.has('ingredient')) {
@@ -242,6 +245,19 @@ export default function ReceitaForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    const draft: Draft = {
+      state,
+      pendingSlot: null,
+      editingId: id ?? null,
+    };
+    try {
+      sessionStorage.setItem(draftKey, JSON.stringify(draft));
+    } catch {
+      // ignore quota errors
+    }
+  }, [state, draftKey, id]);
+
   const handleCreateNewIngredient = (
     section: IngredientSection,
     index: number,
@@ -252,9 +268,11 @@ export default function ReceitaForm() {
       pendingSlot: { section, index },
       editingId: id ?? null,
     };
-    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    sessionStorage.setItem(draftKey, JSON.stringify(draft));
+    const returnPath = searchParams.get('return');
+    const returnUrl = `${location.pathname}${returnPath ? `?return=${encodeURIComponent(returnPath)}` : ''}`;
     const params = new URLSearchParams();
-    params.set('return', location.pathname);
+    params.set('return', returnUrl);
     const trimmed = query?.trim();
     if (trimmed) params.set('name', trimmed);
     navigate(`/ingredientes/novo?${params.toString()}`);
@@ -295,7 +313,7 @@ export default function ReceitaForm() {
     const recipe = formToRecipe(state, original, ingredientMap);
     recipe.id = recipeId;
     upsertUserRecipe(recipe);
-    sessionStorage.removeItem(DRAFT_KEY);
+    sessionStorage.removeItem(draftKey);
     if (editing) {
       navigate(-1);
       return;
