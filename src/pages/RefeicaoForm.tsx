@@ -9,7 +9,7 @@ import { useAllRecipes } from '../data/recipes';
 import { upsertUserMeal } from '../data/userMeals';
 import { uniqueSlug } from '../utils/slug';
 import { MEAL_TYPES, type MealType } from '../types/mealPlan';
-import type { Meal, MealItem, MealItemKind } from '../types/meal';
+import { getMealSlots, type Meal, type MealItem, type MealItemKind } from '../types/meal';
 
 const UNIT_OPTIONS = [
   { value: '', label: '—' },
@@ -34,7 +34,7 @@ interface FormItem {
 
 interface FormState {
   name: string;
-  meal_type: MealType | '';
+  meal_types: MealType[];
   notes: string;
   items: FormItem[];
 }
@@ -53,14 +53,14 @@ function mealToForm(m: Meal | undefined): FormState {
   if (!m) {
     return {
       name: '',
-      meal_type: '',
+      meal_types: [],
       notes: '',
       items: [emptyItem()],
     };
   }
   return {
     name: m.name,
-    meal_type: m.meal_type ?? '',
+    meal_types: getMealSlots(m),
     notes: m.notes ?? '',
     items: m.items.length
       ? m.items.map((i) => ({
@@ -89,7 +89,9 @@ function formToMeal(state: FormState, original: Meal | undefined): Meal {
     ...original,
     id: original?.id ?? '',
     name: state.name.trim(),
-    meal_type: state.meal_type || null,
+    meal_types: state.meal_types.length ? state.meal_types : null,
+    // Sincroniza o campo legado para compatibilidade com leitores antigos.
+    meal_type: state.meal_types[0] ?? null,
     notes: state.notes.trim() || undefined,
     items,
   };
@@ -200,21 +202,37 @@ export default function RefeicaoForm() {
         />
       </Field>
 
-      <Field label="Slot (opcional)">
-        <select
-          value={state.meal_type}
-          onChange={(e) =>
-            setState((s) => ({ ...s, meal_type: e.target.value as MealType | '' }))
-          }
-          className={inputClass}
-        >
-          <option value="">— Sem slot —</option>
-          {MEAL_TYPES.map((m) => (
-            <option key={m.value} value={m.value}>
-              {m.icon} {m.label}
-            </option>
-          ))}
-        </select>
+      <Field label="Slots (opcional)">
+        <div className="flex flex-wrap gap-1.5">
+          {MEAL_TYPES.map((m) => {
+            const selected = state.meal_types.includes(m.value);
+            return (
+              <button
+                key={m.value}
+                type="button"
+                onClick={() =>
+                  setState((s) => ({
+                    ...s,
+                    meal_types: selected
+                      ? s.meal_types.filter((t) => t !== m.value)
+                      : [...s.meal_types, m.value],
+                  }))
+                }
+                aria-pressed={selected}
+                className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                  selected
+                    ? 'bg-brand-500 text-white dark:bg-brand-600'
+                    : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700'
+                }`}
+              >
+                <span aria-hidden>{m.icon}</span> {m.label}
+              </button>
+            );
+          })}
+        </div>
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          Toque para escolher um ou mais slots em que esta refeição pode aparecer.
+        </p>
       </Field>
 
       <Field label="Notas (opcional)">

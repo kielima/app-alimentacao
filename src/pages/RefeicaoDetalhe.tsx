@@ -5,6 +5,7 @@ import { findMealById } from '../data/meals';
 import { findIngredientById } from '../data/ingredients';
 import { findRecipeById } from '../data/recipes';
 import { computeMealItemsNutrition } from '../utils/nutrition';
+import { getMealSlots } from '../types/meal';
 import { MEAL_TYPES } from '../types/mealPlan';
 
 export default function RefeicaoDetalhe() {
@@ -26,7 +27,9 @@ export default function RefeicaoDetalhe() {
     );
   }
 
-  const slotDef = MEAL_TYPES.find((m) => m.value === meal.meal_type);
+  const slotDefs = getMealSlots(meal)
+    .map((s) => MEAL_TYPES.find((m) => m.value === s))
+    .filter((s): s is (typeof MEAL_TYPES)[number] => !!s);
 
   return (
     <div className="mx-auto max-w-md px-4 pt-2 pb-28">
@@ -34,10 +37,17 @@ export default function RefeicaoDetalhe() {
         <h1 className="min-w-0 flex-1 truncate text-lg font-semibold">{meal.name}</h1>
       </HeaderSlot>
 
-      {slotDef && (
-        <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">
-          <span aria-hidden>{slotDef.icon}</span> {slotDef.label}
-        </p>
+      {slotDefs.length > 0 && (
+        <div className="mb-3 flex flex-wrap gap-1.5">
+          {slotDefs.map((slot) => (
+            <span
+              key={slot.value}
+              className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+            >
+              <span aria-hidden>{slot.icon}</span> {slot.label}
+            </span>
+          ))}
+        </div>
       )}
 
       {meal.notes && (
