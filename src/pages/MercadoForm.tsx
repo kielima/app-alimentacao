@@ -100,10 +100,10 @@ export default function MercadoForm() {
           <button
             type="button"
             onClick={handleDelete}
-            className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-red-100 px-3 text-sm text-red-700 transition-colors hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-700 transition-colors hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
             aria-label="Excluir"
           >
-            <TrashIcon className="h-4 w-4" />
+            <TrashIcon className="h-5 w-5" />
           </button>
         )}
         <button
