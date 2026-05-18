@@ -81,10 +81,10 @@ function recipeIngredientToForm(i: RecipeIngredient): FormIngredient {
   };
 }
 
-function recipeToForm(r: Recipe | undefined): FormState {
+function recipeToForm(r: Recipe | undefined, initialName = ''): FormState {
   if (!r) {
     return {
-      name: '',
+      name: initialName,
       category: 'pratos-principais',
       prep_time_min: '',
       difficulty: '',
@@ -186,6 +186,7 @@ export default function ReceitaForm() {
 
   const [state, setState] = useState<FormState>(() => {
     const newIngredientId = searchParams.get('ingredient');
+    const initialName = searchParams.get('name') ?? '';
     try {
       const saved = sessionStorage.getItem(draftKey);
       if (saved) {
@@ -220,7 +221,7 @@ export default function ReceitaForm() {
     } catch {
       // ignore corrupted draft
     }
-    return recipeToForm(original);
+    return recipeToForm(original, initialName);
   });
   const [error, setError] = useState<string | null>(null);
 
@@ -230,11 +231,17 @@ export default function ReceitaForm() {
   }, [state]);
 
   useEffect(() => {
-    if (searchParams.get('ingredient')) {
-      const next = new URLSearchParams(searchParams);
+    const next = new URLSearchParams(searchParams);
+    let dirty = false;
+    if (next.has('ingredient')) {
       next.delete('ingredient');
-      setSearchParams(next, { replace: true });
+      dirty = true;
     }
+    if (next.has('name')) {
+      next.delete('name');
+      dirty = true;
+    }
+    if (dirty) setSearchParams(next, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -251,7 +258,11 @@ export default function ReceitaForm() {
     }
   }, [state, draftKey, id]);
 
-  const handleCreateNewIngredient = (section: IngredientSection, index: number) => {
+  const handleCreateNewIngredient = (
+    section: IngredientSection,
+    index: number,
+    query?: string,
+  ) => {
     const draft: Draft = {
       state: stateRef.current,
       pendingSlot: { section, index },
@@ -259,8 +270,12 @@ export default function ReceitaForm() {
     };
     sessionStorage.setItem(draftKey, JSON.stringify(draft));
     const returnPath = searchParams.get('return');
-    const url = `${location.pathname}${returnPath ? `?return=${encodeURIComponent(returnPath)}` : ''}`;
-    navigate(`/ingredientes/novo?return=${encodeURIComponent(url)}`);
+    const returnUrl = `${location.pathname}${returnPath ? `?return=${encodeURIComponent(returnPath)}` : ''}`;
+    const params = new URLSearchParams();
+    params.set('return', returnUrl);
+    const trimmed = query?.trim();
+    if (trimmed) params.set('name', trimmed);
+    navigate(`/ingredientes/novo?${params.toString()}`);
   };
 
   if (editing && !original) {
@@ -429,7 +444,7 @@ export default function ReceitaForm() {
         items={state.ingredients}
         sortedIngredients={sortedIngredients}
         onChange={(items) => setState((s) => ({ ...s, ingredients: items }))}
-        onCreateNew={(idx) => handleCreateNewIngredient('main', idx)}
+        onCreateNew={(idx, query) => handleCreateNewIngredient('main', idx, query)}
       />
 
       <ExtraIngredientsSection
@@ -437,7 +452,7 @@ export default function ReceitaForm() {
         items={state.ingredients_molho}
         sortedIngredients={sortedIngredients}
         onChange={(items) => setState((s) => ({ ...s, ingredients_molho: items }))}
-        onCreateNew={(idx) => handleCreateNewIngredient('molho', idx)}
+        onCreateNew={(idx, query) => handleCreateNewIngredient('molho', idx, query)}
       />
 
       <StepsSection
@@ -481,7 +496,7 @@ function IngredientsSection({
   items: FormIngredient[];
   sortedIngredients: Ingredient[];
   onChange: (items: FormIngredient[]) => void;
-  onCreateNew: (index: number) => void;
+  onCreateNew: (index: number, query?: string) => void;
 }) {
   const updateItem = (idx: number, patch: Partial<FormIngredient>) =>
     onChange(items.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
@@ -502,7 +517,7 @@ function IngredientsSection({
             sortedIngredients={sortedIngredients}
             onUpdate={(patch) => updateItem(idx, patch)}
             onRemove={() => removeItem(idx)}
-            onCreateNew={() => onCreateNew(idx)}
+            onCreateNew={(query) => onCreateNew(idx, query)}
           />
         ))}
       </ul>
@@ -528,7 +543,7 @@ function ExtraIngredientsSection({
   items: FormIngredient[];
   sortedIngredients: Ingredient[];
   onChange: (items: FormIngredient[]) => void;
-  onCreateNew: (index: number) => void;
+  onCreateNew: (index: number, query?: string) => void;
 }) {
   if (items.length === 0) {
     return (
@@ -563,11 +578,11 @@ function IngredientRow({
   sortedIngredients: Ingredient[];
   onUpdate: (patch: Partial<FormIngredient>) => void;
   onRemove: () => void;
-  onCreateNew: () => void;
+  onCreateNew: (query?: string) => void;
 }) {
   return (
     <li className="rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="mb-2 grid grid-cols-[1fr,auto] gap-2">
+      <div className="mb-2 grid grid-cols-[minmax(0,1fr),auto] gap-2">
         <SearchableSelect
           value={ing.ingredient_id}
           onChange={(newId) => {

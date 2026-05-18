@@ -404,7 +404,7 @@ export default function RefeicaoForm() {
                 }
                 placeholder="— Selecione —"
                 createLabel={`➕ Criar ${it.kind === 'recipe' ? 'nova receita' : 'novo ingrediente'}`}
-                onCreate={() => {
+                onCreate={(q) => {
                   const draft: Draft = {
                     state: stateRef.current,
                     pendingItemId: it.id,
@@ -412,11 +412,14 @@ export default function RefeicaoForm() {
                     editingId: id ?? null,
                   };
                   sessionStorage.setItem(draftKey, JSON.stringify(draft));
-                  const ret = encodeURIComponent(location.pathname);
+                  const params = new URLSearchParams();
+                  params.set('return', location.pathname);
+                  const trimmed = q?.trim();
+                  if (trimmed) params.set('name', trimmed);
                   navigate(
                     it.kind === 'recipe'
-                      ? `/receitas/nova?return=${ret}`
-                      : `/ingredientes/novo?return=${ret}`,
+                      ? `/receitas/nova?${params.toString()}`
+                      : `/ingredientes/novo?${params.toString()}`,
                   );
                 }}
                 className="mb-2"
