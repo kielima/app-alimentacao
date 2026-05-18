@@ -9,6 +9,7 @@ import {
   type DayOfWeek,
   type PlanMeal,
   type PlanMealItem,
+  type PlanMealItemKind,
   type MealType,
   type PlanType,
 } from '../types/mealPlan';
@@ -21,12 +22,27 @@ import {
   useMealPlans,
 } from '../data/mealPlan';
 import { useAllMeals } from '../data/meals';
-import { findRecipeById } from '../data/recipes';
-import { findIngredientById } from '../data/ingredients';
+import { findRecipeById, useAllRecipes } from '../data/recipes';
+import { findIngredientById, useAllIngredients } from '../data/ingredients';
 import { computePlanItemsNutrition, type NutritionBreakdown } from '../utils/nutrition';
 import { useNutritionTargets } from '../hooks/useNutritionTargets';
 import type { NutritionTargets } from '../types/userProfile';
 import type { Meal } from '../types/meal';
+import type { Recipe } from '../types/recipe';
+import type { Ingredient } from '../types/ingredient';
+
+const UNIT_OPTIONS = [
+  { value: '', label: '—' },
+  { value: 'g', label: 'g' },
+  { value: 'ml', label: 'ml' },
+  { value: 'unit', label: 'unidade' },
+  { value: 'xc', label: 'xícara' },
+  { value: 'cs', label: 'colher de sopa' },
+  { value: 'cc', label: 'colher de chá' },
+  { value: 'fatia', label: 'fatia' },
+  { value: 'pct', label: 'pacote' },
+  { value: 'a_gosto', label: 'a gosto' },
+];
 
 // ── Done-tracking helpers ──────────────────────────────────────────────────
 
@@ -81,6 +97,8 @@ export default function Plano() {
   };
 
   const allMeals = useAllMeals();
+  const allRecipes = useAllRecipes();
+  const allIngredients = useAllIngredients();
   const targets = useNutritionTargets();
 
   const dayPlan = useMemo(() => {
@@ -175,6 +193,8 @@ export default function Plano() {
             meal={meal}
             editing={editing}
             allMeals={allMeals}
+            allRecipes={allRecipes}
+            allIngredients={allIngredients}
             onChange={(items) => updateMeal(meal.meal_type, items)}
             isDone={doneMealTypes.has(meal.meal_type)}
             onToggleDone={() => toggleDone(meal.meal_type)}
@@ -345,6 +365,8 @@ function PlanMealCard({
   meal,
   editing,
   allMeals,
+  allRecipes,
+  allIngredients,
   onChange,
   isDone,
   onToggleDone,
@@ -352,6 +374,8 @@ function PlanMealCard({
   meal: PlanMeal;
   editing: boolean;
   allMeals: Meal[];
+  allRecipes: Recipe[];
+  allIngredients: Ingredient[];
   onChange: (items: PlanMealItem[]) => void;
   isDone: boolean;
   onToggleDone: () => void;
@@ -364,6 +388,19 @@ function PlanMealCard({
       .filter((m) => !m.meal_type || m.meal_type === meal.meal_type)
       .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
   }, [allMeals, meal.meal_type]);
+
+  const sortedRecipes = useMemo(
+    () => [...allRecipes].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
+    [allRecipes],
+  );
+  const sortedIngredients = useMemo(
+    () => [...allIngredients].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
+    [allIngredients],
+  );
+  const ingredientById = useMemo(
+    () => new Map(allIngredients.map((i) => [i.id, i])),
+    [allIngredients],
+  );
 
   const mealById = useMemo(() => new Map(allMeals.map((m) => [m.id, m])), [allMeals]);
 
@@ -385,7 +422,23 @@ function PlanMealCard({
     onChange(meal.items.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
   };
 
-  const addItem = () => onChange([...meal.items, newPlanMealItem()]);
+  const changeKind = (idx: number, kind: PlanMealItemKind) => {
+    const current = meal.items[idx];
+    if (!current || current.kind === kind) return;
+    onChange(
+      meal.items.map((it, i) =>
+        i === idx
+          ? {
+              ...newPlanMealItem(kind),
+              id: it.id,
+            }
+          : it,
+      ),
+    );
+  };
+
+  const addItem = (kind: PlanMealItemKind) =>
+    onChange([...meal.items, newPlanMealItem(kind)]);
   const removeItem = (idx: number) => onChange(meal.items.filter((_, i) => i !== idx));
 
   if (!editing && meal.items.length === 0) {
@@ -435,70 +488,270 @@ function PlanMealCard({
       {meal.items.length === 0 && !editing ? null : (
         <ul className={editing ? 'space-y-2' : 'space-y-1'}>
           {meal.items.map((item, idx) => {
-            const refeicao = item.meal_id ? mealById.get(item.meal_id) : undefined;
             if (editing) {
               return (
                 <li key={item.id} className="rounded-lg bg-zinc-50 p-2 dark:bg-zinc-950">
-                  <div className="grid grid-cols-[1fr,auto] gap-1.5">
+                  <div className="mb-1.5 flex gap-1">
+                    <KindChip
+                      active={item.kind === 'meal'}
+                      onClick={() => changeKind(idx, 'meal')}
+                      icon="🍱"
+                      label="Refeição"
+                    />
+                    <KindChip
+                      active={item.kind === 'recipe'}
+                      onClick={() => changeKind(idx, 'recipe')}
+                      icon="🍳"
+                      label="Receita"
+                    />
+                    <KindChip
+                      active={item.kind === 'ingredient'}
+                      onClick={() => changeKind(idx, 'ingredient')}
+                      icon="🥕"
+                      label="Ingrediente"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeItem(idx)}
+                      className="ml-auto inline-flex items-center justify-center rounded-md bg-zinc-100 px-2 py-1 text-zinc-400 hover:bg-red-100 hover:text-red-700 dark:bg-zinc-800 dark:hover:bg-red-900/30"
+                      aria-label="Remover"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                  {item.kind === 'meal' && (
                     <SearchableSelect
                       value={item.meal_id ?? ''}
                       onChange={(val) => updateItem(idx, { meal_id: val || null })}
                       options={filteredMeals.map((m) => ({ value: m.id, label: m.name }))}
                       placeholder="Selecione uma refeição…"
                     />
-                    <button
-                      type="button"
-                      onClick={() => removeItem(idx)}
-                      className="inline-flex items-center justify-center rounded-md bg-zinc-100 px-2 py-1 text-zinc-400 hover:bg-red-100 hover:text-red-700 dark:bg-zinc-800 dark:hover:bg-red-900/30"
-                      aria-label="Remover"
+                  )}
+                  {item.kind === 'recipe' && (
+                    <>
+                      <SearchableSelect
+                        value={item.recipe_id ?? ''}
+                        onChange={(val) => updateItem(idx, { recipe_id: val || null })}
+                        options={sortedRecipes.map((r) => ({ value: r.id, label: r.name }))}
+                        placeholder="Selecione uma receita…"
+                        className="mb-1.5"
+                      />
+                      <QuantityRow
+                        quantity={item.quantity}
+                        unit={item.unit ?? ''}
+                        onChange={(q, u) => updateItem(idx, { quantity: q, unit: u })}
+                      />
+                    </>
+                  )}
+                  {item.kind === 'ingredient' && (
+                    <>
+                      <SearchableSelect
+                        value={item.ingredient_id ?? ''}
+                        onChange={(val) => {
+                          const matched = val ? ingredientById.get(val) : undefined;
+                          updateItem(idx, {
+                            ingredient_id: val || null,
+                            unit: matched && !item.unit ? matched.default_unit : item.unit,
+                          });
+                        }}
+                        options={sortedIngredients.map((i) => ({
+                          value: i.id,
+                          label: i.brand ? `${i.brand} — ${i.name}` : i.name,
+                        }))}
+                        placeholder="Selecione um ingrediente…"
+                        className="mb-1.5"
+                      />
+                      <QuantityRow
+                        quantity={item.quantity}
+                        unit={item.unit ?? ''}
+                        onChange={(q, u) => updateItem(idx, { quantity: q, unit: u })}
+                      />
+                    </>
+                  )}
+                </li>
+              );
+            }
+            const isExpanded = expandedItemIds.has(item.id);
+            if (item.kind === 'meal') {
+              const refeicao = item.meal_id ? mealById.get(item.meal_id) : undefined;
+              if (!refeicao) return null;
+              return (
+                <li key={item.id} className="rounded-lg bg-zinc-50 dark:bg-zinc-950">
+                  <button
+                    type="button"
+                    onClick={() => toggleExpanded(item.id)}
+                    className="flex w-full items-center gap-2 px-2 py-1.5 text-left text-sm"
+                  >
+                    <span aria-hidden>🍱</span>
+                    <span className="flex-1 font-medium text-zinc-900 dark:text-zinc-100">
+                      {refeicao.name}
+                    </span>
+                    <Link
+                      to={`/refeicoes/${refeicao.id}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="shrink-0 text-xs text-zinc-400 hover:text-brand-600 dark:text-zinc-500 dark:hover:text-brand-400"
+                      aria-label="Ver refeição"
                     >
-                      <TrashIcon className="h-4 w-4" />
-                    </button>
+                      ↗
+                    </Link>
+                    <span className="shrink-0 text-xs text-zinc-400 dark:text-zinc-500">
+                      {isExpanded ? '▲' : '▼'}
+                    </span>
+                  </button>
+                  {isExpanded && <MealItemsExpanded meal={refeicao} />}
+                </li>
+              );
+            }
+            if (item.kind === 'recipe') {
+              const recipe = item.recipe_id ? findRecipeById(item.recipe_id) : undefined;
+              if (!recipe) return null;
+              return (
+                <li key={item.id} className="rounded-lg bg-zinc-50 dark:bg-zinc-950">
+                  <div className="flex items-center gap-2 px-2 py-1.5 text-sm">
+                    <span aria-hidden>🍳</span>
+                    <span className="flex-1 font-medium text-zinc-900 dark:text-zinc-100">
+                      {recipe.name}
+                    </span>
+                    {item.quantity != null && (
+                      <span className="shrink-0 text-xs text-zinc-400 dark:text-zinc-500">
+                        {item.quantity}
+                        {item.unit ? ` ${item.unit}` : ''}
+                      </span>
+                    )}
+                    <Link
+                      to={`/receitas/${recipe.id}`}
+                      className="shrink-0 text-xs text-zinc-400 hover:text-brand-600 dark:text-zinc-500 dark:hover:text-brand-400"
+                      aria-label="Ver receita"
+                    >
+                      ↗
+                    </Link>
                   </div>
                 </li>
               );
             }
-            if (!refeicao) return null;
-            const isExpanded = expandedItemIds.has(item.id);
-            return (
-              <li key={item.id} className="rounded-lg bg-zinc-50 dark:bg-zinc-950">
-                <button
-                  type="button"
-                  onClick={() => toggleExpanded(item.id)}
-                  className="flex w-full items-center gap-2 px-2 py-1.5 text-left text-sm"
-                >
-                  <span className="flex-1 font-medium text-zinc-900 dark:text-zinc-100">
-                    {refeicao.name}
-                  </span>
-                  <Link
-                    to={`/refeicoes/${refeicao.id}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="shrink-0 text-xs text-zinc-400 hover:text-brand-600 dark:text-zinc-500 dark:hover:text-brand-400"
-                    aria-label="Ver refeição"
-                  >
-                    ↗
-                  </Link>
-                  <span className="shrink-0 text-xs text-zinc-400 dark:text-zinc-500">
-                    {isExpanded ? '▲' : '▼'}
-                  </span>
-                </button>
-                {isExpanded && <MealItemsExpanded meal={refeicao} />}
-              </li>
-            );
+            if (item.kind === 'ingredient') {
+              const ing = item.ingredient_id ? findIngredientById(item.ingredient_id) : undefined;
+              if (!ing) return null;
+              return (
+                <li key={item.id} className="rounded-lg bg-zinc-50 dark:bg-zinc-950">
+                  <div className="flex items-center gap-2 px-2 py-1.5 text-sm">
+                    <span aria-hidden>🥕</span>
+                    <span className="flex-1 font-medium text-zinc-900 dark:text-zinc-100">
+                      {ing.brand ? `${ing.brand} — ${ing.name}` : ing.name}
+                    </span>
+                    {item.quantity != null && (
+                      <span className="shrink-0 text-xs text-zinc-400 dark:text-zinc-500">
+                        {item.quantity}
+                        {item.unit ? ` ${item.unit}` : ''}
+                      </span>
+                    )}
+                    <Link
+                      to={`/ingredientes/${ing.id}`}
+                      className="shrink-0 text-xs text-zinc-400 hover:text-brand-600 dark:text-zinc-500 dark:hover:text-brand-400"
+                      aria-label="Ver ingrediente"
+                    >
+                      ↗
+                    </Link>
+                  </div>
+                </li>
+              );
+            }
+            return null;
           })}
         </ul>
       )}
 
       {editing && (
-        <button
-          type="button"
-          onClick={addItem}
-          className="mt-2 w-full rounded-lg border-2 border-dashed border-zinc-300 py-1.5 text-xs text-zinc-500 hover:border-brand-500 hover:text-brand-600 dark:border-zinc-700 dark:text-zinc-400"
-        >
-          + Adicionar refeição
-        </button>
+        <div className="mt-2 grid grid-cols-3 gap-1.5">
+          <button
+            type="button"
+            onClick={() => addItem('meal')}
+            className="rounded-lg border-2 border-dashed border-zinc-300 py-1.5 text-xs text-zinc-500 hover:border-brand-500 hover:text-brand-600 dark:border-zinc-700 dark:text-zinc-400"
+          >
+            + 🍱 Refeição
+          </button>
+          <button
+            type="button"
+            onClick={() => addItem('recipe')}
+            className="rounded-lg border-2 border-dashed border-zinc-300 py-1.5 text-xs text-zinc-500 hover:border-brand-500 hover:text-brand-600 dark:border-zinc-700 dark:text-zinc-400"
+          >
+            + 🍳 Receita
+          </button>
+          <button
+            type="button"
+            onClick={() => addItem('ingredient')}
+            className="rounded-lg border-2 border-dashed border-zinc-300 py-1.5 text-xs text-zinc-500 hover:border-brand-500 hover:text-brand-600 dark:border-zinc-700 dark:text-zinc-400"
+          >
+            + 🥕 Ingrediente
+          </button>
+        </div>
       )}
     </li>
+  );
+}
+
+function KindChip({
+  active,
+  onClick,
+  icon,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: string;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-md px-2 py-1 text-[11px] font-medium ${
+        active
+          ? 'bg-brand-500 text-white dark:bg-brand-600'
+          : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300'
+      }`}
+    >
+      <span aria-hidden>{icon}</span> {label}
+    </button>
+  );
+}
+
+function QuantityRow({
+  quantity,
+  unit,
+  onChange,
+}: {
+  quantity: number | null;
+  unit: string;
+  onChange: (quantity: number | null, unit: string) => void;
+}) {
+  return (
+    <div className="grid grid-cols-[80px,1fr] gap-1.5">
+      <input
+        type="number"
+        min={0}
+        step="any"
+        inputMode="decimal"
+        value={quantity ?? ''}
+        onChange={(e) => {
+          const v = e.target.value;
+          onChange(v === '' ? null : Number(v), unit);
+        }}
+        placeholder="Qtd"
+        className="w-full rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm focus:border-brand-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
+      />
+      <select
+        value={unit}
+        onChange={(e) => onChange(quantity, e.target.value)}
+        className="w-full rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm focus:border-brand-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
+      >
+        {UNIT_OPTIONS.map((u) => (
+          <option key={u.value} value={u.value}>
+            {u.label}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 }
 
