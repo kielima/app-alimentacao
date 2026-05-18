@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
+import TrashIcon from '../components/TrashIcon';
 import { findIngredientById, isSeedIngredient } from '../data/ingredients';
 import { deleteUserIngredient, getUserIngredientById } from '../data/userIngredients';
 import { hideIngredient } from '../data/hiddenIngredients';
@@ -219,19 +220,7 @@ export default function IngredienteDetalhe() {
           aria-label="Excluir ingrediente"
           title="Excluir ingrediente"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-4 w-4"
-            aria-hidden
-          >
-            <path d="M6 6l12 12M18 6L6 18" />
-          </svg>
+          <TrashIcon className="h-4 w-4" />
         </button>
       </HeaderSlot>
 

@@ -5,6 +5,7 @@ import SearchableSelect from '../components/SearchableSelect';
 import ScanButton from '../components/ScanButton';
 import FilterButton from '../components/FilterButton';
 import BarcodeScannerModal from '../components/BarcodeScannerModal';
+import TrashIcon from '../components/TrashIcon';
 import {
   upsertShoppingItem,
   deleteShoppingItem,
@@ -361,7 +362,7 @@ export default function Compras() {
                         className="flex h-5 shrink-0 items-center px-2 text-zinc-400 hover:text-red-500"
                         aria-label="Remover"
                       >
-                        ✕
+                        <TrashIcon className="h-4 w-4" />
                       </button>
                   </li>
                 );
