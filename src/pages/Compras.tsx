@@ -359,7 +359,7 @@ export default function Compras() {
                           e.stopPropagation();
                           deleteShoppingItem(item.id);
                         }}
-                        className="flex h-5 shrink-0 items-center px-2 text-zinc-400 hover:text-red-500"
+                        className="flex h-5 shrink-0 items-center px-2 text-red-500 hover:text-red-700"
                         aria-label="Remover"
                       >
                         <TrashIcon className="h-4 w-4" />
