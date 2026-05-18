@@ -46,7 +46,9 @@ interface Draft {
   editingId: string | null;
 }
 
-const DRAFT_KEY = 'refeicao-form-draft';
+function draftKeyFor(id: string | undefined) {
+  return `refeicao-form-draft:${id ?? 'new'}`;
+}
 
 function emptyItem(kind: MealItemKind = 'recipe'): FormItem {
   return {
@@ -127,11 +129,13 @@ export default function RefeicaoForm() {
     [ingredients],
   );
 
+  const draftKey = draftKeyFor(id);
+
   const [state, setState] = useState<FormState>(() => {
     const newRecipeId = searchParams.get('recipe');
     const newIngredientId = searchParams.get('ingredient');
     try {
-      const saved = sessionStorage.getItem(DRAFT_KEY);
+      const saved = sessionStorage.getItem(draftKey);
       if (saved) {
         const draft = JSON.parse(saved) as Draft;
         if (draft.editingId === (id ?? null)) {
@@ -180,7 +184,6 @@ export default function RefeicaoForm() {
   }, [state]);
 
   useEffect(() => {
-    sessionStorage.removeItem(DRAFT_KEY);
     const next = new URLSearchParams(searchParams);
     let dirty = false;
     if (next.has('recipe')) {
@@ -194,6 +197,20 @@ export default function RefeicaoForm() {
     if (dirty) setSearchParams(next, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const draft: Draft = {
+      state,
+      pendingItemId: null,
+      pendingKind: null,
+      editingId: id ?? null,
+    };
+    try {
+      sessionStorage.setItem(draftKey, JSON.stringify(draft));
+    } catch {
+      // ignore quota errors
+    }
+  }, [state, draftKey, id]);
 
   if (editing && !original) {
     return (
@@ -222,7 +239,7 @@ export default function RefeicaoForm() {
     const meal = formToMeal(state, original);
     meal.id = mealId;
     upsertUserMeal(meal);
-    sessionStorage.removeItem(DRAFT_KEY);
+    sessionStorage.removeItem(draftKey);
     if (editing) {
       navigate(-1);
     } else {
@@ -394,7 +411,7 @@ export default function RefeicaoForm() {
                     pendingKind: it.kind,
                     editingId: id ?? null,
                   };
-                  sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+                  sessionStorage.setItem(draftKey, JSON.stringify(draft));
                   const ret = encodeURIComponent(location.pathname);
                   navigate(
                     it.kind === 'recipe'
