@@ -7,4 +7,5 @@ export const getPantry = store.getAll;
 export const getPantryItem = store.getById;
 export const upsertPantryItem = store.upsert;
 export const deletePantryItem = store.remove;
+export const replacePantry = store.replace;
 export const usePantryItems = store.useAll;

@@ -16,6 +16,7 @@ export const getMealPlans = store.getAll;
 export const getMealPlanByKey = (day: DayOfWeek, plan: PlanType): DayPlan | undefined =>
   store.getById(planKey(day, plan));
 export const upsertMealPlan = store.upsert;
+export const replaceMealPlans = store.replace;
 export const useMealPlans = store.useAll;
 
 export function emptyPlanMeal(meal_type: MealType): PlanMeal {

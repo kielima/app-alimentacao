@@ -7,4 +7,5 @@ export const getMarkets = store.getAll;
 export const getMarket = store.getById;
 export const upsertMarket = store.upsert;
 export const deleteMarket = store.remove;
+export const replaceMarkets = store.replace;
 export const useMarkets = store.useAll;

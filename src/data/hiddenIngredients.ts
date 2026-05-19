@@ -27,6 +27,14 @@ export function getHiddenIngredients() {
   return store.getAll();
 }
 
+export function upsertHiddenIngredient(item: { id: string; hidden_at: string }) {
+  store.upsert(item);
+}
+
+export function replaceHiddenIngredients(items: { id: string; hidden_at: string }[]) {
+  store.replace(items);
+}
+
 export function getHiddenIngredientIds(): Set<string> {
   return new Set(store.getAll().map((r) => r.id));
 }

@@ -10,4 +10,5 @@ export const getUserIngredients = store.getAll;
 export const getUserIngredientById = store.getById;
 export const upsertUserIngredient = store.upsert;
 export const deleteUserIngredient = store.remove;
+export const replaceUserIngredients = store.replace;
 export const useUserIngredients = store.useAll;
