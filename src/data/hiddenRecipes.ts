@@ -23,6 +23,10 @@ export function isRecipeHidden(id: string): boolean {
   return !!store.getById(id);
 }
 
+export function getHiddenRecipes() {
+  return store.getAll();
+}
+
 export function getHiddenRecipeIds(): Set<string> {
   return new Set(store.getAll().map((r) => r.id));
 }

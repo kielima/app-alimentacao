@@ -23,6 +23,10 @@ export function isIngredientHidden(id: string): boolean {
   return !!store.getById(id);
 }
 
+export function getHiddenIngredients() {
+  return store.getAll();
+}
+
 export function getHiddenIngredientIds(): Set<string> {
   return new Set(store.getAll().map((r) => r.id));
 }
