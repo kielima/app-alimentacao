@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import HeaderSlot from '../components/HeaderSlot';
 import { setUserProfile, useUserProfile } from '../data/userProfile';
+import { buildExportPayload, downloadExport, exportSummary } from '../utils/dataExport';
 import {
   computeTargets,
   getDefaultFatPct,
@@ -312,7 +313,61 @@ export default function Perfil() {
           </div>
         )}
       </Section>
+
+      <BackupSection />
     </form>
+  );
+}
+
+function BackupSection() {
+  const [lastExport, setLastExport] = useState<{
+    at: number;
+    summary: Record<string, number>;
+  } | null>(null);
+
+  function handleExport() {
+    const payload = buildExportPayload();
+    downloadExport(payload);
+    setLastExport({ at: Date.now(), summary: exportSummary(payload) });
+  }
+
+  const totalItems = lastExport
+    ? Object.values(lastExport.summary).reduce((a, b) => a + b, 0)
+    : 0;
+
+  return (
+    <Section title="Backup">
+      <div className="rounded-xl bg-zinc-100 px-4 py-3 dark:bg-zinc-800">
+        <p className="text-sm text-zinc-700 dark:text-zinc-300">
+          Baixe um arquivo JSON com todos os seus dados (receitas, refeições, ingredientes,
+          dispensa, mercados, plano, compras e perfil).
+        </p>
+        <button
+          type="button"
+          onClick={handleExport}
+          className="mt-3 inline-flex items-center gap-2 rounded-full bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
+        >
+          Exportar dados
+        </button>
+        {lastExport && (
+          <div className="mt-3 rounded-lg bg-white px-3 py-2 text-xs text-zinc-600 dark:bg-zinc-900 dark:text-zinc-300">
+            <div className="mb-1 font-medium text-zinc-800 dark:text-zinc-100">
+              Exportado: {totalItems} item(ns)
+            </div>
+            <ul className="space-y-0.5">
+              {Object.entries(lastExport.summary)
+                .filter(([, n]) => n > 0)
+                .map(([k, n]) => (
+                  <li key={k} className="flex justify-between gap-2">
+                    <span className="text-zinc-500 dark:text-zinc-400">{k}</span>
+                    <span className="tabular-nums">{n}</span>
+                  </li>
+                ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </Section>
   );
 }
 
