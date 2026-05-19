@@ -10,4 +10,5 @@ export const getOffContributions = store.getAll;
 export const getOffContribution = store.getById;
 export const upsertOffContribution = store.upsert;
 export const deleteOffContribution = store.remove;
+export const replaceOffContributions = store.replace;
 export const useOffContributions = store.useAll;

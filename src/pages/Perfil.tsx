@@ -1,7 +1,19 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import HeaderSlot from '../components/HeaderSlot';
 import { setUserProfile, useUserProfile } from '../data/userProfile';
-import { buildExportPayload, downloadExport, exportSummary } from '../utils/dataExport';
+import {
+  buildExportPayload,
+  downloadExport,
+  exportSummary,
+  type ExportPayload,
+} from '../utils/dataExport';
+import {
+  importData,
+  importSummary,
+  parseImportFile,
+  type ImportResult,
+  type ImportStrategy,
+} from '../utils/dataImport';
 import {
   computeTargets,
   getDefaultFatPct,
@@ -325,10 +337,51 @@ function BackupSection() {
     summary: Record<string, number>;
   } | null>(null);
 
+  const [pendingImport, setPendingImport] = useState<{
+    payload: ExportPayload;
+    summary: Record<string, number>;
+    filename: string;
+  } | null>(null);
+  const [strategy, setStrategy] = useState<ImportStrategy>('upsert');
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   function handleExport() {
     const payload = buildExportPayload();
     downloadExport(payload);
     setLastExport({ at: Date.now(), summary: exportSummary(payload) });
+  }
+
+  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setImportError(null);
+    setImportResult(null);
+    try {
+      const payload = await parseImportFile(file);
+      setPendingImport({
+        payload,
+        summary: importSummary(payload),
+        filename: file.name,
+      });
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : 'Falha ao ler o arquivo.');
+      setPendingImport(null);
+    }
+  }
+
+  function handleConfirmImport() {
+    if (!pendingImport) return;
+    const result = importData(pendingImport.payload, strategy);
+    setImportResult(result);
+    setPendingImport(null);
+  }
+
+  function handleCancelImport() {
+    setPendingImport(null);
+    setImportError(null);
   }
 
   const totalItems = lastExport
@@ -337,37 +390,210 @@ function BackupSection() {
 
   return (
     <Section title="Backup">
-      <div className="rounded-xl bg-zinc-100 px-4 py-3 dark:bg-zinc-800">
-        <p className="text-sm text-zinc-700 dark:text-zinc-300">
-          Baixe um arquivo JSON com todos os seus dados (receitas, refeições, ingredientes,
-          dispensa, mercados, plano, compras e perfil).
-        </p>
-        <button
-          type="button"
-          onClick={handleExport}
-          className="mt-3 inline-flex items-center gap-2 rounded-full bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
-        >
-          Exportar dados
-        </button>
-        {lastExport && (
-          <div className="mt-3 rounded-lg bg-white px-3 py-2 text-xs text-zinc-600 dark:bg-zinc-900 dark:text-zinc-300">
-            <div className="mb-1 font-medium text-zinc-800 dark:text-zinc-100">
-              Exportado: {totalItems} item(ns)
+      <div className="space-y-4 rounded-xl bg-zinc-100 px-4 py-3 dark:bg-zinc-800">
+        <div>
+          <p className="text-sm text-zinc-700 dark:text-zinc-300">
+            Baixe um arquivo JSON com todos os seus dados (receitas, refeições,
+            ingredientes, dispensa, mercados, plano, compras e perfil).
+          </p>
+          <button
+            type="button"
+            onClick={handleExport}
+            className="mt-3 inline-flex items-center gap-2 rounded-full bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
+          >
+            Exportar dados
+          </button>
+          {lastExport && (
+            <div className="mt-3 rounded-lg bg-white px-3 py-2 text-xs text-zinc-600 dark:bg-zinc-900 dark:text-zinc-300">
+              <div className="mb-1 font-medium text-zinc-800 dark:text-zinc-100">
+                Exportado: {totalItems} item(ns)
+              </div>
+              <ul className="space-y-0.5">
+                {Object.entries(lastExport.summary)
+                  .filter(([, n]) => n > 0)
+                  .map(([k, n]) => (
+                    <li key={k} className="flex justify-between gap-2">
+                      <span className="text-zinc-500 dark:text-zinc-400">{k}</span>
+                      <span className="tabular-nums">{n}</span>
+                    </li>
+                  ))}
+              </ul>
             </div>
-            <ul className="space-y-0.5">
-              {Object.entries(lastExport.summary)
-                .filter(([, n]) => n > 0)
-                .map(([k, n]) => (
-                  <li key={k} className="flex justify-between gap-2">
-                    <span className="text-zinc-500 dark:text-zinc-400">{k}</span>
-                    <span className="tabular-nums">{n}</span>
-                  </li>
-                ))}
-            </ul>
-          </div>
-        )}
+          )}
+        </div>
+
+        <div className="border-t border-zinc-200 pt-3 dark:border-zinc-700">
+          <p className="text-sm text-zinc-700 dark:text-zinc-300">
+            Restaure dados a partir de um arquivo de backup exportado anteriormente.
+          </p>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={handleFileSelected}
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="mt-3 inline-flex items-center gap-2 rounded-full border border-brand-500 px-4 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50 dark:border-brand-400 dark:text-brand-300 dark:hover:bg-brand-900/20"
+          >
+            Importar dados
+          </button>
+
+          {importError && (
+            <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
+              {importError}
+            </div>
+          )}
+
+          {pendingImport && (
+            <ImportConfirmation
+              filename={pendingImport.filename}
+              summary={pendingImport.summary}
+              exportedAt={pendingImport.payload.exportedAt}
+              strategy={strategy}
+              onStrategyChange={setStrategy}
+              onConfirm={handleConfirmImport}
+              onCancel={handleCancelImport}
+            />
+          )}
+
+          {importResult && <ImportResultPanel result={importResult} />}
+        </div>
       </div>
     </Section>
+  );
+}
+
+const STRATEGY_LABELS: Record<ImportStrategy, { label: string; hint: string }> = {
+  upsert: {
+    label: 'Mesclar (atualizar existentes)',
+    hint: 'Itens com mesmo ID são sobrescritos pelo backup; novos são adicionados; itens só seus permanecem.',
+  },
+  'skip-existing': {
+    label: 'Só adicionar novos',
+    hint: 'Não sobrescreve nada que já existe; só importa itens cujo ID não está no app.',
+  },
+  replace: {
+    label: 'Substituir tudo',
+    hint: 'Apaga tudo das coleções afetadas e restaura exatamente o conteúdo do backup. Itens não presentes no backup serão perdidos.',
+  },
+};
+
+function ImportConfirmation({
+  filename,
+  summary,
+  exportedAt,
+  strategy,
+  onStrategyChange,
+  onConfirm,
+  onCancel,
+}: {
+  filename: string;
+  summary: Record<string, number>;
+  exportedAt: string;
+  strategy: ImportStrategy;
+  onStrategyChange: (s: ImportStrategy) => void;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const total = Object.values(summary).reduce((a, b) => a + b, 0);
+  const exportedDate = new Date(exportedAt);
+  return (
+    <div className="mt-3 space-y-3 rounded-lg border border-zinc-300 bg-white px-3 py-3 dark:border-zinc-700 dark:bg-zinc-900">
+      <div>
+        <div className="text-xs font-medium text-zinc-800 dark:text-zinc-100">
+          {filename}
+        </div>
+        <div className="text-[11px] text-zinc-500 dark:text-zinc-400">
+          Exportado em {exportedDate.toLocaleString('pt-BR')} · {total} item(ns)
+        </div>
+        <ul className="mt-2 space-y-0.5 text-xs text-zinc-600 dark:text-zinc-300">
+          {Object.entries(summary)
+            .filter(([, n]) => n > 0)
+            .map(([k, n]) => (
+              <li key={k} className="flex justify-between gap-2">
+                <span className="text-zinc-500 dark:text-zinc-400">{k}</span>
+                <span className="tabular-nums">{n}</span>
+              </li>
+            ))}
+        </ul>
+      </div>
+
+      <fieldset className="space-y-2">
+        <legend className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          Estratégia
+        </legend>
+        {(Object.keys(STRATEGY_LABELS) as ImportStrategy[]).map((s) => (
+          <label
+            key={s}
+            className={`flex cursor-pointer items-start gap-2 rounded-lg border px-3 py-2 text-sm ${
+              strategy === s
+                ? 'border-brand-500 bg-brand-50 dark:border-brand-400 dark:bg-brand-900/20'
+                : 'border-zinc-200 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800/50'
+            }`}
+          >
+            <input
+              type="radio"
+              name="import-strategy"
+              value={s}
+              checked={strategy === s}
+              onChange={() => onStrategyChange(s)}
+              className="mt-0.5"
+            />
+            <span>
+              <span className="block font-medium text-zinc-800 dark:text-zinc-100">
+                {STRATEGY_LABELS[s].label}
+              </span>
+              <span className="block text-[11px] text-zinc-500 dark:text-zinc-400">
+                {STRATEGY_LABELS[s].hint}
+              </span>
+            </span>
+          </label>
+        ))}
+      </fieldset>
+
+      {strategy === 'replace' && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-200">
+          ⚠️ Esta opção apaga dados não presentes no backup. Recomendado exportar antes.
+        </div>
+      )}
+
+      <div className="flex justify-end gap-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-full px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          onClick={onConfirm}
+          className="rounded-full bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
+        >
+          Confirmar import
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ImportResultPanel({ result }: { result: ImportResult }) {
+  const totalAdded = Object.values(result.added).reduce((a, b) => a + b, 0);
+  const totalSkipped = Object.values(result.skipped).reduce((a, b) => a + b, 0);
+  const totalRemoved = Object.values(result.removed).reduce((a, b) => a + b, 0);
+  return (
+    <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-900/20 dark:text-emerald-200">
+      <div className="font-medium">Import concluído.</div>
+      <ul className="mt-1 space-y-0.5">
+        <li>{totalAdded} item(ns) adicionado(s)/atualizado(s)</li>
+        {totalSkipped > 0 && <li>{totalSkipped} ignorado(s) (já existiam)</li>}
+        {totalRemoved > 0 && <li>{totalRemoved} removido(s) (não estavam no backup)</li>}
+        {result.profileImported && <li>Perfil pessoal restaurado</li>}
+      </ul>
+    </div>
   );
 }
 

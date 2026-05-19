@@ -7,4 +7,5 @@ export const getUserRecipes = store.getAll;
 export const getUserRecipeById = store.getById;
 export const upsertUserRecipe = store.upsert;
 export const deleteUserRecipe = store.remove;
+export const replaceUserRecipes = store.replace;
 export const useUserRecipes = store.useAll;

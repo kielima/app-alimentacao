@@ -7,4 +7,5 @@ export const getUserMeals = store.getAll;
 export const getUserMealById = store.getById;
 export const upsertUserMeal = store.upsert;
 export const deleteUserMeal = store.remove;
+export const replaceUserMeals = store.replace;
 export const useUserMeals = store.useAll;

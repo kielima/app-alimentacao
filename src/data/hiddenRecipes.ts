@@ -27,6 +27,14 @@ export function getHiddenRecipes() {
   return store.getAll();
 }
 
+export function upsertHiddenRecipe(item: { id: string; hidden_at: string }) {
+  store.upsert(item);
+}
+
+export function replaceHiddenRecipes(items: { id: string; hidden_at: string }[]) {
+  store.replace(items);
+}
+
 export function getHiddenRecipeIds(): Set<string> {
   return new Set(store.getAll().map((r) => r.id));
 }
