@@ -19,7 +19,8 @@ export type AuthState =
   | { phase: 'signed-out' }
   | { phase: 'pending'; user: User; record: UserRecord }
   | { phase: 'rejected'; user: User; record: UserRecord }
-  | { phase: 'approved'; user: User; record: UserRecord; isAdmin: boolean };
+  | { phase: 'approved'; user: User; record: UserRecord; isAdmin: boolean }
+  | { phase: 'error'; user: User; message: string };
 
 export interface UseAuth {
   state: AuthState;
@@ -27,6 +28,11 @@ export interface UseAuth {
   signOut: () => Promise<void>;
   signInError: string | null;
   signingIn: boolean;
+}
+
+function errorMessage(err: unknown, fallback: string): string {
+  if (err instanceof Error) return err.message;
+  return fallback;
 }
 
 export function useAuth(): UseAuth {
@@ -59,12 +65,36 @@ export function useAuth(): UseAuth {
         await ensureUserRecord(user);
       } catch (err) {
         console.error('[useAuth] Falha ao garantir users/{uid}:', err);
+        if (!cancelled) {
+          setCurrentUid(null);
+          setState({
+            phase: 'error',
+            user,
+            message: errorMessage(
+              err,
+              'Falha ao criar seu registro de usuário. Verifique as Firestore rules.',
+            ),
+          });
+        }
+        return;
       }
       if (cancelled) return;
-      recordUnsub = subscribeUserRecord(user.uid, (record) => {
-        if (!record) {
+      recordUnsub = subscribeUserRecord(user.uid, (event) => {
+        if (event.type === 'error') {
           setCurrentUid(null);
-          setState({ phase: 'signed-out' });
+          setState({
+            phase: 'error',
+            user,
+            message: errorMessage(
+              event.error,
+              'Falha ao ler seu registro de usuário. Verifique as Firestore rules.',
+            ),
+          });
+          return;
+        }
+        const record = event.record;
+        if (!record) {
+          // doc ainda não existe (eventual consistency). Mantém estado anterior.
           return;
         }
         const status: AccessStatus = record.status;
@@ -100,8 +130,7 @@ export function useAuth(): UseAuth {
     try {
       await signInWithGoogle();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Erro ao entrar.';
-      setSignInError(msg);
+      setSignInError(errorMessage(err, 'Erro ao entrar.'));
     } finally {
       setSigningIn(false);
     }

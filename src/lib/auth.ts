@@ -96,17 +96,19 @@ export async function ensureUserRecord(user: User): Promise<UserRecord> {
  */
 export function subscribeUserRecord(
   uid: string,
-  cb: (record: UserRecord | null) => void,
+  cb: (event:
+    | { type: 'data'; record: UserRecord | null }
+    | { type: 'error'; error: Error }) => void,
 ): Unsubscribe {
   const { dbInstance } = requireFirebase();
   return onSnapshot(
     doc(dbInstance, 'users', uid),
     (snap) => {
-      cb(snap.exists() ? (snap.data() as UserRecord) : null);
+      cb({ type: 'data', record: snap.exists() ? (snap.data() as UserRecord) : null });
     },
     (err) => {
       console.warn('[auth] subscribeUserRecord error:', err);
-      cb(null);
+      cb({ type: 'error', error: err });
     },
   );
 }

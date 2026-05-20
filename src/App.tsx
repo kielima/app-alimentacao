@@ -141,7 +141,18 @@ export default function App() {
     return (
       <PendingScreen
         user={state.user}
-        rejected={state.phase === 'rejected'}
+        mode={state.phase}
+        onSignOut={signOut}
+      />
+    );
+  }
+
+  if (state.phase === 'error') {
+    return (
+      <PendingScreen
+        user={state.user}
+        mode="error"
+        message={state.message}
         onSignOut={signOut}
       />
     );
