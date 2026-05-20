@@ -1,5 +1,5 @@
 import { initializeApp, type FirebaseApp } from 'firebase/app';
-import { getAuth, type Auth } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, type Auth } from 'firebase/auth';
 import {
   initializeFirestore,
   persistentLocalCache,
@@ -23,6 +23,7 @@ export const firebaseConfigured = Boolean(
 let app: FirebaseApp | null = null;
 let _auth: Auth | null = null;
 let _db: Firestore | null = null;
+let _googleProvider: GoogleAuthProvider | null = null;
 
 if (firebaseConfigured) {
   app = initializeApp(config);
@@ -32,11 +33,16 @@ if (firebaseConfigured) {
       tabManager: persistentMultipleTabManager(),
     }),
   });
+  _googleProvider = new GoogleAuthProvider();
+  _googleProvider.setCustomParameters({ prompt: 'select_account' });
 } else if (import.meta.env.DEV) {
   console.info(
-    '[firebase] env vars não definidas — app em modo localStorage (sem sync). Preencha .env.local com as chaves do Firebase Web Config.',
+    '[firebase] env vars não definidas — app sem persistência. Preencha .env.local com as chaves do Firebase Web Config.',
   );
 }
 
 export const auth = _auth;
 export const db = _db;
+export const googleProvider = _googleProvider;
+
+export const ADMIN_EMAIL = 'kly@sapo.pt';

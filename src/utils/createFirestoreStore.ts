@@ -1,14 +1,22 @@
-import { collection, onSnapshot, doc, setDoc, deleteDoc, writeBatch } from 'firebase/firestore';
-import { db, firebaseConfigured } from '../lib/firebase';
-import { ensureAnonAuth } from '../lib/household';
+import {
+  collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  setDoc,
+  writeBatch,
+  type Unsubscribe,
+} from 'firebase/firestore';
 import { useEffect, useState } from 'react';
+import { db, firebaseConfigured } from '../lib/firebase';
+import { getCurrentUid, onUidChange } from '../lib/session';
 
 /**
- * Hybrid store: localStorage como cache síncrono + Firestore como fonte de verdade.
- * - Leituras são imediatas (cache).
- * - Escritas atualizam o cache localmente e persistem no Firestore em background.
- * - onSnapshot sincroniza o cache quando o Firestore responde.
- * - Se Firebase não configurado, funciona apenas com localStorage.
+ * Cache local síncrono + Firestore sob users/{uid}/{collectionName}.
+ * - Reads são imediatos (cache em memória, espelhado em localStorage).
+ * - Subscrição é criada apenas quando há um uid válido (usuário aprovado),
+ *   e recriada se o uid mudar (login/logout/troca de conta).
+ * - Writes locais são fire-and-forget pro Firestore.
  */
 export function createFirestoreStore<T extends { id: string }>(
   storageKey: string,
@@ -32,70 +40,79 @@ export function createFirestoreStore<T extends { id: string }>(
 
   function setCache(list: T[]) {
     cache = list;
-    localStorage.setItem(storageKey, JSON.stringify(list));
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(list));
+    } catch {
+      // ignore quota errors
+    }
+    listeners.forEach((l) => l());
+  }
+
+  function clearCache() {
+    cache = [];
+    try {
+      localStorage.removeItem(storageKey);
+    } catch {
+      // ignore
+    }
     listeners.forEach((l) => l());
   }
 
   // --- Firestore helpers (fire-and-forget) ---
 
+  function userCol(uid: string) {
+    if (!db) throw new Error('Firestore não configurado');
+    return collection(db, 'users', uid, collectionName);
+  }
+
   function fsUpsert(item: T) {
     if (!firebaseConfigured || !db) return;
-    const fsDb = db;
-    ensureAnonAuth()
-      .then(() => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { id: _id, ...rest } = item as T & { id: string };
-        return setDoc(doc(fsDb, collectionName, item.id), rest);
-      })
-      .catch((err) => console.warn(`[store:${collectionName}] upsert failed:`, err));
+    const uid = getCurrentUid();
+    if (!uid) return;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id: _id, ...rest } = item as T & { id: string };
+    setDoc(doc(userCol(uid), item.id), rest).catch((err) =>
+      console.warn(`[store:${collectionName}] upsert failed:`, err),
+    );
   }
 
   function fsDelete(id: string) {
     if (!firebaseConfigured || !db) return;
-    const fsDb = db;
-    ensureAnonAuth()
-      .then(() => deleteDoc(doc(fsDb, collectionName, id)))
-      .catch((err) => console.warn(`[store:${collectionName}] delete failed:`, err));
+    const uid = getCurrentUid();
+    if (!uid) return;
+    deleteDoc(doc(userCol(uid), id)).catch((err) =>
+      console.warn(`[store:${collectionName}] delete failed:`, err),
+    );
   }
 
   function fsBatchWrite(toDelete: string[], toUpsert: T[]) {
     if (!firebaseConfigured || !db) return;
+    const uid = getCurrentUid();
+    if (!uid) return;
     const fsDb = db;
-    ensureAnonAuth()
-      .then(() => {
-        const batch = writeBatch(fsDb);
-        toDelete.forEach((id) => batch.delete(doc(fsDb, collectionName, id)));
-        toUpsert.forEach((item) => {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { id: _id, ...rest } = item as T & { id: string };
-          batch.set(doc(fsDb, collectionName, item.id), rest);
-        });
-        return batch.commit();
-      })
+    const batch = writeBatch(fsDb);
+    toDelete.forEach((id) => batch.delete(doc(userCol(uid), id)));
+    toUpsert.forEach((item) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { id: _id, ...rest } = item as T & { id: string };
+      batch.set(doc(userCol(uid), item.id), rest);
+    });
+    batch
+      .commit()
       .catch((err) => console.warn(`[store:${collectionName}] batch failed:`, err));
   }
 
-  // --- Firestore subscription with auto-migration ---
+  // --- Subscrição reativa ao uid atual ---
 
-  let initialized = false;
+  let unsub: Unsubscribe | null = null;
 
-  async function subscribe() {
+  function subscribeFor(uid: string) {
     if (!firebaseConfigured || !db) return;
     try {
-      await ensureAnonAuth();
-      const col = collection(db, collectionName);
-      onSnapshot(
-        col,
+      unsub = onSnapshot(
+        userCol(uid),
         (snapshot) => {
           const docs = snapshot.docs.map((d) => ({ ...d.data(), id: d.id } as T));
-          if (!initialized) {
-            initialized = true;
-            // Migrate localStorage data to Firestore if Firestore is empty
-            if (docs.length === 0 && cache.length > 0) {
-              fsBatchWrite([], cache);
-              return; // keep using local cache until Firestore confirms
-            }
-          }
           setCache(docs);
         },
         (err) => console.warn(`[store:${collectionName}] snapshot error:`, err),
@@ -105,9 +122,25 @@ export function createFirestoreStore<T extends { id: string }>(
     }
   }
 
-  subscribe();
+  function tearDown() {
+    if (unsub) {
+      unsub();
+      unsub = null;
+    }
+  }
 
-  // --- Public API (synchronous, matches createLocalStore interface) ---
+  // Reage a mudanças de uid: tear down + clear cache + resubscribe.
+  onUidChange((uid) => {
+    tearDown();
+    clearCache();
+    if (uid) subscribeFor(uid);
+  });
+
+  // Caso o uid já esteja setado quando o módulo carrega (improvável, mas seguro).
+  const initialUid = getCurrentUid();
+  if (initialUid) subscribeFor(initialUid);
+
+  // --- API pública (síncrona) ---
 
   function getAll(): T[] {
     return cache;

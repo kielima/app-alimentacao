@@ -1,15 +1,11 @@
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, type Unsubscribe } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { db, firebaseConfigured } from '../lib/firebase';
-import { ensureAnonAuth } from '../lib/household';
+import { getCurrentUid, onUidChange } from '../lib/session';
 
 /**
- * Hybrid store para UM documento Firestore fixo.
- * - localStorage como cache síncrono.
- * - Escritas atualizam cache imediatamente, persistem no Firestore em background com merge.
- * - onSnapshot mantém o cache em dia.
- * - `pick` extrai o subset relevante do documento; `merge` constrói o patch a ser
- *   gravado, preservando outros campos do documento (ex.: pinHash).
+ * Cache local + Firestore para UM documento sob users/{uid}/{collection}/{docId}.
+ * Reage a mudanças de uid igual ao createFirestoreStore.
  */
 export function createFirestoreDocStore<T>(opts: {
   storageKey: string;
@@ -37,42 +33,38 @@ export function createFirestoreDocStore<T>(opts: {
 
   function setCache(value: T | null) {
     cache = value;
-    if (value === null) {
-      localStorage.removeItem(storageKey);
-    } else {
-      localStorage.setItem(storageKey, JSON.stringify(value));
+    try {
+      if (value === null) {
+        localStorage.removeItem(storageKey);
+      } else {
+        localStorage.setItem(storageKey, JSON.stringify(value));
+      }
+    } catch {
+      // ignore
     }
     listeners.forEach((l) => l());
   }
 
   function fsWrite(value: T) {
     if (!firebaseConfigured || !db) return;
-    const fsDb = db;
-    ensureAnonAuth()
-      .then(() => setDoc(doc(fsDb, collectionName, docId), merge(value), { merge: true }))
-      .catch((err) => console.warn(`[docstore:${collectionName}/${docId}] write failed:`, err));
+    const uid = getCurrentUid();
+    if (!uid) return;
+    setDoc(doc(db, 'users', uid, collectionName, docId), merge(value), { merge: true }).catch(
+      (err) => console.warn(`[docstore:${collectionName}/${docId}] write failed:`, err),
+    );
   }
 
-  let initialized = false;
+  let unsub: Unsubscribe | null = null;
 
-  async function subscribe() {
+  function subscribeFor(uid: string) {
     if (!firebaseConfigured || !db) return;
     try {
-      await ensureAnonAuth();
-      const ref = doc(db, collectionName, docId);
-      onSnapshot(
+      const ref = doc(db, 'users', uid, collectionName, docId);
+      unsub = onSnapshot(
         ref,
         (snap) => {
           const raw = snap.exists() ? (snap.data() as Record<string, unknown>) : null;
-          const remote = pick(raw);
-          if (!initialized) {
-            initialized = true;
-            if (remote === null && cache !== null) {
-              fsWrite(cache);
-              return;
-            }
-          }
-          setCache(remote);
+          setCache(pick(raw));
         },
         (err) => console.warn(`[docstore:${collectionName}/${docId}] snapshot error:`, err),
       );
@@ -81,7 +73,21 @@ export function createFirestoreDocStore<T>(opts: {
     }
   }
 
-  subscribe();
+  function tearDown() {
+    if (unsub) {
+      unsub();
+      unsub = null;
+    }
+  }
+
+  onUidChange((uid) => {
+    tearDown();
+    setCache(null);
+    if (uid) subscribeFor(uid);
+  });
+
+  const initialUid = getCurrentUid();
+  if (initialUid) subscribeFor(initialUid);
 
   function get(): T | null {
     return cache;

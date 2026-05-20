@@ -4,7 +4,7 @@ import type { UserProfile } from '../types/userProfile';
 
 const store = createFirestoreDocStore<UserProfile>({
   storageKey: 'app-alimentacao:user-profile',
-  collection: 'household',
+  collection: 'profile',
   docId: 'main',
   pick: (raw) => {
     if (!raw) return null;

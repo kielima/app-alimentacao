@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import HeaderSlot from '../components/HeaderSlot';
 import { setUserProfile, useUserProfile } from '../data/userProfile';
+import { useAuth } from '../hooks/useAuth';
+import {
+  approveUser,
+  rejectUser,
+  subscribePendingUsers,
+  type UserRecord,
+} from '../lib/auth';
 import {
   buildExportPayload,
   downloadExport,
@@ -326,8 +333,115 @@ export default function Perfil() {
         )}
       </Section>
 
+      <AdminSection />
+
       <BackupSection />
     </form>
+  );
+}
+
+function AdminSection() {
+  const { state } = useAuth();
+  const [pending, setPending] = useState<UserRecord[] | null>(null);
+  const [busyUid, setBusyUid] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const isAdmin = state.phase === 'approved' && state.isAdmin;
+  const adminUid = state.phase === 'approved' ? state.user.uid : null;
+
+  useEffect(() => {
+    if (!isAdmin) {
+      setPending(null);
+      return;
+    }
+    const unsub = subscribePendingUsers((list) => setPending(list));
+    return () => unsub();
+  }, [isAdmin]);
+
+  if (!isAdmin || !adminUid) return null;
+
+  async function handleApprove(uid: string) {
+    if (!adminUid) return;
+    setBusyUid(uid);
+    setError(null);
+    try {
+      await approveUser(uid, adminUid);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao aprovar.');
+    } finally {
+      setBusyUid(null);
+    }
+  }
+
+  async function handleReject(uid: string) {
+    if (!adminUid) return;
+    if (!confirm('Rejeitar este usuário?')) return;
+    setBusyUid(uid);
+    setError(null);
+    try {
+      await rejectUser(uid, adminUid);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao rejeitar.');
+    } finally {
+      setBusyUid(null);
+    }
+  }
+
+  return (
+    <Section title="Aprovações pendentes (admin)">
+      <div className="rounded-xl bg-zinc-100 px-4 py-3 dark:bg-zinc-800">
+        {pending === null ? (
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Carregando…</p>
+        ) : pending.length === 0 ? (
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            Nenhum usuário aguardando aprovação.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {pending.map((u) => (
+              <li
+                key={u.uid}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white px-3 py-2 text-sm dark:bg-zinc-900"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-medium text-zinc-800 dark:text-zinc-100">
+                    {u.displayName || u.email}
+                  </div>
+                  {u.displayName && (
+                    <div className="truncate text-xs text-zinc-500 dark:text-zinc-400">
+                      {u.email}
+                    </div>
+                  )}
+                </div>
+                <div className="flex shrink-0 gap-2">
+                  <button
+                    type="button"
+                    disabled={busyUid === u.uid}
+                    onClick={() => handleApprove(u.uid)}
+                    className="rounded-full bg-emerald-500 px-3 py-1 text-xs font-medium text-white hover:bg-emerald-600 disabled:opacity-60"
+                  >
+                    Aprovar
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busyUid === u.uid}
+                    onClick={() => handleReject(u.uid)}
+                    className="rounded-full border border-red-300 px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-60 dark:border-red-900/40 dark:text-red-300 dark:hover:bg-red-900/20"
+                  >
+                    Rejeitar
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+        {error && (
+          <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
+            {error}
+          </div>
+        )}
+      </div>
+    </Section>
   );
 }
 
