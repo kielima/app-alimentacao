@@ -82,7 +82,7 @@ export default function NavMenu({ onSignOut }: { onSignOut: () => void }) {
   }, [open]);
 
   function handleSignOut() {
-    if (confirm('Sair? Você precisará inserir o PIN novamente na próxima abertura.')) {
+    if (confirm('Sair da conta Google?')) {
       onSignOut();
       setOpen(false);
     }

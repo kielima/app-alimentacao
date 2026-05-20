@@ -3,7 +3,8 @@ import { Navigate, Route, Routes, useLocation, useNavigationType } from 'react-r
 import NavMenu from './components/NavMenu';
 import BackButton from './components/BackButton';
 import { HEADER_SLOT_ID } from './components/HeaderSlot';
-import PinScreen from './components/PinScreen';
+import LoginScreen from './components/LoginScreen';
+import PendingScreen from './components/PendingScreen';
 import LoadingSplash from './components/LoadingSplash';
 import Receitas from './pages/Receitas';
 import Dispensa from './pages/Dispensa';
@@ -24,7 +25,7 @@ import Mercados from './pages/Mercados';
 import MercadoForm from './pages/MercadoForm';
 import Perfil from './pages/Perfil';
 import { useTheme } from './hooks/useTheme';
-import { usePinAuth } from './hooks/usePinAuth';
+import { useAuth } from './hooks/useAuth';
 import { PlanoProvider, usePlano } from './contexts/PlanoContext';
 import { DAYS_OF_WEEK, todayDayOfWeek, type DayOfWeek } from './types/mealPlan';
 
@@ -115,22 +116,33 @@ const BACK_ROUTE_PATTERN = /^\/(ingredientes|receitas|refeicoes)\/[^/]+/;
 
 export default function App() {
   useTheme();
-  const { loading, authenticated, hasPin, setPin, verifyPin, signOut } = usePinAuth();
+  const { state, signIn, signOut, signInError, signingIn } = useAuth();
   const location = useLocation();
   const isPlano = location.pathname === '/plano';
   const showBack = BACK_ROUTE_PATTERN.test(location.pathname);
   const [mainEl, setMainEl] = useState<HTMLElement | null>(null);
   useScrollRestoration(mainEl);
 
-  if (loading) {
+  if (state.phase === 'loading') {
     return <LoadingSplash />;
   }
 
-  if (!authenticated) {
+  if (state.phase === 'unconfigured') {
+    return <LoginScreen onSignIn={signIn} signingIn={false} error={null} unconfigured />;
+  }
+
+  if (state.phase === 'signed-out') {
     return (
-      <PinScreen
-        mode={hasPin ? 'verify' : 'create'}
-        onSubmit={hasPin ? verifyPin : setPin}
+      <LoginScreen onSignIn={signIn} signingIn={signingIn} error={signInError} />
+    );
+  }
+
+  if (state.phase === 'pending' || state.phase === 'rejected') {
+    return (
+      <PendingScreen
+        user={state.user}
+        rejected={state.phase === 'rejected'}
+        onSignOut={signOut}
       />
     );
   }
