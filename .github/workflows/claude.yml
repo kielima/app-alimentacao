@@ -1,0 +1,70 @@
+name: Claude Code
+
+on:
+  issue_comment:
+    types: [created]
+  issues:
+    types: [opened, assigned]
+  pull_request:
+    types: [opened, synchronize]
+  pull_request_review:
+    types: [submitted]
+  pull_request_review_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: "Prompt para o Claude"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+
+jobs:
+  claude:
+    runs-on: ubuntu-latest
+    # Só executa se o comentário mencionar @claude OU se for abertura de issue/PR
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
+      (github.event_name == 'issues' && github.event.action == 'opened') ||
+      (github.event_name == 'pull_request' && github.event.action == 'opened') ||
+      github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Executar Claude Code
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Prompt customizado para workflow_dispatch manual
+          direct_prompt: ${{ github.event_name == 'workflow_dispatch' && inputs.prompt || '' }}
+          # Configurações de segurança — Claude só pode ler e criar comentários/PRs
+          allowed_tools: "Bash,Read,Write,Edit"
+          timeout_minutes: "30"
+          # Modelo a usar
+          model: "claude-sonnet-4-6"
+          # Instruções de sistema para contextualizar o projeto
+          custom_instructions: |
+            Você está a ajudar no desenvolvimento do **app-alimentacao**, uma aplicação web
+            React + TypeScript + Firebase Firestore para gestão de alimentação, receitas,
+            planeamento de refeições e lista de compras.
+
+            Stack principal:
+            - React 18 + TypeScript + Vite
+            - Firebase (Auth, Firestore, Hosting)
+            - Tailwind CSS
+            - PWA
+
+            Responda em **português europeu** (pt-PT).
+            Seja direto, técnico e proponha soluções concretas com código quando relevante.
+            Ao criar código, siga os padrões existentes no repositório.
