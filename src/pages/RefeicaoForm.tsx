@@ -230,11 +230,6 @@ export default function RefeicaoForm() {
       setError('Nome é obrigatório');
       return;
     }
-    const items = state.items.filter((i) => i.ref_id);
-    if (items.length === 0) {
-      setError('Adicione ao menos uma receita ou ingrediente');
-      return;
-    }
     const mealId = original?.id ?? uniqueSlug(state.name, allMealIds());
     const meal = formToMeal(state, original);
     meal.id = mealId;
