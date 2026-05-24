@@ -1,6 +1,8 @@
 # Seed Data — App de Alimentação
 
-Dados iniciais que populam o banco Firebase Firestore na primeira configuração do app.
+Dados iniciais usados **apenas** pela importação manual em **Perfil → Catálogo inicial**, que copia o conteúdo destes ficheiros para `users/{uid}/userIngredients`, `users/{uid}/recipes` e `users/{uid}/userMeals` no Firestore (preservando IDs, idempotente).
+
+O app de runtime **não lê** estes ficheiros — toda a UI lê das coleções por-utilizador no Firestore. Depois de o utilizador clicar em "Importar catálogo base" uma vez, estes JSONs podem ser apagados do repositório.
 
 ## Arquivos
 
