@@ -1,0 +1,2698 @@
+{
+  "$schema_version": "1.1",
+  "description": "Receitas extraídas de `livro de receitas.md`. Receitas com `needs_review: true` foram identificadas mas ainda precisam ter ingredientes/preparo extraídos do markdown. O campo `source_lines` aponta [linha_inicial, linha_final] para auditoria.",
+  "categories": [
+    {
+      "id": "pratos-principais",
+      "name": "Pratos Principais",
+      "icon": "🍽️"
+    },
+    {
+      "id": "bebidas",
+      "name": "Bebidas",
+      "icon": "🍹"
+    },
+    {
+      "id": "sobremesas-e-lanches",
+      "name": "Sobremesas e Lanches",
+      "icon": "🍰"
+    },
+    {
+      "id": "molhos-temperos-acompanhamentos",
+      "name": "Molhos, Temperos e Acompanhamentos",
+      "icon": "🥣"
+    }
+  ],
+  "recipes": [
+    {
+      "id": "arroz-de-couve-flor",
+      "name": "Arroz de Couve-Flor",
+      "category": "pratos-principais",
+      "prep_time_min": null,
+      "difficulty": "facil",
+      "rating": null,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "1 couve-flor",
+          "ingredient_id": "couve-flor",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "1 cebola",
+          "ingredient_id": "cebola",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "3 dentes de alho",
+          "ingredient_id": "alho",
+          "quantity": 3,
+          "unit": "dt"
+        },
+        {
+          "raw_text": "Sal a gosto",
+          "ingredient_id": "sal",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Pimenta do reino",
+          "ingredient_id": "pimenta-do-reino",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Azeite de oliva extra virgem",
+          "ingredient_id": "azeite-de-oliva-extra-virgem",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Manteiga",
+          "ingredient_id": "manteiga",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Lavar a couve flor e processar",
+        "Processar a cebola e o alho",
+        "Refogar a cebola e alho no azeite e manteiga",
+        "Em seguida junte a couve-flor e cozinha em fogo baixo por 3 minutos"
+      ],
+      "source_lines": [
+        22,
+        38
+      ]
+    },
+    {
+      "id": "arroz-lentilha-cenoura-frango-curry",
+      "name": "Arroz, Lentilha, Cenoura e Frango em Cubos com Curry",
+      "category": "pratos-principais",
+      "prep_time_min": 1,
+      "notes": "Pra cada xícara, adicionar 4 colheres de sopa de linhaça.",
+      "source_lines": [
+        39,
+        49
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "arroz-lentilha-couve-hamburguinho",
+      "name": "Arroz, Lentilha, Couve e Hamburguinho",
+      "category": "pratos-principais",
+      "rating": 5,
+      "source_lines": [
+        50,
+        55
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "batata-frita-artesanal",
+      "name": "Batata Frita Artesanal",
+      "category": "pratos-principais",
+      "ingredients": [
+        {
+          "raw_text": "Batata comum",
+          "ingredient_id": "batata-comum",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps_natural": [
+        "Lavar e secar em papel toalha",
+        "Selar pincelando com azeite",
+        "Preaquecer a AirFryer à 200°C",
+        "Colocar as batatas entre 15 e 30 minutos",
+        "Mexer a cada 10 minutos"
+      ],
+      "steps_congelada": [
+        "Tirar do congelador 20 minutos antes de usar",
+        "Secar com papel toalha",
+        "Preaquecer a AirFryer à 200°C",
+        "Colocar as batatas entre 15 e 30 minutos",
+        "Mexer a cada 10 minutos"
+      ],
+      "source_lines": [
+        56,
+        77
+      ]
+    },
+    {
+      "id": "batata-rustica",
+      "name": "Batata Rústica",
+      "category": "pratos-principais",
+      "ingredients": [
+        {
+          "raw_text": "400g de batatas",
+          "ingredient_id": "batata-comum",
+          "quantity": 400,
+          "unit": "g"
+        },
+        {
+          "raw_text": "2 colheres de sopa de azeite",
+          "ingredient_id": "azeite-de-oliva-extra-virgem",
+          "quantity": 2,
+          "unit": "cs"
+        },
+        {
+          "raw_text": "Catupiry ou requeijão cremoso",
+          "ingredient_id": "catupiry-ou-requeijao-cremoso",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Sal a gosto",
+          "ingredient_id": "sal",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Páprica a gosto",
+          "ingredient_id": "paprica",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Lavar as batatas com escova",
+        "Sem descascar cortar na vertical",
+        "Colocar em vasilha",
+        "Cobrir com água",
+        "Deixar descansar por 30 minutos",
+        "Pré aquecer a AirFryer à 200°C por 5 minutos",
+        "Escorrer a água das batatas",
+        "Secar com papel toalha ou pano",
+        "Adicionar azeite, sal e páprica",
+        "Mexer bem com as mãos",
+        "Colocar na fritadeira por 30 minutos",
+        "Agitar na metade do tempo",
+        "Colocar em uma travessa e servir com o catupiry ou requeijão"
+      ],
+      "source_lines": [
+        78,
+        107
+      ]
+    },
+    {
+      "id": "caesar-salad",
+      "name": "Caesar Salad",
+      "category": "pratos-principais",
+      "source_lines": [
+        108,
+        119
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "calabresa-acebolada",
+      "name": "Calabresa Acebolada",
+      "category": "pratos-principais",
+      "ingredients": [
+        {
+          "raw_text": "Linguiça Calabresa",
+          "ingredient_id": "linguica-calabresa",
+          "quantity": null,
+          "unit": null
+        }
+      ],
+      "source_lines": [
+        120,
+        125
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "caldo-de-kabocha",
+      "name": "Caldo de Kabocha",
+      "category": "pratos-principais",
+      "rating": 4,
+      "season": "inverno",
+      "notes": "Kabocha é a pronúncia de Abóbora em Japonês (かぼちゃ). Tipo de abóbora também chamada de abóbora Japonesa, trazida ao Brasil em 1960; MG é o maior produtor mundial.",
+      "ingredients": [
+        {
+          "raw_text": "1/2 Kabocha",
+          "ingredient_id": "abobora-kabocha",
+          "quantity": 0.5,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "1 galho de alecrim",
+          "ingredient_id": "alecrim",
+          "quantity": 1,
+          "unit": "unit"
+        }
+      ],
+      "steps": [
+        "Lavar a casca",
+        "Tirar as sementes",
+        "Colocar na pressão por 8 minutos com um galho de alecrim",
+        "Bater no liquidificador",
+        "Ferver com a massala (curry, sal, calabresa)"
+      ],
+      "nutrition_per_100g": {
+        "calories": 45,
+        "carbs": 11.5,
+        "protein": 1,
+        "fat": 0.1,
+        "fiber": 2
+      },
+      "source_lines": [
+        126,
+        166
+      ]
+    },
+    {
+      "id": "cenoura-vapor-carne-moida-pure-kabotia",
+      "name": "Cenoura no Vapor, Carne Moída e Purê de Kabotiá",
+      "category": "pratos-principais",
+      "notes": "Refeição pós-treino balanceada. Cenoura no vapor preserva nutrientes; carne moída fornece proteína de alta qualidade e ferro; purê de abóbora kabotiá adiciona carboidratos complexos e betacaroteno.",
+      "source_lines": [
+        167,
+        176
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "escondidinho-de-batata-doce",
+      "name": "Escondidinho de Batata Doce",
+      "category": "pratos-principais",
+      "ingredients": [
+        {
+          "raw_text": "2 peitos de frango desfiado",
+          "ingredient_id": "frango-peito",
+          "quantity": 2,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "4 sachês de tempero pronto em pó (de sua escolha)",
+          "ingredient_id": "tempero",
+          "quantity": 4,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "2 latas de molho de tomate pronto",
+          "ingredient_id": "molho-de-tomate",
+          "quantity": 2,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "1 cebola pequena bem picadinha",
+          "ingredient_id": "cebola",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "1 dente de alho",
+          "ingredient_id": "alho",
+          "quantity": 1,
+          "unit": "dt"
+        },
+        {
+          "raw_text": "1 colher (sopa) bem cheia de margarina",
+          "ingredient_id": "margarina",
+          "quantity": 1,
+          "unit": "cs"
+        },
+        {
+          "raw_text": "1 kg de batata-doce",
+          "ingredient_id": "batata-doce",
+          "quantity": 1000,
+          "unit": "g"
+        },
+        {
+          "raw_text": "1 embalagem grande de requeijão (embalagem para culinária)",
+          "ingredient_id": "requeijao",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "500 g de mussarela ralada",
+          "ingredient_id": "mussarela",
+          "quantity": 500,
+          "unit": "g"
+        },
+        {
+          "raw_text": "pimenta a gosto",
+          "ingredient_id": "pimenta-do-reino",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "sal a gosto",
+          "ingredient_id": "sal",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "source_lines": [
+        177,
+        210
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "espaguete-pesto-manjericao",
+      "name": "Espaguete ao Pesto de Manjericão",
+      "category": "pratos-principais",
+      "notes": "Pesto tradicional combina manjericão fresco (preferencialmente o genovês), alho, pinhões ou nozes, queijo parmesão ralado, sal marinho e azeite extravirgem.",
+      "source_lines": [
+        211,
+        220
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "espaguete-com-almondegas",
+      "name": "Espaguete com Almôndegas",
+      "category": "pratos-principais",
+      "rating": 3,
+      "ingredients": [
+        {
+          "raw_text": "1 xícara de proteína de soja texturizada",
+          "ingredient_id": "proteina-de-soja-texturizada",
+          "quantity": 1,
+          "unit": "xc"
+        },
+        {
+          "raw_text": "Água suficiente para cobrir a proteína de soja",
+          "ingredient_id": "agua",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "1 cebola pequena picada",
+          "ingredient_id": "cebola",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "2 dentes de alho picados",
+          "ingredient_id": "alho",
+          "quantity": 2,
+          "unit": "dt"
+        },
+        {
+          "raw_text": "1 ovo",
+          "ingredient_id": "ovo",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "Farinha de trigo quanto baste",
+          "ingredient_id": "farinha-de-trigo",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Passata de tomate",
+          "ingredient_id": "passata-de-tomate",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "source_lines": [
+        221,
+        246
+      ]
+    },
+    {
+      "id": "hamburguer",
+      "name": "Hambúrguer",
+      "category": "pratos-principais",
+      "rating": 5,
+      "prep_time_min": 30,
+      "source_lines": [
+        247,
+        261
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "kibe-abobora-batata-doce-vapor",
+      "name": "Kibe de Abóbora e Batata Doce no Vapor",
+      "category": "pratos-principais",
+      "notes": "Variação vegana do kibe sírio tradicional, com abóbora kabotiá ralada, batata-doce, cebola roxa, bulgur (trigo para quibe), azeite, sal, pimenta e ervas como orégano. Cozinhar no vapor 15–20 min ou assar a 180°C por 20–25 min.",
+      "source_lines": [
+        262,
+        271
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "kibe-forno-kabotia",
+      "name": "Kibe de Forno de Kabotiá",
+      "category": "pratos-principais",
+      "prep_time_min": 90,
+      "ingredients": [
+        {
+          "raw_text": "Trigo para Kibe: 1 xícara",
+          "ingredient_id": "trigo-para-kibe",
+          "quantity": 1,
+          "unit": "xc"
+        },
+        {
+          "raw_text": "Abóbora cabotiá cozida e amassada: 1 xícara",
+          "ingredient_id": "abobora-kabocha",
+          "quantity": 1,
+          "unit": "xc"
+        },
+        {
+          "raw_text": "Cheiro verde picado: a gosto",
+          "ingredient_id": "cheiro-verde",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Cebola picadinha: 1 unidade",
+          "ingredient_id": "cebola",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "Alho picado: 2 dentes",
+          "ingredient_id": "alho",
+          "quantity": 2,
+          "unit": "dt"
+        },
+        {
+          "raw_text": "Azeite: 2 colheres de sopa",
+          "ingredient_id": "azeite-de-oliva-extra-virgem",
+          "quantity": 2,
+          "unit": "cs"
+        },
+        {
+          "raw_text": "Sal: a gosto",
+          "ingredient_id": "sal",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Cominho: a gosto",
+          "ingredient_id": "cominho",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Canela: a gosto",
+          "ingredient_id": "canela",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Cozinhe a abóbora cabotiá e amasse.",
+        "Separe a casca da abóbora para fazer chips.",
+        "Separe a água do cozimento para hidratar o kibe.",
+        "Hidrate o trigo para kibe com água morna e esprema o excesso de água com um pano.",
+        "Misture o trigo espremido com a abóbora amassada, cebola, cheiro verde, azeite, sal, cominho, uma pitada de canela e hortelã fresca picada.",
+        "Arrume a mistura em um tabuleiro.",
+        "Faça cortes na mistura e passe um fio de azeite nos cortes.",
+        "Asse em forno preaquecido a 180°C por 30 minutos."
+      ],
+      "source_lines": [
+        272,
+        303
+      ]
+    },
+    {
+      "id": "lasanha-bolonhesa",
+      "name": "Lasanha Bolonhesa",
+      "category": "pratos-principais",
+      "notes": "Camadas de massa, molho bolonhesa e molho branco (béchamel). Proporção recomendada: 3 camadas de bolonhesa e 2 de molho branco, começando e terminando com branco. Forno 180°C, 40 min coberto + 15–20 min descoberto.",
+      "source_lines": [
+        304,
+        313
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "lasanha-4-queijos",
+      "name": "Lasanha de 4 Queijos",
+      "category": "pratos-principais",
+      "source_lines": [
+        314,
+        369
+      ],
+      "needs_review": true,
+      "notes": "Ingredientes e modo de preparo presentes no markdown, ainda não parseados."
+    },
+    {
+      "id": "lasanha-de-beringela",
+      "name": "Lasanha de Berinjela",
+      "category": "pratos-principais",
+      "ingredients": [
+        {
+          "raw_text": "2 berinjelas",
+          "ingredient_id": "berinjela",
+          "quantity": 2,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "300g mussarela",
+          "ingredient_id": "mussarela",
+          "quantity": 300,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Molho de tomate",
+          "ingredient_id": "molho-de-tomate",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Deixar berinjela na salmoura",
+        "Escorre bem a berinjela e lava",
+        "Aperta pra tirar o excesso",
+        "Faz o molho",
+        "Monta 1 camada de berinjela, 1 de molho e 1 de queijo"
+      ],
+      "source_lines": [
+        370,
+        387
+      ]
+    },
+    {
+      "id": "lasanha-vegana",
+      "name": "Lasanha Vegana",
+      "category": "pratos-principais",
+      "source_lines": [
+        388,
+        457
+      ],
+      "needs_review": true,
+      "notes": "Três componentes: molho bolonhesa de proteína de soja, legumes refogados (couve-flor e brócolis), queijo vegano de castanhas. Ingredientes detalhados no markdown."
+    },
+    {
+      "id": "legumes-assados",
+      "name": "Legumes Assados",
+      "category": "pratos-principais",
+      "rating": 3,
+      "prep_time_min": 90,
+      "ingredients": [
+        {
+          "raw_text": "1 Batata doce",
+          "ingredient_id": "batata-doce",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "1 Cebola",
+          "ingredient_id": "cebola",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "2 Cenoura",
+          "ingredient_id": "cenoura",
+          "quantity": 2,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "1/4 Abóbora cabotiã",
+          "ingredient_id": "abobora-kabocha",
+          "quantity": 0.25,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "Chuchu",
+          "ingredient_id": "chuchu",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Abobrinha",
+          "ingredient_id": "abobrinha",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Tomate",
+          "ingredient_id": "tomate",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "1 cabeça de Alho",
+          "ingredient_id": "alho",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "Alecrim a gosto",
+          "ingredient_id": "alecrim",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Sal a gosto",
+          "ingredient_id": "sal",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "source_lines": [
+        458,
+        494
+      ]
+    },
+    {
+      "id": "macarrao-molho-vermelho",
+      "name": "Macarrão ao Molho Vermelho",
+      "category": "pratos-principais",
+      "rating": 3,
+      "source_lines": [
+        495,
+        513
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "macarrao-gravatinha-ricota-brocolis",
+      "name": "Macarrão Gravatinha ao Molho de Ricota com Brócolis",
+      "category": "pratos-principais",
+      "rating": 5,
+      "source_lines": [
+        514,
+        527
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "ovos-mexidos",
+      "name": "Ovos Mexidos",
+      "category": "pratos-principais",
+      "source_lines": [
+        528,
+        537
+      ],
+      "needs_review": true,
+      "notes": "Apenas descrição em prosa no markdown."
+    },
+    {
+      "id": "ovos-mexidos-ervas-provenca",
+      "name": "Ovos Mexidos com Ervas de Provença",
+      "category": "pratos-principais",
+      "rating": 4,
+      "source_lines": [
+        538,
+        543
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "pizza",
+      "name": "Pizza",
+      "category": "pratos-principais",
+      "prep_time_min": 720,
+      "source_lines": [
+        544,
+        583
+      ],
+      "needs_review": true,
+      "notes": "Massa e recheio com ingredientes completos no markdown."
+    },
+    {
+      "id": "poke",
+      "name": "Poke",
+      "category": "pratos-principais",
+      "rating": 5,
+      "source_lines": [
+        584,
+        604
+      ],
+      "needs_review": true,
+      "notes": "Ingredientes principais: Salmão, Pepino japonês, Arroz japonês, Sunomono."
+    },
+    {
+      "id": "quiche-alho-poro-ricota-ovos",
+      "name": "Quiche de Alho-Poró com Ricota e Ovos",
+      "category": "pratos-principais",
+      "source_lines": [
+        605,
+        614
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "ratatouille",
+      "name": "Ratatouille",
+      "category": "pratos-principais",
+      "prep_time_min": null,
+      "ingredients": [
+        {
+          "raw_text": "1 abobrinha cortada em rodelas finas",
+          "ingredient_id": "abobrinha",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "1 berinjela cortada em rodelas finas",
+          "ingredient_id": "berinjela",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "2 tomates cortados em rodelas finas",
+          "ingredient_id": "tomate",
+          "quantity": 2,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "Sal",
+          "ingredient_id": "sal",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Pimenta do reino",
+          "ingredient_id": "pimenta-do-reino",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Azeite para regar",
+          "ingredient_id": "azeite-de-oliva-extra-virgem",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "ingredients_molho": [
+        {
+          "raw_text": "5 tomates picados, sem pele e sem sementes",
+          "ingredient_id": "tomate",
+          "quantity": 5,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "1 dente de alho picado",
+          "ingredient_id": "alho",
+          "quantity": 1,
+          "unit": "dt"
+        },
+        {
+          "raw_text": "1/2 cebola picada",
+          "ingredient_id": "cebola",
+          "quantity": 0.5,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "1/2 xícara (chá) de azeite",
+          "ingredient_id": "azeite-de-oliva-extra-virgem",
+          "quantity": 0.5,
+          "unit": "xc"
+        }
+      ],
+      "source_lines": [
+        615,
+        652
+      ]
+    },
+    {
+      "id": "risoto-arroz-vermelho-champignon",
+      "name": "Risoto de Arroz Vermelho com Champignon e Parmesão",
+      "category": "pratos-principais",
+      "source_lines": [
+        653,
+        685
+      ],
+      "needs_review": true,
+      "notes": "Ingredientes e modo de preparo completos no markdown."
+    },
+    {
+      "id": "risoto-kabotia-parmesao",
+      "name": "Risoto de Kabotiá com Parmesão",
+      "category": "pratos-principais",
+      "prep_time_min": 60,
+      "source_lines": [
+        686,
+        717
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "salada-crocante",
+      "name": "Salada Crocante",
+      "category": "pratos-principais",
+      "rating": 5,
+      "source_lines": [
+        718,
+        733
+      ],
+      "needs_review": true,
+      "notes": "Folhas, Tomate cereja, Milho, Cenoura, Batata palha, Molho rosê e Tiras de frango grelhado."
+    },
+    {
+      "id": "sopa-legumes-frango-desfiado",
+      "name": "Sopa de Legumes com Frango Desfiado",
+      "category": "pratos-principais",
+      "season": "inverno",
+      "source_lines": [
+        734,
+        766
+      ],
+      "needs_review": true,
+      "notes": "Ingredientes e modo de preparo completos no markdown."
+    },
+    {
+      "id": "stroganoof",
+      "name": "Stroganoff",
+      "category": "pratos-principais",
+      "rating": 4,
+      "prep_time_min": 30,
+      "source_lines": [
+        767,
+        805
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "sunomono",
+      "name": "Sunomono",
+      "category": "pratos-principais",
+      "source_lines": [
+        806,
+        830
+      ],
+      "needs_review": true,
+      "notes": "Salada japonesa de pepino com vinagre de arroz."
+    },
+    {
+      "id": "tempura",
+      "name": "Tempura",
+      "category": "pratos-principais",
+      "source_lines": [
+        831,
+        846
+      ],
+      "needs_review": true,
+      "notes": "Lista de ingredientes presente; modo de preparo ausente."
+    },
+    {
+      "id": "torta-palmito-ricota",
+      "name": "Torta de Palmito com Ricota",
+      "category": "pratos-principais",
+      "rating": 1,
+      "source_lines": [
+        847,
+        858
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "yakisoba",
+      "name": "Yakisoba",
+      "category": "pratos-principais",
+      "prep_time_min": 40,
+      "source_lines": [
+        859,
+        899
+      ],
+      "needs_review": true,
+      "notes": "Ingredientes e modo de preparo completos no markdown."
+    },
+    {
+      "id": "ceviche",
+      "name": "Ceviche",
+      "category": "pratos-principais",
+      "ingredients": [
+        {
+          "raw_text": "Peixe",
+          "ingredient_id": "peixe",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Limão",
+          "ingredient_id": "limao",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Cebola roxa",
+          "ingredient_id": "cebola-roxa",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Óleo de gergelim",
+          "ingredient_id": "oleo-de-gergelim",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Manga (opcional)",
+          "ingredient_id": "manga",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Cortar todos os ingredientes do mesmo tamanho e misturar bem."
+      ],
+      "source_lines": [
+        900,
+        915
+      ]
+    },
+    {
+      "id": "caldo-de-abobora-cabotiá-gokula",
+      "name": "Caldo de Abóbora Cabotiá (Gokula)",
+      "category": "pratos-principais",
+      "source_lines": [
+        916,
+        924
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "creme-de-mandioquinha-gokula",
+      "name": "Creme de Mandioquinha (Gokula)",
+      "category": "pratos-principais",
+      "source_lines": [
+        925,
+        933
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "pasta-ervilha-partida-gokula",
+      "name": "Pasta de Ervilha Partida (Gokula)",
+      "category": "pratos-principais",
+      "source_lines": [
+        934,
+        943
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "proteina-soja-temperada-gokula",
+      "name": "Proteína de Soja Temperada (Gokula)",
+      "category": "pratos-principais",
+      "source_lines": [
+        944,
+        955
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "pao-com-sementes-gokula",
+      "name": "Pão com Sementes (Gokula)",
+      "category": "pratos-principais",
+      "source_lines": [
+        956,
+        982
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "chapati-integral-gokula",
+      "name": "Chapati Integral (Gokula)",
+      "category": "pratos-principais",
+      "source_lines": [
+        983,
+        1000
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "black-russian",
+      "name": "Black Russian",
+      "category": "bebidas",
+      "rating": 5,
+      "source_lines": [
+        1004,
+        1027
+      ],
+      "needs_review": true,
+      "notes": "Coquetel: 60ml vodka + 20ml Kahlúa + Coca-Cola."
+    },
+    {
+      "id": "blue-lagoon",
+      "name": "Blue Lagoon",
+      "category": "bebidas",
+      "source_lines": [
+        1028,
+        1055
+      ],
+      "needs_review": true,
+      "notes": "Coquetel: 30ml vodka + 30ml curaçao + soda."
+    },
+    {
+      "id": "brisa-de-jerico",
+      "name": "Brisa de Jericó",
+      "category": "bebidas",
+      "source_lines": [
+        1056,
+        1089
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "caipirosca",
+      "name": "Caipirosca",
+      "category": "bebidas",
+      "source_lines": [
+        1090,
+        1105
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "capuccino",
+      "name": "Capuccino",
+      "category": "bebidas",
+      "source_lines": [
+        1106,
+        1129
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "el-cremoso",
+      "name": "El Cremoso",
+      "category": "bebidas",
+      "rating": 5,
+      "source_lines": [
+        1130,
+        1162
+      ],
+      "needs_review": true,
+      "notes": "Drink autoral. Rum + Kahlúa + ristretto + creme de leite + leite condensado."
+    },
+    {
+      "id": "french-martini",
+      "name": "French Martini",
+      "category": "bebidas",
+      "source_lines": [
+        1163,
+        1193
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "gid-barnett",
+      "name": "Gid Barnett",
+      "category": "bebidas",
+      "source_lines": [
+        1194,
+        1222
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "happy",
+      "name": "Happy",
+      "category": "bebidas",
+      "rating": 5,
+      "source_lines": [
+        1223,
+        1266
+      ],
+      "needs_review": true,
+      "notes": "Apesar do nome estar na seção de bebidas, é uma receita de wrap/chapatti com frango."
+    },
+    {
+      "id": "jungle-juice",
+      "name": "Jungle Juice",
+      "category": "bebidas",
+      "source_lines": [
+        1267,
+        1290
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "long-grape",
+      "name": "Long Grape",
+      "category": "bebidas",
+      "source_lines": [
+        1291,
+        1323
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "martini",
+      "name": "Martini",
+      "category": "bebidas",
+      "source_lines": [
+        1324,
+        1356
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "martini-melancia",
+      "name": "Martini de Melancia",
+      "category": "bebidas",
+      "source_lines": [
+        1357,
+        1383
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "paradise-martini",
+      "name": "Paradise Martini",
+      "category": "bebidas",
+      "source_lines": [
+        1384,
+        1414
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "purple-passion-tea",
+      "name": "Purple Passion Tea",
+      "category": "bebidas",
+      "source_lines": [
+        1415,
+        1448
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "sino-soviet-split",
+      "name": "Sino-Soviet Split",
+      "category": "bebidas",
+      "source_lines": [
+        1449,
+        1471
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "vitamina-de-frutas",
+      "name": "Vitamina de Frutas",
+      "category": "bebidas",
+      "source_lines": [
+        1472,
+        1491
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "vodka-gimlet",
+      "name": "Vodka Gimlet",
+      "category": "bebidas",
+      "source_lines": [
+        1492,
+        1515
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "vodka-sour",
+      "name": "Vodka Sour",
+      "category": "bebidas",
+      "source_lines": [
+        1516,
+        1543
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "white-russian",
+      "name": "White Russian",
+      "category": "bebidas",
+      "source_lines": [
+        1544,
+        1571
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "woo-woo",
+      "name": "Woo Woo",
+      "category": "bebidas",
+      "source_lines": [
+        1572,
+        1596
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "golden-milk",
+      "name": "Golden Milk",
+      "category": "bebidas",
+      "source_lines": [
+        1619,
+        1625
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "leite-vegetal",
+      "name": "Leite Vegetal (Amêndoas / Castanha de Caju / Coco)",
+      "category": "bebidas",
+      "source_lines": [
+        1626,
+        1637
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "bolinho-de-chuva",
+      "name": "Bolinho de Chuva",
+      "category": "sobremesas-e-lanches",
+      "source_lines": [
+        1640,
+        1654
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "bolo-de-caixinha",
+      "name": "Bolo de Caixinha",
+      "category": "sobremesas-e-lanches",
+      "source_lines": [
+        1655,
+        1672
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "bolo-de-fuba",
+      "name": "Bolo de Fubá",
+      "category": "sobremesas-e-lanches",
+      "source_lines": [
+        1673,
+        1694
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "cookie",
+      "name": "Cookie",
+      "category": "sobremesas-e-lanches",
+      "source_lines": [
+        1695,
+        1723
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "iogurte-com-frutas",
+      "name": "Iogurte com Frutas",
+      "category": "sobremesas-e-lanches",
+      "source_lines": [
+        1724,
+        1737
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "mousse-de-maracuja",
+      "name": "Mousse de Maracujá",
+      "category": "sobremesas-e-lanches",
+      "source_lines": [
+        1738,
+        1766
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "overnight",
+      "name": "Overnight",
+      "category": "sobremesas-e-lanches",
+      "source_lines": [
+        1767,
+        1780
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "panqueca-de-banana",
+      "name": "Panqueca de Banana",
+      "category": "sobremesas-e-lanches",
+      "source_lines": [
+        1781,
+        1789
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "pudim-de-caneca",
+      "name": "Pudim de Caneca",
+      "category": "sobremesas-e-lanches",
+      "source_lines": [
+        1790,
+        1795
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "panqueca-de-palmito",
+      "name": "Panqueca de Palmito",
+      "category": "sobremesas-e-lanches",
+      "source_lines": [
+        1796,
+        1805
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "sobremesa-de-shiva",
+      "name": "Sobremesa de Shiva",
+      "category": "sobremesas-e-lanches",
+      "source_lines": [
+        1806,
+        1830
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "tiramissu",
+      "name": "Tiramissu",
+      "category": "sobremesas-e-lanches",
+      "source_lines": [
+        1831,
+        1874
+      ],
+      "needs_review": true,
+      "notes": "Duplicado com 'Tiramisù' (linha 1905) — consolidar na revisão."
+    },
+    {
+      "id": "overnight-oat",
+      "name": "Overnight Oat",
+      "category": "sobremesas-e-lanches",
+      "source_lines": [
+        1875,
+        1904
+      ],
+      "needs_review": true,
+      "notes": "Duplicado com 'Overnight' (linha 1767) — consolidar na revisão."
+    },
+    {
+      "id": "tiramisu",
+      "name": "Tiramisù",
+      "category": "sobremesas-e-lanches",
+      "source_lines": [
+        1905,
+        1936
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "bolonhesa",
+      "name": "Molho Bolonhesa",
+      "category": "molhos-temperos-acompanhamentos",
+      "source_lines": [
+        1939,
+        1948
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "cebola-crispy",
+      "name": "Cebola Crispy",
+      "category": "molhos-temperos-acompanhamentos",
+      "source_lines": [
+        1949,
+        1958
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "creme-de-alho",
+      "name": "Creme de Alho",
+      "category": "molhos-temperos-acompanhamentos",
+      "source_lines": [
+        1959,
+        1964
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "creme-de-avela",
+      "name": "Creme de Avelã",
+      "category": "molhos-temperos-acompanhamentos",
+      "source_lines": [
+        1965,
+        1982
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "molho-rose",
+      "name": "Molho Rosê",
+      "category": "molhos-temperos-acompanhamentos",
+      "source_lines": [
+        1983,
+        1998
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "molho-para-gratinar",
+      "name": "Molho para Gratinar",
+      "category": "molhos-temperos-acompanhamentos",
+      "source_lines": [
+        1999,
+        2009
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "molho-pra-salada",
+      "name": "Molho pra Salada",
+      "category": "molhos-temperos-acompanhamentos",
+      "source_lines": [
+        2010,
+        2026
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "pate-ricota",
+      "name": "Patê de Ricota",
+      "category": "molhos-temperos-acompanhamentos",
+      "source_lines": [
+        2027,
+        2040
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "sour-mix",
+      "name": "Sour Mix",
+      "category": "molhos-temperos-acompanhamentos",
+      "source_lines": [
+        2041,
+        2061
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "tempero-pronto",
+      "name": "Tempero Pronto",
+      "category": "molhos-temperos-acompanhamentos",
+      "source_lines": [
+        2062,
+        2073
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "marinadas-frango",
+      "name": "Marinadas para Frango",
+      "category": "molhos-temperos-acompanhamentos",
+      "source_lines": [
+        2074,
+        2116
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "veganese",
+      "name": "Veganese (Maionese Vegana)",
+      "category": "molhos-temperos-acompanhamentos",
+      "source_lines": [
+        2117,
+        2125
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "creme-de-leite-vegano",
+      "name": "Creme de Leite Vegano",
+      "category": "molhos-temperos-acompanhamentos",
+      "source_lines": [
+        2126,
+        2134
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "molho-branco",
+      "name": "Molho Branco",
+      "category": "molhos-temperos-acompanhamentos",
+      "source_lines": [
+        2135,
+        2141
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "pao-de-queijo-vegano",
+      "name": "Pão de Queijo Vegano",
+      "category": "molhos-temperos-acompanhamentos",
+      "source_lines": [
+        2142,
+        2161
+      ],
+      "needs_review": true
+    },
+    {
+      "id": "virado-de-banana",
+      "name": "Virado de Banana (Medicinal)",
+      "category": "molhos-temperos-acompanhamentos",
+      "source_lines": [
+        2303,
+        2327
+      ],
+      "needs_review": true,
+      "notes": "Está na seção 'RECEITAS MEDICINAIS' do markdown original."
+    },
+    {
+      "id": "omelete-espinafre-cottage",
+      "name": "Omelete de Espinafre e Cottage",
+      "category": "pratos-principais",
+      "prep_time_min": 10,
+      "difficulty": "facil",
+      "rating": null,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "3 ovos",
+          "ingredient_id": "ovo",
+          "quantity": 3,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "Espinafre fresco a gosto",
+          "ingredient_id": "espinafre",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Queijo cottage (50g)",
+          "ingredient_id": "queijo-cottage",
+          "quantity": 50,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Sal a gosto",
+          "ingredient_id": "sal",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Pimenta-do-reino",
+          "ingredient_id": "pimenta-do-reino",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Azeite ou manteiga",
+          "ingredient_id": "azeite-de-oliva-extra-virgem",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Bater os ovos com sal e pimenta",
+        "Refogar levemente o espinafre numa frigideira antiaderente com azeite ou manteiga",
+        "Despejar os ovos e cozinhar em fogo baixo",
+        "Adicionar o queijo cottage por cima e dobrar o omelete"
+      ]
+    },
+    {
+      "id": "omelete-forno-brocolis-queijo",
+      "name": "Omelete de Forno com Brócolis e Queijo",
+      "category": "pratos-principais",
+      "prep_time_min": 30,
+      "difficulty": "facil",
+      "rating": 5,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "4 ovos",
+          "ingredient_id": "ovo",
+          "quantity": 4,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "Brócolis cozido",
+          "ingredient_id": "brocolis",
+          "quantity": 100,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Queijo mussarela (40g)",
+          "ingredient_id": "mussarela",
+          "quantity": 40,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Sal a gosto",
+          "ingredient_id": "sal",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Pimenta-do-reino",
+          "ingredient_id": "pimenta-do-reino",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Azeite",
+          "ingredient_id": "azeite-de-oliva-extra-virgem",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Pré-aquecer o forno a 180°C",
+        "Bater os ovos com sal e pimenta",
+        "Misturar os brócolis cozidos e o queijo",
+        "Untar uma assadeira pequena com azeite e despejar a mistura",
+        "Assar por 20-25 minutos até dourar e firmar"
+      ]
+    },
+    {
+      "id": "panqueca-proteica",
+      "name": "Panqueca Proteica (Whey, Ovo e Banana)",
+      "category": "pratos-principais",
+      "prep_time_min": 10,
+      "difficulty": "facil",
+      "rating": null,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "2 ovos",
+          "ingredient_id": "ovo",
+          "quantity": 2,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "1 banana média",
+          "ingredient_id": "banana",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "Aveia em flocos (30g)",
+          "ingredient_id": "aveia-flocos",
+          "quantity": 30,
+          "unit": "g"
+        },
+        {
+          "raw_text": "1 scoop de whey protein (30g)",
+          "ingredient_id": "whey-protein",
+          "quantity": 30,
+          "unit": "g"
+        }
+      ],
+      "steps": [
+        "Bater tudo no liquidificador até virar uma massa homogênea",
+        "Aquecer uma frigideira antiaderente",
+        "Despejar pequenas porções e dourar dos dois lados"
+      ]
+    },
+    {
+      "id": "crepioca",
+      "name": "Crepioca",
+      "category": "pratos-principais",
+      "prep_time_min": 8,
+      "difficulty": "facil",
+      "rating": null,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "2 ovos",
+          "ingredient_id": "ovo",
+          "quantity": 2,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "2 colheres de sopa de goma de tapioca",
+          "ingredient_id": "tapioca-goma",
+          "quantity": 30,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Sal a gosto",
+          "ingredient_id": "sal",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Misturar ovos e tapioca até ficar homogêneo",
+        "Despejar em frigideira antiaderente quente",
+        "Cozinhar dos dois lados como um crepe",
+        "Rechear a gosto (requeijão, queijo, frango etc.)"
+      ]
+    },
+    {
+      "id": "tapioca-frango-queijo",
+      "name": "Tapioca com Frango Desfiado e Queijo",
+      "category": "pratos-principais",
+      "prep_time_min": 15,
+      "difficulty": "facil",
+      "rating": 5,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Goma de tapioca (50g)",
+          "ingredient_id": "tapioca-goma",
+          "quantity": 50,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Frango desfiado (80g)",
+          "ingredient_id": "frango-peito",
+          "quantity": 80,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Queijo minas (30g)",
+          "ingredient_id": "queijo-minas-cooper",
+          "quantity": 30,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Requeijão (opcional)",
+          "ingredient_id": "requeijao",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Espalhar a goma de tapioca peneirada em frigideira antiaderente quente",
+        "Esperar a goma firmar formando o disco",
+        "Espalhar o requeijão sobre metade do disco",
+        "Adicionar o frango desfiado temperado e o queijo",
+        "Dobrar a tapioca ao meio e servir"
+      ]
+    },
+    {
+      "id": "mingau-aveia-whey",
+      "name": "Mingau de Aveia com Whey",
+      "category": "pratos-principais",
+      "prep_time_min": 8,
+      "difficulty": "facil",
+      "rating": null,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Aveia em flocos (50g)",
+          "ingredient_id": "aveia-flocos",
+          "quantity": 50,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Leite (200ml)",
+          "ingredient_id": "leite-integral",
+          "quantity": 200,
+          "unit": "ml"
+        },
+        {
+          "raw_text": "1 scoop de whey protein (30g)",
+          "ingredient_id": "whey-protein",
+          "quantity": 30,
+          "unit": "g"
+        },
+        {
+          "raw_text": "1 banana",
+          "ingredient_id": "banana",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "Canela a gosto",
+          "ingredient_id": "canela",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Aquecer o leite com a aveia até engrossar",
+        "Tirar do fogo e misturar o whey (não bater quente para não desnaturar)",
+        "Servir com banana picada e canela"
+      ]
+    },
+    {
+      "id": "wrap-frango-requeijao",
+      "name": "Wrap de Frango com Requeijão",
+      "category": "pratos-principais",
+      "prep_time_min": 10,
+      "difficulty": "facil",
+      "rating": 5,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "1 tortilha integral pequena",
+          "ingredient_id": "tortilha-integral",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "Frango desfiado (60g)",
+          "ingredient_id": "frango-peito",
+          "quantity": 60,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Requeijão light",
+          "ingredient_id": "requeijao-light",
+          "quantity": 30,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Alface",
+          "ingredient_id": "alface",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Tomate",
+          "ingredient_id": "tomate",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Aquecer levemente a tortilha",
+        "Espalhar o requeijão",
+        "Distribuir frango, alface e tomate",
+        "Enrolar firmemente e cortar ao meio"
+      ]
+    },
+    {
+      "id": "vitamina-leite-banana-whey",
+      "name": "Vitamina de Banana com Whey",
+      "category": "bebidas",
+      "prep_time_min": 5,
+      "difficulty": "facil",
+      "rating": null,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Leite (200-250ml)",
+          "ingredient_id": "leite-integral",
+          "quantity": 225,
+          "unit": "ml"
+        },
+        {
+          "raw_text": "1 banana",
+          "ingredient_id": "banana",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "1 colher de sopa de pasta de amendoim",
+          "ingredient_id": "pasta-amendoim",
+          "quantity": 15,
+          "unit": "g"
+        },
+        {
+          "raw_text": "½ scoop de whey protein (15g)",
+          "ingredient_id": "whey-protein",
+          "quantity": 15,
+          "unit": "g"
+        }
+      ],
+      "steps": [
+        "Bater todos os ingredientes no liquidificador",
+        "Servir gelado"
+      ]
+    },
+    {
+      "id": "smoothie-iogurte-cacau",
+      "name": "Smoothie de Iogurte com Cacau",
+      "category": "bebidas",
+      "prep_time_min": 5,
+      "difficulty": "facil",
+      "rating": null,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Iogurte natural (150g)",
+          "ingredient_id": "iogurte-natural-integral",
+          "quantity": 150,
+          "unit": "g"
+        },
+        {
+          "raw_text": "1 banana congelada",
+          "ingredient_id": "banana",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "Cacau em pó",
+          "ingredient_id": "cacau-po",
+          "quantity": 10,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Aveia (20g)",
+          "ingredient_id": "aveia-flocos",
+          "quantity": 20,
+          "unit": "g"
+        }
+      ],
+      "steps": [
+        "Bater tudo no liquidificador até cremoso",
+        "Servir imediatamente"
+      ]
+    },
+    {
+      "id": "pudim-chia",
+      "name": "Pudim de Chia",
+      "category": "sobremesas-e-lanches",
+      "prep_time_min": 5,
+      "difficulty": "facil",
+      "rating": null,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Sementes de chia (30g)",
+          "ingredient_id": "chia",
+          "quantity": 30,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Leite (200ml)",
+          "ingredient_id": "leite-integral",
+          "quantity": 200,
+          "unit": "ml"
+        },
+        {
+          "raw_text": "½ scoop de whey (15g)",
+          "ingredient_id": "whey-protein",
+          "quantity": 15,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Mel a gosto (opcional)",
+          "ingredient_id": "mel",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Misturar a chia com o leite e o whey num pote",
+        "Adoçar com mel se quiser",
+        "Levar à geladeira por pelo menos 4h (idealmente noite anterior)"
+      ]
+    },
+    {
+      "id": "acai-granola-whey",
+      "name": "Açaí com Granola e Whey",
+      "category": "sobremesas-e-lanches",
+      "prep_time_min": 5,
+      "difficulty": "facil",
+      "rating": null,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Polpa de açaí (150g)",
+          "ingredient_id": "acai-polpa",
+          "quantity": 150,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Granola (30g)",
+          "ingredient_id": "granola",
+          "quantity": 30,
+          "unit": "g"
+        },
+        {
+          "raw_text": "1 banana",
+          "ingredient_id": "banana",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "1 scoop de whey (30g)",
+          "ingredient_id": "whey-protein",
+          "quantity": 30,
+          "unit": "g"
+        }
+      ],
+      "steps": [
+        "Bater a polpa de açaí com o whey e a banana",
+        "Servir em tigela e cobrir com granola"
+      ]
+    },
+    {
+      "id": "strogonoff-de-frango",
+      "name": "Strogonoff de Frango",
+      "category": "pratos-principais",
+      "prep_time_min": 30,
+      "difficulty": "facil",
+      "rating": 5,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Peito de frango em cubos (200g)",
+          "ingredient_id": "frango-peito",
+          "quantity": 200,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Cebola picada",
+          "ingredient_id": "cebola",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "Alho",
+          "ingredient_id": "alho",
+          "quantity": 2,
+          "unit": "dt"
+        },
+        {
+          "raw_text": "Molho de tomate",
+          "ingredient_id": "molho-de-tomate",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Requeijão (ou creme de leite light)",
+          "ingredient_id": "requeijao-light",
+          "quantity": 100,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Sal, pimenta",
+          "ingredient_id": "sal",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Temperar e dourar o frango em cubos",
+        "Refogar cebola e alho à parte",
+        "Juntar o frango, o molho de tomate e deixar reduzir",
+        "Finalizar com o requeijão sem ferver para não talhar",
+        "Servir com arroz integral"
+      ]
+    },
+    {
+      "id": "yakisoba-frango",
+      "name": "Yakisoba de Frango",
+      "category": "pratos-principais",
+      "prep_time_min": 25,
+      "difficulty": "medio",
+      "rating": 5,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Peito de frango em tiras (150g)",
+          "ingredient_id": "frango-peito",
+          "quantity": 150,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Macarrão integral (100g)",
+          "ingredient_id": "macarrao-integral",
+          "quantity": 100,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Abobrinha",
+          "ingredient_id": "abobrinha",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Couve-flor",
+          "ingredient_id": "couve-flor",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Cenoura",
+          "ingredient_id": "cenoura",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Shoyu",
+          "ingredient_id": "shoyu-organico",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Óleo de gergelim",
+          "ingredient_id": "oleo-de-gergelim",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Cozinhar o macarrão al dente e reservar",
+        "Saltear o frango em fogo alto até dourar",
+        "Adicionar os legumes em tiras e refogar mantendo a crocância",
+        "Juntar o macarrão e temperar com shoyu e óleo de gergelim"
+      ]
+    },
+    {
+      "id": "hamburguer-frango-caseiro",
+      "name": "Hambúrguer de Frango Caseiro",
+      "category": "pratos-principais",
+      "prep_time_min": 20,
+      "difficulty": "facil",
+      "rating": 5,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Peito de frango moído (160g — 2 unidades de 80g)",
+          "ingredient_id": "frango-peito",
+          "quantity": 160,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Cebola ralada",
+          "ingredient_id": "cebola",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Alho",
+          "ingredient_id": "alho",
+          "quantity": 1,
+          "unit": "dt"
+        },
+        {
+          "raw_text": "Sal e pimenta",
+          "ingredient_id": "sal",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Cheiro verde",
+          "ingredient_id": "cheiro-verde",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Misturar todos os ingredientes e moldar 2 hambúrgueres",
+        "Grelhar em frigideira antiaderente, 4 min de cada lado",
+        "Excelente para fazer em lote e congelar"
+      ]
+    },
+    {
+      "id": "pao-hamburguer-fitness",
+      "name": "Pão de Hambúrguer Fitness",
+      "category": "pratos-principais",
+      "prep_time_min": 10,
+      "difficulty": "facil",
+      "rating": 5,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "1 pão de hambúrguer integral",
+          "ingredient_id": "pao-hamburguer-integral",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "1 hambúrguer de frango ou filé",
+          "ingredient_id": "frango-peito",
+          "quantity": 80,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Queijo mussarela",
+          "ingredient_id": "mussarela",
+          "quantity": 20,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Tomate",
+          "ingredient_id": "tomate",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Cebola",
+          "ingredient_id": "cebola",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Alface",
+          "ingredient_id": "alface",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Molhos a gosto (mostarda, ketchup, maionese light)",
+          "ingredient_id": "molhos-prontos",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Grelhar o hambúrguer ou filé de frango",
+        "Tostar o pão",
+        "Montar com queijo, tomate, cebola, alface e molhos"
+      ]
+    },
+    {
+      "id": "bowl-frango-arroz-feijao",
+      "name": "Bowl de Frango com Arroz, Feijão e Abacate",
+      "category": "pratos-principais",
+      "prep_time_min": 15,
+      "difficulty": "facil",
+      "rating": 5,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Peito de frango em cubos (180g)",
+          "ingredient_id": "frango-peito",
+          "quantity": 180,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Arroz integral cozido (130g)",
+          "ingredient_id": "arroz-integral",
+          "quantity": 130,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Feijão carioca (100g — 1 concha)",
+          "ingredient_id": "feijao-carioca",
+          "quantity": 100,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Milho cozido",
+          "ingredient_id": "milho",
+          "quantity": 30,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Abacate em cubos (50g)",
+          "ingredient_id": "abacate",
+          "quantity": 50,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Azeite",
+          "ingredient_id": "azeite-de-oliva-extra-virgem",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Grelhar o frango temperado",
+        "Montar em tigela: arroz, feijão, frango, milho e abacate",
+        "Finalizar com fio de azeite"
+      ]
+    },
+    {
+      "id": "escondidinho-frango-mandioca",
+      "name": "Escondidinho de Frango com Mandioca",
+      "category": "pratos-principais",
+      "prep_time_min": 60,
+      "difficulty": "medio",
+      "rating": 5,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Frango desfiado (150g)",
+          "ingredient_id": "frango-peito",
+          "quantity": 150,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Mandioca cozida",
+          "ingredient_id": "mandioca",
+          "quantity": 200,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Leite",
+          "ingredient_id": "leite-integral",
+          "quantity": 100,
+          "unit": "ml"
+        },
+        {
+          "raw_text": "Manteiga",
+          "ingredient_id": "manteiga",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Cebola",
+          "ingredient_id": "cebola",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Alho",
+          "ingredient_id": "alho",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Queijo mussarela para gratinar",
+          "ingredient_id": "mussarela",
+          "quantity": 40,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Tomate ou molho de tomate",
+          "ingredient_id": "molho-de-tomate",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Refogar o frango desfiado com cebola, alho e molho de tomate",
+        "Bater a mandioca cozida com leite e manteiga até virar purê",
+        "Montar em refratária: camada de purê, frango, purê",
+        "Cobrir com queijo e gratinar no forno"
+      ]
+    },
+    {
+      "id": "salada-completa-frango",
+      "name": "Salada Completa com Frango",
+      "category": "pratos-principais",
+      "prep_time_min": 15,
+      "difficulty": "facil",
+      "rating": null,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Folhas (alface, rúcula)",
+          "ingredient_id": "alface",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Frango grelhado em tiras (150g)",
+          "ingredient_id": "frango-peito",
+          "quantity": 150,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Grão-de-bico cozido (80g)",
+          "ingredient_id": "grao-de-bico",
+          "quantity": 80,
+          "unit": "g"
+        },
+        {
+          "raw_text": "1 ovo cozido",
+          "ingredient_id": "ovo",
+          "quantity": 1,
+          "unit": "unit"
+        },
+        {
+          "raw_text": "Queijo branco",
+          "ingredient_id": "queijo-branco",
+          "quantity": 30,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Tomate",
+          "ingredient_id": "tomate",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Azeite extra virgem",
+          "ingredient_id": "azeite-de-oliva-extra-virgem",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Lavar as folhas e montar a base",
+        "Adicionar o frango, grão-de-bico, ovo, queijo e tomate",
+        "Finalizar com azeite, sal e limão"
+      ]
+    },
+    {
+      "id": "sanduiche-atum",
+      "name": "Sanduíche de Atum",
+      "category": "pratos-principais",
+      "prep_time_min": 5,
+      "difficulty": "facil",
+      "rating": null,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "2 fatias de pão integral",
+          "ingredient_id": "pao-integral",
+          "quantity": 60,
+          "unit": "g"
+        },
+        {
+          "raw_text": "1 lata de atum",
+          "ingredient_id": "atum-em-lata",
+          "quantity": 170,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Alface",
+          "ingredient_id": "alface",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Tomate",
+          "ingredient_id": "tomate",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Escorrer o atum",
+        "Montar o sanduíche com atum, alface e tomate"
+      ]
+    },
+    {
+      "id": "frango-molho-tomate",
+      "name": "Frango ao Molho de Tomate",
+      "category": "pratos-principais",
+      "prep_time_min": 30,
+      "difficulty": "facil",
+      "rating": null,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Peito de frango em cubos (180g)",
+          "ingredient_id": "frango-peito",
+          "quantity": 180,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Molho de tomate ou passata",
+          "ingredient_id": "passata-de-tomate",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Cebola",
+          "ingredient_id": "cebola",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Alho",
+          "ingredient_id": "alho",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Manjericão",
+          "ingredient_id": "cheiro-verde",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Refogar cebola e alho no azeite",
+        "Dourar o frango temperado",
+        "Adicionar o molho de tomate e deixar apurar",
+        "Finalizar com ervas frescas"
+      ]
+    },
+    {
+      "id": "legumes-salteados",
+      "name": "Legumes Salteados",
+      "category": "pratos-principais",
+      "prep_time_min": 15,
+      "difficulty": "facil",
+      "rating": null,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Abobrinha",
+          "ingredient_id": "abobrinha",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Cenoura",
+          "ingredient_id": "cenoura",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Brócolis",
+          "ingredient_id": "brocolis",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Couve-flor",
+          "ingredient_id": "couve-flor",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Azeite extra virgem",
+          "ingredient_id": "azeite-de-oliva-extra-virgem",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Alho",
+          "ingredient_id": "alho",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Sal",
+          "ingredient_id": "sal",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Cortar os legumes em fatias finas / pequenos floretes",
+        "Aquecer o azeite com alho em fogo alto",
+        "Saltear os legumes mantendo a crocância (3-5 min)",
+        "Temperar com sal e pimenta"
+      ]
+    },
+    {
+      "id": "sopa-frango-macarrao",
+      "name": "Sopa de Frango com Macarrão e Legumes",
+      "category": "pratos-principais",
+      "prep_time_min": 40,
+      "difficulty": "facil",
+      "rating": null,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Peito de frango (180g)",
+          "ingredient_id": "frango-peito",
+          "quantity": 180,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Macarrão integral (50g)",
+          "ingredient_id": "macarrao-integral",
+          "quantity": 50,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Cenoura",
+          "ingredient_id": "cenoura",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Cebola",
+          "ingredient_id": "cebola",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Alho",
+          "ingredient_id": "alho",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Cheiro verde",
+          "ingredient_id": "cheiro-verde",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Sal",
+          "ingredient_id": "sal",
+          "quantity": null,
+          "unit": "a_gosto"
+        },
+        {
+          "raw_text": "Água",
+          "ingredient_id": "agua",
+          "quantity": 800,
+          "unit": "ml"
+        }
+      ],
+      "steps": [
+        "Cozinhar o frango em água com cebola, alho e sal",
+        "Desfiar o frango e reservar o caldo",
+        "Voltar o frango ao caldo, adicionar os legumes em cubos",
+        "Cozinhar até os legumes ficarem macios",
+        "Adicionar o macarrão e cozinhar mais 8 min",
+        "Finalizar com cheiro verde"
+      ]
+    },
+    {
+      "id": "tapioca-queijo",
+      "name": "Tapioca com Queijo",
+      "category": "pratos-principais",
+      "prep_time_min": 5,
+      "difficulty": "facil",
+      "rating": 5,
+      "photos": [],
+      "ingredients": [
+        {
+          "raw_text": "Goma de tapioca",
+          "ingredient_id": "tapioca-goma",
+          "quantity": 50,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Queijo branco ou minas (40g)",
+          "ingredient_id": "queijo-branco",
+          "quantity": 40,
+          "unit": "g"
+        },
+        {
+          "raw_text": "Orégano a gosto",
+          "ingredient_id": "oregano",
+          "quantity": null,
+          "unit": "a_gosto"
+        }
+      ],
+      "steps": [
+        "Peneirar a goma em frigideira quente",
+        "Adicionar o queijo sobre metade do disco",
+        "Dobrar ao meio e servir"
+      ]
+    }
+  ],
+  "_metadata": {
+    "total_recipes": 92,
+    "fully_parsed": 13,
+    "needs_review": 79,
+    "skipped_non_food": [
+      {
+        "line": 2162,
+        "title": "DIFUSOR AMBIENTES COM VARETAS",
+        "reason": "Não é receita culinária (aromatizante)"
+      }
+    ],
+    "duplicates_to_consolidate": [
+      [
+        "tiramissu",
+        "tiramisu"
+      ],
+      [
+        "overnight",
+        "overnight-oat"
+      ]
+    ],
+    "remaining_work": "79 receitas têm metadados básicos (nome, categoria, linha-fonte) mas ingredientes/passos ainda precisam ser extraídos do markdown original. Sugerido fazer em lotes de 10–15 numa sessão dedicada com Claude assistindo."
+  }
+}
