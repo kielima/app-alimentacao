@@ -4,11 +4,14 @@ import HeaderSlot from '../components/HeaderSlot';
 import ScanButton from '../components/ScanButton';
 import FilterButton from '../components/FilterButton';
 import BarcodeScannerModal from '../components/BarcodeScannerModal';
+import CardActionSheet from '../components/CardActionSheet';
+import TrashIcon from '../components/TrashIcon';
 import { usePantry, type PantryFilter } from '../hooks/usePantry';
+import { useLongPress } from '../hooks/useLongPress';
 import { expiryStatus, expiryLabel, statusColor, statusIcon } from '../utils/expiry';
 import { unitLabel } from '../utils/units';
 import { upsertShoppingItem } from '../data/shoppingList';
-import { deletePantryItem } from '../data/pantry';
+import { upsertPantryItem, deletePantryItem } from '../data/pantry';
 import { useAllIngredients } from '../data/ingredients';
 import { handleScanForPantry } from '../lib/scanActions';
 import type { PantryItem } from '../types/pantry';
@@ -55,6 +58,27 @@ export default function Dispensa() {
       added_at: new Date().toISOString(),
     });
     deletePantryItem(item.id);
+  };
+
+  const [actionItemId, setActionItemId] = useState<string | null>(null);
+  const actionItem = actionItemId
+    ? list.find((i) => i.id === actionItemId) ?? null
+    : null;
+
+  const duplicatePantryItem = (item: PantryItem) => {
+    const newId = `pantry-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    upsertPantryItem({
+      ...item,
+      id: newId,
+      added_at: new Date().toISOString(),
+    });
+    setActionItemId(null);
+  };
+
+  const removePantryItem = (item: PantryItem) => {
+    if (!confirm(`Apagar "${item.raw_text}" da dispensa? Esta ação não pode ser desfeita.`)) return;
+    deletePantryItem(item.id);
+    setActionItemId(null);
   };
 
   return (
@@ -155,50 +179,95 @@ export default function Dispensa() {
         </p>
       ) : (
         <ul className="space-y-2">
-          {list.map((item) => {
-            const status = expiryStatus(item.expiry_date);
-            return (
-              <li key={item.id}>
-                <div
-                  role="button"
-                  onClick={() => navigate(`/dispensa/${item.id}/editar`)}
-                  className="cursor-pointer rounded-xl border border-zinc-200 bg-white p-3 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800/60"
-                >
-                  <div className="flex items-start gap-2">
-                    <span className="text-xl" aria-hidden>
-                      {statusIcon(status)}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium">{item.raw_text}</span>
-                      <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-                        {item.quantity && item.unit
-                          ? `${item.quantity} ${unitLabel(item.unit)}`
-                          : item.quantity ?? ''}
-                        {item.store && ` · ${item.store}`}
-                      </p>
-                      <p className={`mt-0.5 text-xs font-medium ${statusColor(status)}`}>
-                        {expiryLabel(item.expiry_date)}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        sendToList(item);
-                      }}
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-sm leading-none text-zinc-500 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-brand-900/30 dark:hover:text-brand-400"
-                      aria-label="Adicionar à lista de compras"
-                      title="Adicionar à lista de compras"
-                    >
-                      🛒
-                    </button>
-                  </div>
-                </div>
-              </li>
-            );
-          })}
+          {list.map((item) => (
+            <PantryCard
+              key={item.id}
+              item={item}
+              onOpen={() => navigate(`/dispensa/${item.id}/editar`)}
+              onSendToList={() => sendToList(item)}
+              onLongPress={() => setActionItemId(item.id)}
+            />
+          ))}
         </ul>
       )}
+
+      {actionItem && (
+        <CardActionSheet
+          category="Item da dispensa"
+          title={actionItem.raw_text}
+          onClose={() => setActionItemId(null)}
+          actions={[
+            {
+              label: 'Duplicar item',
+              icon: <span className="text-lg">📋</span>,
+              onClick: () => duplicatePantryItem(actionItem),
+            },
+            {
+              label: 'Apagar item',
+              icon: <TrashIcon className="h-4 w-4" />,
+              onClick: () => removePantryItem(actionItem),
+              destructive: true,
+            },
+          ]}
+        />
+      )}
     </div>
+  );
+}
+
+interface PantryCardProps {
+  item: PantryItem;
+  onOpen: () => void;
+  onSendToList: () => void;
+  onLongPress: () => void;
+}
+
+function PantryCard({ item, onOpen, onSendToList, onLongPress }: PantryCardProps) {
+  const longPress = useLongPress(onLongPress, { delay: 450 });
+  const status = expiryStatus(item.expiry_date);
+  return (
+    <li>
+      <div
+        role="button"
+        tabIndex={0}
+        {...longPress}
+        onClick={(e) => {
+          longPress.onClick(e);
+          if (!e.defaultPrevented) onOpen();
+        }}
+        className="cursor-pointer select-none rounded-xl border border-zinc-200 bg-white p-3 hover:bg-zinc-50 [-webkit-touch-callout:none] dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800/60"
+      >
+        <div className="flex items-start gap-2">
+          <span className="text-xl" aria-hidden>
+            {statusIcon(status)}
+          </span>
+          <div className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-medium">{item.raw_text}</span>
+            <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+              {item.quantity && item.unit
+                ? `${item.quantity} ${unitLabel(item.unit)}`
+                : item.quantity ?? ''}
+              {item.store && ` · ${item.store}`}
+            </p>
+            <p className={`mt-0.5 text-xs font-medium ${statusColor(status)}`}>
+              {expiryLabel(item.expiry_date)}
+            </p>
+          </div>
+          <button
+            type="button"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSendToList();
+            }}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-sm leading-none text-zinc-500 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-brand-900/30 dark:hover:text-brand-400"
+            aria-label="Adicionar à lista de compras"
+            title="Adicionar à lista de compras"
+          >
+            🛒
+          </button>
+        </div>
+      </div>
+    </li>
   );
 }

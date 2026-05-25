@@ -1,10 +1,14 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
-import { useMarkets } from '../data/markets';
+import CardActionSheet from '../components/CardActionSheet';
+import TrashIcon from '../components/TrashIcon';
+import { useMarkets, upsertMarket, deleteMarket } from '../data/markets';
 import { useShoppingItems } from '../data/shoppingList';
 import { useAllIngredients } from '../data/ingredients';
+import { useLongPress } from '../hooks/useLongPress';
 import { createUIStore } from '../utils/persistentUIState';
+import type { Market } from '../types/market';
 
 const ui = createUIStore({ query: '' });
 
@@ -40,6 +44,28 @@ export default function Mercados() {
       (m) => m.name.toLowerCase().includes(q) || m.address?.toLowerCase().includes(q),
     );
   }, [markets, query]);
+
+  const [actionMarketId, setActionMarketId] = useState<string | null>(null);
+  const actionMarket = actionMarketId
+    ? markets.find((m) => m.id === actionMarketId) ?? null
+    : null;
+
+  const duplicateMarket = (market: Market) => {
+    const newId = `market-${Date.now()}`;
+    upsertMarket({
+      ...market,
+      id: newId,
+      name: `${market.name} (cópia)`,
+      added_at: new Date().toISOString(),
+    });
+    setActionMarketId(null);
+  };
+
+  const removeMarket = (market: Market) => {
+    if (!confirm(`Apagar o mercado "${market.name}"? Esta ação não pode ser desfeita.`)) return;
+    deleteMarket(market.id);
+    setActionMarketId(null);
+  };
 
   return (
     <div className="mx-auto max-w-md px-4 pt-2 pb-28">
@@ -90,54 +116,92 @@ export default function Mercados() {
         </div>
       ) : (
         <ul className="space-y-2">
-          {filtered.map((market) => {
-            const ingCount = market.ingredient_ids.length;
-            const shopCount = shoppingByStore.get(market.name) ?? 0;
-            const ingNames = market.ingredient_ids
-              .slice(0, 3)
-              .map((id) => ingNameMap.get(id))
-              .filter(Boolean);
-            return (
-              <li key={market.id}>
-                <Link
-                  to={`/mercados/${market.id}/editar`}
-                  className="flex items-start justify-between rounded-xl border border-zinc-200 bg-white px-4 py-3 transition-colors hover:border-brand-500 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-400"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{market.name}</p>
-                    {market.address && (
-                      <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
-                        {market.address}
-                      </p>
-                    )}
-                    {ingNames.length > 0 && (
-                      <p className="mt-0.5 truncate text-[11px] text-zinc-400 dark:text-zinc-500">
-                        {ingNames.join(' · ')}
-                        {ingCount > 3 ? ` +${ingCount - 3}` : ''}
-                      </p>
-                    )}
-                    <div className="mt-1 flex flex-wrap gap-2">
-                      {ingCount > 0 && (
-                        <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
-                          {ingCount} ingrediente{ingCount !== 1 ? 's' : ''}
-                        </span>
-                      )}
-                      {shopCount > 0 && (
-                        <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-medium text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
-                          🛒 {shopCount} na lista
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <span className="ml-2 mt-0.5 shrink-0 text-zinc-400" aria-hidden>
-                    ›
-                  </span>
-                </Link>
-              </li>
-            );
-          })}
+          {filtered.map((market) => (
+            <MarketCard
+              key={market.id}
+              market={market}
+              shopCount={shoppingByStore.get(market.name) ?? 0}
+              ingNames={market.ingredient_ids
+                .slice(0, 3)
+                .map((id) => ingNameMap.get(id))
+                .filter((n): n is string => !!n)}
+              onLongPress={() => setActionMarketId(market.id)}
+            />
+          ))}
         </ul>
       )}
+
+      {actionMarket && (
+        <CardActionSheet
+          category="Mercado"
+          title={actionMarket.name}
+          onClose={() => setActionMarketId(null)}
+          actions={[
+            {
+              label: 'Duplicar mercado',
+              icon: <span className="text-lg">📋</span>,
+              onClick: () => duplicateMarket(actionMarket),
+            },
+            {
+              label: 'Apagar mercado',
+              icon: <TrashIcon className="h-4 w-4" />,
+              onClick: () => removeMarket(actionMarket),
+              destructive: true,
+            },
+          ]}
+        />
+      )}
     </div>
+  );
+}
+
+interface MarketCardProps {
+  market: Market;
+  shopCount: number;
+  ingNames: string[];
+  onLongPress: () => void;
+}
+
+function MarketCard({ market, shopCount, ingNames, onLongPress }: MarketCardProps) {
+  const longPress = useLongPress(onLongPress, { delay: 450 });
+  const ingCount = market.ingredient_ids.length;
+  return (
+    <li>
+      <Link
+        to={`/mercados/${market.id}/editar`}
+        {...longPress}
+        className="flex select-none items-start justify-between rounded-xl border border-zinc-200 bg-white px-4 py-3 transition-colors hover:border-brand-500 [-webkit-touch-callout:none] dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-400"
+      >
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-medium">{market.name}</p>
+          {market.address && (
+            <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
+              {market.address}
+            </p>
+          )}
+          {ingNames.length > 0 && (
+            <p className="mt-0.5 truncate text-[11px] text-zinc-400 dark:text-zinc-500">
+              {ingNames.join(' · ')}
+              {ingCount > 3 ? ` +${ingCount - 3}` : ''}
+            </p>
+          )}
+          <div className="mt-1 flex flex-wrap gap-2">
+            {ingCount > 0 && (
+              <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+                {ingCount} ingrediente{ingCount !== 1 ? 's' : ''}
+              </span>
+            )}
+            {shopCount > 0 && (
+              <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-medium text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
+                🛒 {shopCount} na lista
+              </span>
+            )}
+          </div>
+        </div>
+        <span className="ml-2 mt-0.5 shrink-0 text-zinc-400" aria-hidden>
+          ›
+        </span>
+      </Link>
+    </li>
   );
 }
