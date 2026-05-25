@@ -4,11 +4,14 @@ import HeaderSlot from '../components/HeaderSlot';
 import ScanButton from '../components/ScanButton';
 import FilterButton from '../components/FilterButton';
 import BarcodeScannerModal from '../components/BarcodeScannerModal';
+import CardActionSheet from '../components/CardActionSheet';
+import TrashIcon from '../components/TrashIcon';
 import {
   useIngredients,
   ingredientNeedsReview,
   type IngredientFilter,
 } from '../hooks/useIngredients';
+import { useLongPress } from '../hooks/useLongPress';
 import {
   upsertShoppingItem,
   deleteShoppingItem,
@@ -19,9 +22,14 @@ import {
   deletePantryItem,
   usePantryItems,
 } from '../data/pantry';
-import { useAllIngredients } from '../data/ingredients';
+import { useAllIngredients, allIngredientIds } from '../data/ingredients';
+import {
+  upsertUserIngredient,
+  deleteUserIngredient,
+} from '../data/userIngredients';
 import { handleScanForIngredientsList } from '../lib/scanActions';
 import type { Ingredient } from '../types/ingredient';
+import { uniqueSlug } from '../utils/slug';
 
 const filters: { value: IngredientFilter; label: string }[] = [
   { value: 'todos', label: 'Todos' },
@@ -62,6 +70,32 @@ export default function Ingredientes() {
 
   const hasActiveFilters = filter !== 'todos';
   const isFiltering = hasActiveFilters || !!query.trim();
+
+  const [actionIngredientId, setActionIngredientId] = useState<string | null>(null);
+  const actionIngredient = actionIngredientId
+    ? list.find((i) => i.id === actionIngredientId) ?? null
+    : null;
+
+  const duplicateIngredient = (ingredient: Ingredient) => {
+    const baseName = ingredient.brand
+      ? `${ingredient.brand} — ${ingredient.name} (cópia)`
+      : `${ingredient.name} (cópia)`;
+    const newId = uniqueSlug(baseName, allIngredientIds());
+    upsertUserIngredient({
+      ...ingredient,
+      id: newId,
+      name: `${ingredient.name} (cópia)`,
+    });
+    setActionIngredientId(null);
+  };
+
+  const deleteIngredient = (ingredient: Ingredient) => {
+    if (!confirm(`Apagar o ingrediente "${ingredient.name}"? Esta ação não pode ser desfeita.`)) {
+      return;
+    }
+    deleteUserIngredient(ingredient.id);
+    setActionIngredientId(null);
+  };
 
   const cartByIngredient = useMemo(() => {
     const map = new Map<string, string[]>();
@@ -204,79 +238,132 @@ export default function Ingredientes() {
         </p>
       ) : (
         <ul className="space-y-2">
-          {list.map((ing) => {
-            const addedToCart = (cartByIngredient.get(ing.id)?.length ?? 0) > 0;
-            const addedToPantry = (pantryByIngredient.get(ing.id)?.length ?? 0) > 0;
-            return (
-              <li key={ing.id}>
-                <Link
-                  to={`/ingredientes/${ing.id}`}
-                  className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-3 transition-colors hover:border-brand-500 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-400"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{ing.name}</p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                      {ing.brand ? `${ing.brand} · ` : ''}
-                      {ing.nutrition_per_100
-                        ? `${ing.nutrition_per_100.calories} kcal/100${ing.default_unit === 'ml' ? 'ml' : 'g'}`
-                        : 'sem dados nutricionais'}
-                    </p>
-                  </div>
-                  {ingredientNeedsReview(ing) && (
-                    <span
-                      className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
-                      title={
-                        ing.category === 'hortifruti' && !ing.ceagesp_slug
-                          ? 'Hortifruti sem link do CEAGESP'
-                          : 'Valores nutricionais ainda precisam validação'
-                      }
-                    >
-                      revisar
-                    </span>
-                  )}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleTogglePantry(ing);
-                    }}
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm leading-none transition-colors ${
-                      addedToPantry
-                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-                        : 'bg-zinc-100 text-zinc-500 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-brand-900/30 dark:hover:text-brand-400'
-                    }`}
-                    aria-label={addedToPantry ? 'Remover da dispensa' : 'Adicionar à dispensa'}
-                    title={addedToPantry ? 'Remover da dispensa' : 'Adicionar à dispensa'}
-                  >
-                    {addedToPantry ? '✓' : '🥫'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleToggleCart(ing);
-                    }}
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm leading-none transition-colors ${
-                      addedToCart
-                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-                        : 'bg-zinc-100 text-zinc-500 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-brand-900/30 dark:hover:text-brand-400'
-                    }`}
-                    aria-label={addedToCart ? 'Remover da lista de compras' : 'Adicionar à lista de compras'}
-                    title={addedToCart ? 'Remover da lista de compras' : 'Adicionar à lista de compras'}
-                  >
-                    {addedToCart ? '✓' : '🛒'}
-                  </button>
-                  <span className="text-zinc-400" aria-hidden>
-                    ›
-                  </span>
-                </Link>
-              </li>
-            );
-          })}
+          {list.map((ing) => (
+            <IngredientCard
+              key={ing.id}
+              ingredient={ing}
+              addedToCart={(cartByIngredient.get(ing.id)?.length ?? 0) > 0}
+              addedToPantry={(pantryByIngredient.get(ing.id)?.length ?? 0) > 0}
+              onToggleCart={() => handleToggleCart(ing)}
+              onTogglePantry={() => handleTogglePantry(ing)}
+              onLongPress={() => setActionIngredientId(ing.id)}
+            />
+          ))}
         </ul>
       )}
+
+      {actionIngredient && (
+        <CardActionSheet
+          category="Ingrediente"
+          title={actionIngredient.brand ? `${actionIngredient.brand} — ${actionIngredient.name}` : actionIngredient.name}
+          onClose={() => setActionIngredientId(null)}
+          actions={[
+            {
+              label: 'Duplicar ingrediente',
+              icon: <span className="text-lg">📋</span>,
+              onClick: () => duplicateIngredient(actionIngredient),
+            },
+            {
+              label: 'Apagar ingrediente',
+              icon: <TrashIcon className="h-4 w-4" />,
+              onClick: () => deleteIngredient(actionIngredient),
+              destructive: true,
+            },
+          ]}
+        />
+      )}
     </div>
+  );
+}
+
+interface IngredientCardProps {
+  ingredient: Ingredient;
+  addedToCart: boolean;
+  addedToPantry: boolean;
+  onToggleCart: () => void;
+  onTogglePantry: () => void;
+  onLongPress: () => void;
+}
+
+function IngredientCard({
+  ingredient: ing,
+  addedToCart,
+  addedToPantry,
+  onToggleCart,
+  onTogglePantry,
+  onLongPress,
+}: IngredientCardProps) {
+  const longPress = useLongPress(onLongPress, { delay: 450 });
+  // Impede que tocar nos botões internos (carrinho/dispensa) inicie o long-press do card.
+  const stopGesture = { onPointerDown: (e: React.PointerEvent) => e.stopPropagation() };
+  return (
+    <li>
+      <Link
+        to={`/ingredientes/${ing.id}`}
+        {...longPress}
+        className="flex select-none items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-3 transition-colors hover:border-brand-500 [-webkit-touch-callout:none] dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-400"
+      >
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium">{ing.name}</p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            {ing.brand ? `${ing.brand} · ` : ''}
+            {ing.nutrition_per_100
+              ? `${ing.nutrition_per_100.calories} kcal/100${ing.default_unit === 'ml' ? 'ml' : 'g'}`
+              : 'sem dados nutricionais'}
+          </p>
+        </div>
+        {ingredientNeedsReview(ing) && (
+          <span
+            className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+            title={
+              ing.category === 'hortifruti' && !ing.ceagesp_slug
+                ? 'Hortifruti sem link do CEAGESP'
+                : 'Valores nutricionais ainda precisam validação'
+            }
+          >
+            revisar
+          </span>
+        )}
+        <button
+          type="button"
+          {...stopGesture}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onTogglePantry();
+          }}
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm leading-none transition-colors ${
+            addedToPantry
+              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+              : 'bg-zinc-100 text-zinc-500 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-brand-900/30 dark:hover:text-brand-400'
+          }`}
+          aria-label={addedToPantry ? 'Remover da dispensa' : 'Adicionar à dispensa'}
+          title={addedToPantry ? 'Remover da dispensa' : 'Adicionar à dispensa'}
+        >
+          {addedToPantry ? '✓' : '🥫'}
+        </button>
+        <button
+          type="button"
+          {...stopGesture}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onToggleCart();
+          }}
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm leading-none transition-colors ${
+            addedToCart
+              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+              : 'bg-zinc-100 text-zinc-500 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-brand-900/30 dark:hover:text-brand-400'
+          }`}
+          aria-label={addedToCart ? 'Remover da lista de compras' : 'Adicionar à lista de compras'}
+          title={addedToCart ? 'Remover da lista de compras' : 'Adicionar à lista de compras'}
+        >
+          {addedToCart ? '✓' : '🛒'}
+        </button>
+        <span className="text-zinc-400" aria-hidden>
+          ›
+        </span>
+      </Link>
+    </li>
   );
 }

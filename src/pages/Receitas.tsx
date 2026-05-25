@@ -2,14 +2,19 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import FilterButton from '../components/FilterButton';
-import { recipeCategories, useHiddenSeedRecipes } from '../data/recipes';
+import CardActionSheet from '../components/CardActionSheet';
+import TrashIcon from '../components/TrashIcon';
+import { recipeCategories, useHiddenSeedRecipes, allRecipeIds } from '../data/recipes';
 import { unhideRecipe } from '../data/hiddenRecipes';
+import { upsertUserRecipe, deleteUserRecipe } from '../data/userRecipes';
 import {
   useRecipes,
   type CompletenessFilter,
   type RatingFilter,
 } from '../hooks/useRecipes';
-import type { RecipeCategoryId } from '../types/recipe';
+import { useLongPress } from '../hooks/useLongPress';
+import type { Recipe, RecipeCategoryId } from '../types/recipe';
+import { uniqueSlug } from '../utils/slug';
 
 const categoryChips: { value: RecipeCategoryId | 'todas'; label: string; icon: string }[] = [
   { value: 'todas', label: 'Todas', icon: '✨' },
@@ -44,6 +49,25 @@ export default function Receitas() {
     setShowFilters,
     total,
   } = useRecipes();
+
+  const [actionRecipeId, setActionRecipeId] = useState<string | null>(null);
+  const actionRecipe = actionRecipeId
+    ? list.find((r) => r.id === actionRecipeId) ?? null
+    : null;
+
+  const duplicateRecipe = (recipe: Recipe) => {
+    const baseName = `${recipe.name} (cópia)`;
+    const newId = uniqueSlug(baseName, allRecipeIds());
+    const cloned: Recipe = { ...recipe, id: newId, name: baseName };
+    upsertUserRecipe(cloned);
+    setActionRecipeId(null);
+  };
+
+  const deleteRecipe = (recipe: Recipe) => {
+    if (!confirm(`Apagar a receita "${recipe.name}"? Esta ação não pode ser desfeita.`)) return;
+    deleteUserRecipe(recipe.id);
+    setActionRecipeId(null);
+  };
 
   const hasActiveFilters = category !== 'todas' || completeness !== 'todas' || minRating !== 0;
   const isFiltering = hasActiveFilters || !!query;
@@ -107,44 +131,35 @@ export default function Receitas() {
         </p>
       ) : (
         <ul className="space-y-2">
-          {list.map((r) => {
-            const cat = recipeCategories.find((c) => c.id === r.category);
-            return (
-              <li key={r.id}>
-                <Link
-                  to={`/receitas/${r.id}`}
-                  className="flex items-start gap-3 rounded-xl border border-zinc-200 bg-white p-3 transition-colors hover:border-brand-500 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-400"
-                >
-                  <div
-                    className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-3xl dark:bg-zinc-800"
-                    aria-hidden
-                  >
-                    {cat?.icon ?? '🍽️'}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium leading-tight">{r.name}</p>
-                    <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-                      {cat?.name}
-                      {r.prep_time_min ? ` · ⏱ ${r.prep_time_min}min` : ''}
-                    </p>
-                    <div className="mt-1 flex items-center gap-1">
-                      {r.rating && (
-                        <span className="text-xs text-amber-500" aria-label={`${r.rating} estrelas`}>
-                          {'⭐'.repeat(r.rating)}
-                        </span>
-                      )}
-                      {r.needs_review && (
-                        <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
-                          revisar
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              </li>
-            );
-          })}
+          {list.map((r) => (
+            <RecipeCard
+              key={r.id}
+              recipe={r}
+              onLongPress={() => setActionRecipeId(r.id)}
+            />
+          ))}
         </ul>
+      )}
+
+      {actionRecipe && (
+        <CardActionSheet
+          category="Receita"
+          title={actionRecipe.name}
+          onClose={() => setActionRecipeId(null)}
+          actions={[
+            {
+              label: 'Duplicar receita',
+              icon: <span className="text-lg">📋</span>,
+              onClick: () => duplicateRecipe(actionRecipe),
+            },
+            {
+              label: 'Apagar receita',
+              icon: <TrashIcon className="h-4 w-4" />,
+              onClick: () => deleteRecipe(actionRecipe),
+              destructive: true,
+            },
+          ]}
+        />
       )}
 
       <HiddenRecipesPanel />
@@ -168,6 +183,46 @@ export default function Receitas() {
         </svg>
       </Link>
     </div>
+  );
+}
+
+function RecipeCard({ recipe, onLongPress }: { recipe: Recipe; onLongPress: () => void }) {
+  const longPress = useLongPress(onLongPress, { delay: 450 });
+  const cat = recipeCategories.find((c) => c.id === recipe.category);
+  return (
+    <li>
+      <Link
+        to={`/receitas/${recipe.id}`}
+        {...longPress}
+        className="flex select-none items-start gap-3 rounded-xl border border-zinc-200 bg-white p-3 transition-colors hover:border-brand-500 [-webkit-touch-callout:none] dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-400"
+      >
+        <div
+          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-3xl dark:bg-zinc-800"
+          aria-hidden
+        >
+          {cat?.icon ?? '🍽️'}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium leading-tight">{recipe.name}</p>
+          <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+            {cat?.name}
+            {recipe.prep_time_min ? ` · ⏱ ${recipe.prep_time_min}min` : ''}
+          </p>
+          <div className="mt-1 flex items-center gap-1">
+            {recipe.rating && (
+              <span className="text-xs text-amber-500" aria-label={`${recipe.rating} estrelas`}>
+                {'⭐'.repeat(recipe.rating)}
+              </span>
+            )}
+            {recipe.needs_review && (
+              <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                revisar
+              </span>
+            )}
+          </div>
+        </div>
+      </Link>
+    </li>
   );
 }
 
