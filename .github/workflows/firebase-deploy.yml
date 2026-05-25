@@ -4,10 +4,19 @@ on:
   push:
     branches:
       - main
+  workflow_run:
+    workflows: ["Auto-merge"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # Em push: sempre roda. Em workflow_run (Auto-merge): só se concluiu com sucesso.
+    if: >
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
 
     steps:
       - uses: actions/checkout@v4
