@@ -29,6 +29,12 @@ import {
   getEffectiveProteinPerKg,
 } from '../utils/profileTargets';
 import {
+  getSeedCounts,
+  migrateSeedsToUser,
+  type MigrationProgress,
+  type MigrationResult,
+} from '../utils/migrateSeeds';
+import {
   ACTIVITY_OPTIONS,
   EMPTY_USER_PROFILE,
   GOAL_OPTIONS,
@@ -335,8 +341,82 @@ export default function Perfil() {
 
       <AdminSection />
 
+      <MigrationSection />
+
       <BackupSection />
     </form>
+  );
+}
+
+function MigrationSection() {
+  const { state } = useAuth();
+  const uid = state.phase === 'approved' ? state.user.uid : null;
+
+  const [counts] = useState(() => getSeedCounts());
+  const [progress, setProgress] = useState<MigrationProgress | null>(null);
+  const [result, setResult] = useState<MigrationResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  if (!uid) return null;
+
+  const total = counts.ingredients + counts.recipes + counts.meals;
+  if (total === 0) return null;
+
+  async function handleMigrate() {
+    if (!uid) return;
+    const confirmed = confirm(
+      `Importar catálogo base (${counts.ingredients} ingredientes, ${counts.recipes} receitas, ${counts.meals} refeições) para a sua conta?\n\nIsto sobrescreve qualquer item existente com o mesmo ID. Continuar?`,
+    );
+    if (!confirmed) return;
+    setBusy(true);
+    setError(null);
+    setResult(null);
+    setProgress(null);
+    try {
+      const r = await migrateSeedsToUser(uid, (p) => setProgress(p));
+      setResult(r);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao importar.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Section title="Catálogo inicial">
+      <div className="space-y-3 rounded-xl bg-zinc-100 px-4 py-3 dark:bg-zinc-800">
+        <p className="text-sm text-zinc-700 dark:text-zinc-200">
+          Importa o catálogo base do repositório ({counts.ingredients} ingredientes,{' '}
+          {counts.recipes} receitas, {counts.meals} refeições) para a sua conta no Firestore.
+          Faça isto uma vez. Idempotente: re-correr sobrescreve com a versão do seed.
+        </p>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={handleMigrate}
+          className="rounded-full bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60"
+        >
+          {busy ? 'Importando…' : 'Importar catálogo base'}
+        </button>
+        {progress && (
+          <p className="text-xs text-zinc-600 dark:text-zinc-300">
+            {progress.collection}: {progress.written}/{progress.total}
+          </p>
+        )}
+        {result && (
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800 dark:border-emerald-900/40 dark:bg-emerald-900/20 dark:text-emerald-300">
+            Importado: {result.ingredients} ingredientes, {result.recipes} receitas,{' '}
+            {result.meals} refeições.
+          </div>
+        )}
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
+            {error}
+          </div>
+        )}
+      </div>
+    </Section>
   );
 }
 

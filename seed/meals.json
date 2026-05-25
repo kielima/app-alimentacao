@@ -1,0 +1,571 @@
+{
+  "meals": [
+    {
+      "id": "cafe-base-3-ovos-mexidos",
+      "name": "Base — 3 ovos mexidos",
+      "meal_type": "cafe-manha",
+      "items": [],
+      "notes": "3 ovos mexidos + 2 fatias pão integral + 1 banana + café sem açúcar\n\n~30g prot, ~560 kcal"
+    },
+    {
+      "id": "cafe-opcao-1-omelete-de-3-ovos-com-espinafre-e-queijo-cottage-50g",
+      "name": "Opção 1 — Omelete de 3 ovos com espinafre e queijo cottage (50g)",
+      "meal_type": "cafe-manha",
+      "items": [],
+      "notes": "Omelete de 3 ovos com espinafre e queijo cottage (50g) + 1 fatia pão integral + 1 maçã\n\n~34g prot · ~530 kcal — Rico em ferro e cálcio"
+    },
+    {
+      "id": "cafe-opcao-2-panqueca-proteica-2-ovos",
+      "name": "Opção 2 — Panqueca proteica: 2 ovos",
+      "meal_type": "cafe-manha",
+      "items": [],
+      "notes": "Panqueca proteica: 2 ovos + 1 banana + 30g aveia + 1 scoop whey\n\n~38g prot · ~520 kcal — Bater tudo no liquidificador"
+    },
+    {
+      "id": "cafe-opcao-3-tapioca-2-medias",
+      "name": "Opção 3 — Tapioca (2 médias)",
+      "meal_type": "cafe-manha",
+      "items": [],
+      "notes": "Tapioca (2 médias) + frango desfiado (80g) + queijo minas (30g) + suco de laranja natural\n\n~36g prot · ~560 kcal — Sem glúten; favorito"
+    },
+    {
+      "id": "cafe-opcao-4-iogurte-grego-200g",
+      "name": "Opção 4 — Iogurte grego (200g)",
+      "meal_type": "cafe-manha",
+      "items": [],
+      "notes": "Iogurte grego (200g) + granola (40g) + banana + 2 ovos cozidos\n\n~33g prot · ~570 kcal — Sem cozimento; rápido"
+    },
+    {
+      "id": "cafe-opcao-5-crepioca",
+      "name": "Opção 5 — Crepioca",
+      "meal_type": "cafe-manha",
+      "items": [],
+      "notes": "Crepioca (2 ovos + 2 col. tapioca) + requeijão light + presunto de peru (40g) + fruta\n\n~32g prot · ~510 kcal — Bom para levar"
+    },
+    {
+      "id": "cafe-opcao-6-mingau-de-aveia-50g-com-leite",
+      "name": "Opção 6 — Mingau de aveia (50g) com leite",
+      "meal_type": "cafe-manha",
+      "items": [],
+      "notes": "Mingau de aveia (50g) com leite + 1 scoop whey + banana + 10g castanha\n\n~37g prot · ~550 kcal — Quente; reconfortante"
+    },
+    {
+      "id": "cafe-opcao-7-wrap-integral",
+      "name": "Opção 7 — Wrap integral",
+      "meal_type": "cafe-manha",
+      "items": [],
+      "notes": "Wrap integral + 2 ovos mexidos + queijo cottage (60g) + tomate + café preto\n\n~34g prot · ~500 kcal — Prático"
+    },
+    {
+      "id": "cafe-opcao-8-pao-integral-2-fatias",
+      "name": "Opção 8 — Pão integral (2 fatias)",
+      "meal_type": "cafe-manha",
+      "items": [],
+      "notes": "Pão integral (2 fatias) + pasta de atum (80g) + 1 ovo cozido + suco verde\n\n~35g prot · ~540 kcal — Ômega-3 do atum"
+    },
+    {
+      "id": "cafe-opcao-9-acai-150ml-sem-xarope",
+      "name": "Opção 9 — Açaí (150ml, sem xarope)",
+      "meal_type": "cafe-manha",
+      "items": [],
+      "notes": "Açaí (150ml, sem xarope) + granola + banana + 1 scoop whey batido junto\n\n~30g prot · ~590 kcal — Energético; ideal antes de natação"
+    },
+    {
+      "id": "cafe-opcao-10-torrada-integral-3",
+      "name": "Opção 10 — Torrada integral (3)",
+      "meal_type": "cafe-manha",
+      "items": [],
+      "notes": "Torrada integral (3) + ricota (80g) + mel + 2 ovos cozidos + café com leite\n\n~33g prot · ~550 kcal — Clássico; fácil preparo"
+    },
+    {
+      "id": "cafe-opcao-11-overnight-oats-aveia-50g",
+      "name": "Opção 11 — Overnight oats: aveia (50g)",
+      "meal_type": "cafe-manha",
+      "items": [],
+      "notes": "Overnight oats: aveia (50g) + iogurte grego (150g) + banana + mel (preparo na noite anterior)\n\n~25g prot · ~490 kcal — Pré-treino da manhã; zero preparo"
+    },
+    {
+      "id": "lanche-base-iogurte-grego-170g",
+      "name": "Base — Iogurte grego (170g)",
+      "meal_type": "lanche-manha",
+      "items": [],
+      "notes": "Iogurte grego (170g) + granola (30g) + mix de castanhas (15g)\n\n~22g prot, ~390 kcal"
+    },
+    {
+      "id": "lanche-opcao-1-vitamina-200ml-leite",
+      "name": "Opção 1 — Vitamina: 200ml leite",
+      "meal_type": "lanche-manha",
+      "items": [],
+      "notes": "Vitamina: 200ml leite + 1 banana + 1 col. pasta de amendoim + ½ scoop whey\n\n~22g prot · ~380 kcal — Rápido; batido no copo"
+    },
+    {
+      "id": "lanche-opcao-2-mix-de-castanhas-30g",
+      "name": "Opção 2 — Mix de castanhas (30g)",
+      "meal_type": "lanche-manha",
+      "items": [],
+      "notes": "Mix de castanhas (30g) + 1 banana + 1 fruta (pêssego ou uvas)\n\n~7g prot · ~310 kcal — Zero preparo; leve"
+    },
+    {
+      "id": "lanche-opcao-3-barra-proteica-30g-prot",
+      "name": "Opção 3 — Barra proteica (30g+ prot)",
+      "meal_type": "lanche-manha",
+      "items": [],
+      "notes": "Barra proteica (30g+ prot) + 1 banana\n\n~32g prot · ~400 kcal — Emergência; verificar rótulo"
+    },
+    {
+      "id": "lanche-opcao-4-cottage-100g",
+      "name": "Opção 4 — Cottage (100g)",
+      "meal_type": "lanche-manha",
+      "items": [],
+      "notes": "Cottage (100g) + mel (1 col.) + nozes (15g) + 5 morangos\n\n~20g prot · ~350 kcal — Fresco; alta saciedade"
+    },
+    {
+      "id": "lanche-opcao-5-ovo-cozido-2",
+      "name": "Opção 5 — Ovo cozido (2)",
+      "meal_type": "lanche-manha",
+      "items": [],
+      "notes": "Ovo cozido (2) + 1 fatia pão integral + manteiga de amendoim (15g)\n\n~20g prot · ~380 kcal — Salgado; boa alternativa"
+    },
+    {
+      "id": "lanche-opcao-6-smoothie-iogurte-natural-150g",
+      "name": "Opção 6 — Smoothie: iogurte natural (150g)",
+      "meal_type": "lanche-manha",
+      "items": [],
+      "notes": "Smoothie: iogurte natural (150g) + banana congelada + cacau em pó + aveia (20g)\n\n~18g prot · ~360 kcal — Cremoso; antioxidante"
+    },
+    {
+      "id": "lanche-opcao-7-tapioca-1-media",
+      "name": "Opção 7 — Tapioca (1 média)",
+      "meal_type": "lanche-manha",
+      "items": [],
+      "notes": "Tapioca (1 média) + queijo branco (40g) + orégano\n\n~16g prot · ~320 kcal — Leve; sem glúten; favorito"
+    },
+    {
+      "id": "lanche-opcao-8-pudim-de-chia-30g-chia",
+      "name": "Opção 8 — Pudim de chia: 30g chia",
+      "meal_type": "lanche-manha",
+      "items": [],
+      "notes": "Pudim de chia: 30g chia + 200ml leite + ½ scoop whey (preparo noite anterior)\n\n~24g prot · ~380 kcal — Fibras; ômega-3; prático"
+    },
+    {
+      "id": "lanche-opcao-9-wrap-de-frango-tortilha-pequena",
+      "name": "Opção 9 — Wrap de frango: tortilha pequena",
+      "meal_type": "lanche-manha",
+      "items": [],
+      "notes": "Wrap de frango: tortilha pequena + 60g frango desfiado + alface + requeijão light\n\n~22g prot · ~350 kcal — Salgado; satisfatório; favorito"
+    },
+    {
+      "id": "lanche-opcao-10-panqueca-de-banana",
+      "name": "Opção 10 — Panqueca de banana",
+      "meal_type": "lanche-manha",
+      "items": [],
+      "notes": "Panqueca de banana (1 banana + 1 ovo + aveia) + iogurte natural por cima\n\n~18g prot · ~360 kcal — Doce natural; sem açúcar"
+    },
+    {
+      "id": "almoco-base-frango-180g",
+      "name": "Base — Frango (180g)",
+      "meal_type": "almoco",
+      "items": [],
+      "notes": "Frango (180g) + arroz integral com grãos + feijão + salada + azeite + legumes\n\n~45g prot, ~730 kcal"
+    },
+    {
+      "id": "almoco-opcao-1-tilapia-grelhada-200g",
+      "name": "Opção 1 — Tilápia grelhada (200g)",
+      "meal_type": "almoco",
+      "items": [],
+      "notes": "Tilápia grelhada (200g) + arroz integral com grãos + lentilha + salada + azeite\n\n~52g prot · ~710 kcal — Peixe branco; leve"
+    },
+    {
+      "id": "almoco-opcao-2-sobrecoxa-de-frango-assada-200g",
+      "name": "Opção 2 — Sobrecoxa de frango assada (200g)",
+      "meal_type": "almoco",
+      "items": [],
+      "notes": "Sobrecoxa de frango assada (200g) + batata-doce (150g) + feijão preto + salada\n\n~50g prot · ~750 kcal — Mais saboroso que peito"
+    },
+    {
+      "id": "almoco-opcao-3-salmao-grelhado-180g",
+      "name": "Opção 3 — Salmão grelhado (180g)",
+      "meal_type": "almoco",
+      "items": [],
+      "notes": "Salmão grelhado (180g) + quinoa (100g cozida) + grão-de-bico + legumes salteados\n\n~55g prot · ~720 kcal — Ômega-3; excelente perfil lipídico"
+    },
+    {
+      "id": "almoco-opcao-4-frango-desfiado-200g",
+      "name": "Opção 4 — Frango desfiado (200g)",
+      "meal_type": "almoco",
+      "items": [],
+      "notes": "Frango desfiado (200g) + macarrão integral (100g seco) + molho de tomate + salada\n\n~52g prot · ~740 kcal — Prático; cozinhar em lote"
+    },
+    {
+      "id": "almoco-opcao-5-patinho-grelhado-180g",
+      "name": "Opção 5 — Patinho grelhado (180g)",
+      "meal_type": "almoco",
+      "items": [],
+      "notes": "Patinho grelhado (180g) + arroz integral com grãos + feijão + salada verde\n\n~50g prot · ~740 kcal — Carne vermelha magra; 1–2×/semana"
+    },
+    {
+      "id": "almoco-opcao-6-truta-grelhada-200g",
+      "name": "Opção 6 — Truta grelhada (200g)",
+      "meal_type": "almoco",
+      "items": [],
+      "notes": "Truta grelhada (200g) + purê de batata-doce + ervilha + brócolis + azeite\n\n~50g prot · ~710 kcal — Peixe nobre; sabor delicado"
+    },
+    {
+      "id": "almoco-opcao-7-bowl-arroz-integral-com-graos",
+      "name": "Opção 7 — Bowl: arroz integral com grãos",
+      "meal_type": "almoco",
+      "items": [],
+      "notes": "Bowl: arroz integral com grãos + frango em cubos (180g) + feijão + milho + abacate (50g)\n\n~48g prot · ~760 kcal — Prático em pote; favorito"
+    },
+    {
+      "id": "almoco-opcao-8-peito-de-frango-ao-forno-com-ervas-200g",
+      "name": "Opção 8 — Peito de frango ao forno com ervas (200g)",
+      "meal_type": "almoco",
+      "items": [],
+      "notes": "Peito de frango ao forno com ervas (200g) + mandioca cozida (120g) + feijão + couve refogada\n\n~52g prot · ~730 kcal — Clássico brasileiro"
+    },
+    {
+      "id": "almoco-opcao-9-strogonoff-de-frango-200g",
+      "name": "Opção 9 — Strogonoff de frango (200g)",
+      "meal_type": "almoco",
+      "items": [],
+      "notes": "Strogonoff de frango (200g) + arroz integral com grãos + salada\n\n~48g prot · ~720 kcal — Favorito; cozinhar em lote"
+    },
+    {
+      "id": "almoco-opcao-10-frango-grelhado-180g",
+      "name": "Opção 10 — Frango grelhado (180g)",
+      "meal_type": "almoco",
+      "items": [],
+      "notes": "Frango grelhado (180g) + cuscuz nordestino (100g) + ovo cozido + feijão-fradinho + salada\n\n~55g prot · ~720 kcal — Regional; alta fibra"
+    },
+    {
+      "id": "almoco-opcao-11-omelete-de-forno-4-ovos",
+      "name": "Opção 11 — Omelete de forno: 4 ovos",
+      "meal_type": "almoco",
+      "items": [],
+      "notes": "Omelete de forno: 4 ovos + brócolis + queijo muçarela (40g) + arroz integral com grãos (100g) + salada\n\n~42g prot · ~680 kcal — Favorito; fácil preparo"
+    },
+    {
+      "id": "almoco-opcao-12-merluza-ao-forno-200g",
+      "name": "Opção 12 — Merluza ao forno (200g)",
+      "meal_type": "almoco",
+      "items": [],
+      "notes": "Merluza ao forno (200g) + batata inglesa (150g) + vagem + salada de rúcula + azeite\n\n~46g prot · ~690 kcal — Peixe econômico; sabor neutro"
+    },
+    {
+      "id": "pre-treino-base-batata-doce-150g",
+      "name": "Base — Batata-doce (150g)",
+      "meal_type": "pre-treino",
+      "items": [],
+      "notes": "Batata-doce (150g) + whey (30g) + 1 fruta\n\n~27g prot, ~340 kcal"
+    },
+    {
+      "id": "pre-treino-opcao-1-batata-doce-120g",
+      "name": "Opção 1 — Batata-doce (120g)",
+      "meal_type": "pre-treino",
+      "items": [],
+      "notes": "Batata-doce (120g) + frango desfiado (80g) + suco natural\n\n~22g prot · ~350 kcal — Clássico pré-treino; energia sustentada"
+    },
+    {
+      "id": "pre-treino-opcao-2-sanduiche-pao-integral",
+      "name": "Opção 2 — Sanduíche: pão integral",
+      "meal_type": "pre-treino",
+      "items": [],
+      "notes": "Sanduíche: pão integral + atum (1 lata) + alface + tomate\n\n~24g prot · ~340 kcal — Prático; ômega-3"
+    },
+    {
+      "id": "pre-treino-opcao-3-vitamina-250ml-leite",
+      "name": "Opção 3 — Vitamina: 250ml leite",
+      "meal_type": "pre-treino",
+      "items": [],
+      "notes": "Vitamina: 250ml leite + 1 banana + aveia (30g) + ½ scoop whey\n\n~25g prot · ~370 kcal — Líquido; fácil digestão"
+    },
+    {
+      "id": "pre-treino-opcao-4-crepioca",
+      "name": "Opção 4 — Crepioca",
+      "meal_type": "pre-treino",
+      "items": [],
+      "notes": "Crepioca (2 ovos + 2 col. tapioca) + queijo cottage (50g)\n\n~24g prot · ~340 kcal — Rápido; sem glúten"
+    },
+    {
+      "id": "pre-treino-opcao-5-arroz-integral-com-graos-100g-cozido",
+      "name": "Opção 5 — Arroz integral com grãos (100g cozido)",
+      "meal_type": "pre-treino",
+      "items": [],
+      "notes": "Arroz integral com grãos (100g cozido) + ovo mexido (2) + banana\n\n~20g prot · ~380 kcal — Simples; barato; eficiente"
+    },
+    {
+      "id": "pre-treino-opcao-6-wrap-integral",
+      "name": "Opção 6 — Wrap integral",
+      "meal_type": "pre-treino",
+      "items": [],
+      "notes": "Wrap integral + pasta de frango com requeijão light (80g total)\n\n~22g prot · ~330 kcal — Para levar; prático"
+    },
+    {
+      "id": "pre-treino-opcao-7-mingau-de-aveia-40g",
+      "name": "Opção 7 — Mingau de aveia (40g)",
+      "meal_type": "pre-treino",
+      "items": [],
+      "notes": "Mingau de aveia (40g) + leite + ½ scoop whey + mel\n\n~23g prot · ~360 kcal — Quente; energia duradoura"
+    },
+    {
+      "id": "pre-treino-opcao-8-tapioca-1-grande",
+      "name": "Opção 8 — Tapioca (1 grande)",
+      "meal_type": "pre-treino",
+      "items": [],
+      "notes": "Tapioca (1 grande) + ovo mexido (2) + queijo minas (20g)\n\n~22g prot · ~350 kcal — Sem glúten; sabor neutro; favorito"
+    },
+    {
+      "id": "pre-treino-opcao-9-pao-de-queijo-3-medios",
+      "name": "Opção 9 — Pão de queijo (3 médios)",
+      "meal_type": "pre-treino",
+      "items": [],
+      "notes": "Pão de queijo (3 médios) + 1 ovo cozido + suco natural\n\n~18g prot · ~380 kcal — Opção prática; saboroso"
+    },
+    {
+      "id": "pre-treino-opcao-10-cuscuz-nordestino-100g",
+      "name": "Opção 10 — Cuscuz nordestino (100g)",
+      "meal_type": "pre-treino",
+      "items": [],
+      "notes": "Cuscuz nordestino (100g) + ovo (2) + queijo coalho (30g)\n\n~24g prot · ~370 kcal — Regional; ótima energia"
+    },
+    {
+      "id": "pre-treino-opcao-11-overnight-oats-ja-preparado-aveia-50g",
+      "name": "Opção 11 — Overnight oats (já preparado): aveia (50g)",
+      "meal_type": "pre-treino",
+      "items": [],
+      "notes": "Overnight oats (já preparado): aveia (50g) + iogurte grego (150g) + banana + mel\n\n~25g prot · ~490 kcal — Zero preparo no dia; favorito para treino da manhã"
+    },
+    {
+      "id": "pos-treino-base-40g-whey",
+      "name": "Base — 40g whey",
+      "meal_type": "pos-treino",
+      "items": [],
+      "notes": "40g whey + 1 banana + 30g aveia\n\n~33g prot, ~280 kcal"
+    },
+    {
+      "id": "pos-treino-opcao-1-whey-1-scoop",
+      "name": "Opção 1 — Whey (1 scoop)",
+      "meal_type": "pos-treino",
+      "items": [],
+      "notes": "Whey (1 scoop) + água de coco (300ml) + creatina\n\n~25g prot · ~230 kcal — Hidratante; potássio"
+    },
+    {
+      "id": "pos-treino-opcao-2-whey-1-scoop",
+      "name": "Opção 2 — Whey (1 scoop)",
+      "meal_type": "pos-treino",
+      "items": [],
+      "notes": "Whey (1 scoop) + 30g dextrose + creatina (shake)\n\n~25g prot · ~240 kcal — Absorção rápida"
+    },
+    {
+      "id": "pos-treino-opcao-3-whey-1-scoop",
+      "name": "Opção 3 — Whey (1 scoop)",
+      "meal_type": "pos-treino",
+      "items": [],
+      "notes": "Whey (1 scoop) + 200ml suco de uva integral + creatina\n\n~25g prot · ~260 kcal — Antioxidante; favorito"
+    },
+    {
+      "id": "pos-treino-opcao-4-iogurte-grego-170g",
+      "name": "Opção 4 — Iogurte grego (170g)",
+      "meal_type": "pos-treino",
+      "items": [],
+      "notes": "Iogurte grego (170g) + mel (1 col.) + creatina\n\n~20g prot · ~230 kcal — Sem whey; textura cremosa"
+    },
+    {
+      "id": "pos-treino-opcao-5-leite-300ml",
+      "name": "Opção 5 — Leite (300ml)",
+      "meal_type": "pos-treino",
+      "items": [],
+      "notes": "Leite (300ml) + achocolatado light + creatina\n\n~18g prot · ~250 kcal — Opção simples e rápida"
+    },
+    {
+      "id": "pos-treino-opcao-6-whey-1-scoop",
+      "name": "Opção 6 — Whey (1 scoop)",
+      "meal_type": "pos-treino",
+      "items": [],
+      "notes": "Whey (1 scoop) + 1 fatia pão integral com mel + creatina\n\n~27g prot · ~290 kcal — Sólido; carboidrato rápido"
+    },
+    {
+      "id": "pos-treino-opcao-7-whey-1-scoop-batido-com-150ml-leite",
+      "name": "Opção 7 — Whey (1 scoop) batido com 150ml leite",
+      "meal_type": "pos-treino",
+      "items": [],
+      "notes": "Whey (1 scoop) batido com 150ml leite + banana congelada + creatina\n\n~30g prot · ~320 kcal — Cremoso; mais calórico"
+    },
+    {
+      "id": "pos-treino-opcao-8-smoothie-whey",
+      "name": "Opção 8 — Smoothie: whey",
+      "meal_type": "pos-treino",
+      "items": [],
+      "notes": "Smoothie: whey + morango congelado (100g) + mel + creatina\n\n~26g prot · ~240 kcal — Refrescante; vitamina C"
+    },
+    {
+      "id": "pos-treino-opcao-9-whey-1-scoop",
+      "name": "Opção 9 — Whey (1 scoop)",
+      "meal_type": "pos-treino",
+      "items": [],
+      "notes": "Whey (1 scoop) + tapioca simples (1 média) + creatina\n\n~26g prot · ~260 kcal — Sólido + líquido; satisfatório"
+    },
+    {
+      "id": "pos-treino-opcao-10-clara-de-ovo-pasteurizada-200ml",
+      "name": "Opção 10 — Clara de ovo pasteurizada (200ml)",
+      "meal_type": "pos-treino",
+      "items": [],
+      "notes": "Clara de ovo pasteurizada (200ml) + banana + creatina\n\n~24g prot · ~210 kcal — Sem lactose; alternativa"
+    },
+    {
+      "id": "jantar-base-frango-ou-peixe-150g",
+      "name": "Base — Frango ou peixe (150g)",
+      "meal_type": "jantar",
+      "items": [],
+      "notes": "Frango ou peixe (150g) + legumes salteados + salada + azeite\n\n~38g prot, ~470 kcal"
+    },
+    {
+      "id": "jantar-opcao-1-tilapia-grelhada-180g",
+      "name": "Opção 1 — Tilápia grelhada (180g)",
+      "meal_type": "jantar",
+      "items": [],
+      "notes": "Tilápia grelhada (180g) + purê de batata-doce (100g) + salada verde + azeite\n\n~42g prot · ~480 kcal — Leve; boa digestão noturna"
+    },
+    {
+      "id": "jantar-opcao-2-frango-ao-molho-de-tomate-180g",
+      "name": "Opção 2 — Frango ao molho de tomate (180g)",
+      "meal_type": "jantar",
+      "items": [],
+      "notes": "Frango ao molho de tomate (180g) + arroz integral com grãos (100g) + brócolis\n\n~43g prot · ~500 kcal — Sabor caseiro; reconfortante"
+    },
+    {
+      "id": "jantar-opcao-3-omelete-de-forno",
+      "name": "Opção 3 — Omelete de forno",
+      "meal_type": "jantar",
+      "items": [],
+      "notes": "Omelete de forno (3 ovos + brócolis + queijo muçarela 40g) + batata-doce (100g)\n\n~35g prot · ~450 kcal — Rápido; favorito"
+    },
+    {
+      "id": "jantar-opcao-4-salmao-150g",
+      "name": "Opção 4 — Salmão (150g)",
+      "meal_type": "jantar",
+      "items": [],
+      "notes": "Salmão (150g) + aspargos grelhados + quinoa (80g cozida)\n\n~42g prot · ~490 kcal — Ômega-3; anti-inflamatório"
+    },
+    {
+      "id": "jantar-opcao-5-sopa-de-frango",
+      "name": "Opção 5 — Sopa de frango",
+      "meal_type": "jantar",
+      "items": [],
+      "notes": "Sopa de frango (180g frango + legumes + macarrão integral 50g)\n\n~40g prot · ~430 kcal — Ideal para dias frios"
+    },
+    {
+      "id": "jantar-opcao-6-hamburguer-de-frango-caseiro-2-unid-80g",
+      "name": "Opção 6 — Hambúrguer de frango caseiro (2 unid. × 80g)",
+      "meal_type": "jantar",
+      "items": [],
+      "notes": "Hambúrguer de frango caseiro (2 unid. × 80g) + pão integral + alface + tomate + queijo muçarela\n\n~42g prot · ~540 kcal — **Favorito** — fazer em lote e congelar"
+    },
+    {
+      "id": "jantar-opcao-7-bowl-frango-desfiado-150g",
+      "name": "Opção 7 — Bowl: frango desfiado (150g)",
+      "meal_type": "jantar",
+      "items": [],
+      "notes": "Bowl: frango desfiado (150g) + batata-doce + abacate (50g) + rúcula\n\n~38g prot · ~510 kcal — Montagem rápida; equilibrado"
+    },
+    {
+      "id": "jantar-opcao-8-truta-ao-forno-180g",
+      "name": "Opção 8 — Truta ao forno (180g)",
+      "meal_type": "jantar",
+      "items": [],
+      "notes": "Truta ao forno (180g) + arroz integral com grãos + vagem + cenoura + azeite\n\n~42g prot · ~480 kcal — Peixe delicado; fácil preparo"
+    },
+    {
+      "id": "jantar-opcao-9-panqueca-salgada-2-massa-de-ovo",
+      "name": "Opção 9 — Panqueca salgada (2): massa de ovo",
+      "meal_type": "jantar",
+      "items": [],
+      "notes": "Panqueca salgada (2): massa de ovo + recheio frango/queijo + salada\n\n~38g prot · ~460 kcal — Diferente; saboroso"
+    },
+    {
+      "id": "jantar-opcao-10-patinho-ou-file-mignon-150g",
+      "name": "Opção 10 — Patinho ou filé mignon (150g)",
+      "meal_type": "jantar",
+      "items": [],
+      "notes": "Patinho ou filé mignon (150g) + legumes salteados + arroz integral com grãos (80g)\n\n~42g prot · ~500 kcal — Carne vermelha magra; 1–2×/semana"
+    },
+    {
+      "id": "jantar-opcao-11-escondidinho-de-frango-pure-de-mandioca",
+      "name": "Opção 11 — Escondidinho de frango: purê de mandioca",
+      "meal_type": "jantar",
+      "items": [],
+      "notes": "Escondidinho de frango: purê de mandioca + frango desfiado (150g) + gratinado com queijo\n\n~38g prot · ~530 kcal — **Favorito** — comfort food brasileiro"
+    },
+    {
+      "id": "jantar-opcao-12-salada-completa-folhas",
+      "name": "Opção 12 — Salada completa: folhas",
+      "meal_type": "jantar",
+      "items": [],
+      "notes": "Salada completa: folhas + frango grelhado (150g) + grão-de-bico (80g) + ovo + queijo + azeite\n\n~45g prot · ~510 kcal — Leve; ideal para noites quentes"
+    },
+    {
+      "id": "jantar-opcao-13-tapioca-2-medias",
+      "name": "Opção 13 — Tapioca (2 médias)",
+      "meal_type": "jantar",
+      "items": [],
+      "notes": "Tapioca (2 médias) + frango desfiado (120g) + requeijão light + queijo minas + salada\n\n~38g prot · ~480 kcal — **Favorito** — rápido; sem glúten"
+    },
+    {
+      "id": "jantar-opcao-14-yakisoba-de-frango-frango-150g",
+      "name": "Opção 14 — Yakisoba de frango: frango (150g)",
+      "meal_type": "jantar",
+      "items": [],
+      "notes": "Yakisoba de frango: frango (150g) + macarrão integral + abobrinha + couve-flor + shoyu light\n\n~35g prot · ~450 kcal — **Favorito** — preparar com legumes variados"
+    },
+    {
+      "id": "ceia-base-200ml-leite",
+      "name": "Base — 200ml leite",
+      "meal_type": "ceia",
+      "items": [],
+      "notes": "200ml leite + 30g caseína ou queijo cottage (100g)\n\n~30g prot, ~200–280 kcal"
+    },
+    {
+      "id": "ceia-opcao-1-iogurte-grego-natural-200g",
+      "name": "Opção 1 — Iogurte grego natural (200g)",
+      "meal_type": "ceia",
+      "items": [],
+      "notes": "Iogurte grego natural (200g) + 1 col. mel + 10g nozes\n\n~20g prot · ~280 kcal — Caseína natural; boa opção noturna"
+    },
+    {
+      "id": "ceia-opcao-2-queijo-cottage-100g",
+      "name": "Opção 2 — Queijo cottage (100g)",
+      "meal_type": "ceia",
+      "items": [],
+      "notes": "Queijo cottage (100g) + 1 maçã fatiada\n\n~12g prot · ~200 kcal — Leve; sem açúcar"
+    },
+    {
+      "id": "ceia-opcao-3-ricota-120g",
+      "name": "Opção 3 — Ricota (120g)",
+      "meal_type": "ceia",
+      "items": [],
+      "notes": "Ricota (120g) + mel (1 col.) + canela\n\n~14g prot · ~220 kcal — Suave; boa digestão"
+    },
+    {
+      "id": "ceia-opcao-4-200ml-kefir",
+      "name": "Opção 4 — 200ml kefir",
+      "meal_type": "ceia",
+      "items": [],
+      "notes": "200ml kefir + 1 col. chia\n\n~10g prot · ~160 kcal — Probióticos; levíssimo"
+    },
+    {
+      "id": "ceia-opcao-5-whey-de-chocolate-scoop",
+      "name": "Opção 5 — Whey de chocolate (½ scoop)",
+      "meal_type": "ceia",
+      "items": [],
+      "notes": "Whey de chocolate (½ scoop) + 200ml leite morno\n\n~22g prot · ~200 kcal — Rápido; caseína + whey"
+    },
+    {
+      "id": "ceia-opcao-6-iogurte-grego-150g",
+      "name": "Opção 6 — Iogurte grego (150g)",
+      "meal_type": "ceia",
+      "items": [],
+      "notes": "Iogurte grego (150g) + whey de chocolate (½ scoop) misturado\n\n~25g prot · ~240 kcal — **Favorito** — cremoso; sabor agradável"
+    }
+  ]
+}
