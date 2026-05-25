@@ -2,8 +2,10 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import FilterButton from '../components/FilterButton';
+import CardActionSheet from '../components/CardActionSheet';
+import TrashIcon from '../components/TrashIcon';
 import { useAllMeals, allMealIds } from '../data/meals';
-import { upsertUserMeal } from '../data/userMeals';
+import { upsertUserMeal, deleteUserMeal } from '../data/userMeals';
 import { getMealSlots, type Meal } from '../types/meal';
 import { MEAL_TYPES, type MealType } from '../types/mealPlan';
 import { useLongPress } from '../hooks/useLongPress';
@@ -51,6 +53,12 @@ export default function Refeicoes() {
       })),
     };
     upsertUserMeal(cloned);
+    setActionMealId(null);
+  };
+
+  const deleteMeal = (meal: Meal) => {
+    if (!confirm(`Apagar a refeição "${meal.name}"? Esta ação não pode ser desfeita.`)) return;
+    deleteUserMeal(meal.id);
     setActionMealId(null);
   };
 
@@ -131,43 +139,24 @@ export default function Refeicoes() {
       )}
 
       {actionMeal && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Ações da refeição"
-          className="fixed inset-0 z-[70] flex items-end justify-center"
-          onClick={() => setActionMealId(null)}
-        >
-          <div className="absolute inset-0 bg-black/40" />
-          <div
-            className="relative mx-auto w-full max-w-md p-3 pb-[calc(env(safe-area-inset-bottom)+12px)]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-zinc-900">
-              <div className="border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
-                <p className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  Refeição
-                </p>
-                <p className="truncate text-base font-medium">{actionMeal.name}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => duplicateMeal(actionMeal)}
-                className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800"
-              >
-                <span aria-hidden className="text-lg">📋</span>
-                <span>Duplicar refeição</span>
-              </button>
-            </div>
-            <button
-              type="button"
-              onClick={() => setActionMealId(null)}
-              className="mt-2 w-full rounded-2xl bg-white py-3 text-sm font-medium hover:bg-zinc-50 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-            >
-              Cancelar
-            </button>
-          </div>
-        </div>
+        <CardActionSheet
+          category="Refeição"
+          title={actionMeal.name}
+          onClose={() => setActionMealId(null)}
+          actions={[
+            {
+              label: 'Duplicar refeição',
+              icon: <span className="text-lg">📋</span>,
+              onClick: () => duplicateMeal(actionMeal),
+            },
+            {
+              label: 'Apagar refeição',
+              icon: <TrashIcon className="h-4 w-4" />,
+              onClick: () => deleteMeal(actionMeal),
+              destructive: true,
+            },
+          ]}
+        />
       )}
 
       <Link
