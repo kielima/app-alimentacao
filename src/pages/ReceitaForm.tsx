@@ -297,16 +297,6 @@ export default function ReceitaForm() {
       setError('Nome é obrigatório');
       return;
     }
-    const ingredients = state.ingredients.filter((i) => i.ingredient_id);
-    if (ingredients.length === 0) {
-      setError('Selecione ao menos um ingrediente');
-      return;
-    }
-    const steps = state.steps.filter((s) => s.trim());
-    if (steps.length === 0) {
-      setError('Adicione ao menos um passo no modo de preparo');
-      return;
-    }
 
     const recipeId =
       original?.id ?? uniqueSlug(state.name, new Set([...allRecipeIds()]));
