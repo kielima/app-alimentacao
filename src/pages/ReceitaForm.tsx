@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
+import Icon from '../components/Icon';
 import { useAllIngredients } from '../data/ingredients';
 import SearchableSelect from '../components/SearchableSelect';
 import TrashIcon from '../components/TrashIcon';
@@ -24,10 +25,10 @@ const UNIT_OPTIONS = [
   { value: 'a_gosto', label: 'a gosto' },
 ];
 
-const DIFFICULTIES: { value: Difficulty; label: string }[] = [
-  { value: 'facil', label: '😌 Fácil' },
-  { value: 'medio', label: '😅 Médio' },
-  { value: 'dificil', label: '🔥 Difícil' },
+const DIFFICULTIES: { value: Difficulty; label: string; icon: string }[] = [
+  { value: 'facil', label: 'Fácil', icon: 'smile' },
+  { value: 'medio', label: 'Médio', icon: 'meh' },
+  { value: 'dificil', label: 'Difícil', icon: 'flame' },
 ];
 
 interface FormIngredient {
@@ -361,7 +362,7 @@ export default function ReceitaForm() {
         >
           {recipeCategories.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.icon} {c.name}
+              {c.name}
             </option>
           ))}
         </select>
@@ -391,7 +392,10 @@ export default function ReceitaForm() {
                 aria-label={`${n} estrela${n > 1 ? 's' : ''}`}
                 className="text-2xl"
               >
-                <span className={n <= state.rating ? 'opacity-100' : 'opacity-30'}>⭐</span>
+                <Icon
+                  name="star"
+                  className={`h-6 w-6 text-amber-500 ${n <= state.rating ? 'opacity-100' : 'opacity-30'}`}
+                />
               </button>
             ))}
           </div>
@@ -407,13 +411,13 @@ export default function ReceitaForm() {
               onClick={() =>
                 setState((s) => ({ ...s, difficulty: s.difficulty === d.value ? '' : d.value }))
               }
-              className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                 state.difficulty === d.value
                   ? 'bg-brand-500 text-white dark:bg-brand-600'
                   : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700'
               }`}
             >
-              {d.label}
+              <Icon name={d.icon} className="h-4 w-4" /> {d.label}
             </button>
           ))}
         </div>
@@ -467,9 +471,9 @@ export default function ReceitaForm() {
         type="button"
         onClick={() => navigate(-1)}
         aria-label="Cancelar"
-        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-cream text-2xl text-brand-700 shadow-lg hover:bg-brand-100 dark:bg-brand-cream dark:text-brand-700 dark:hover:bg-brand-100"
+        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-cream text-brand-700 shadow-lg hover:bg-brand-100 dark:bg-brand-cream dark:text-brand-700 dark:hover:bg-brand-100"
       >
-        ✕
+        <Icon name="x" className="h-7 w-7" />
       </button>
     </form>
   );
@@ -587,7 +591,7 @@ function IngredientRow({
             label: i.brand ? `${i.brand} — ${i.name}` : i.name,
           }))}
           placeholder="— Selecione um ingrediente —"
-          createLabel="➕ Criar novo ingrediente"
+          createLabel="Criar novo ingrediente"
           onCreate={onCreateNew}
         />
         <button
@@ -667,19 +671,19 @@ function StepsSection({
                 type="button"
                 onClick={() => moveStep(idx, -1)}
                 disabled={idx === 0}
-                className="text-zinc-400 disabled:opacity-30"
+                className="inline-flex items-center justify-center text-zinc-400 disabled:opacity-30"
                 aria-label="Mover para cima"
               >
-                ▲
+                <Icon name="chevron-up" className="h-4 w-4" />
               </button>
               <button
                 type="button"
                 onClick={() => moveStep(idx, 1)}
                 disabled={idx === items.length - 1}
-                className="text-zinc-400 disabled:opacity-30"
+                className="inline-flex items-center justify-center text-zinc-400 disabled:opacity-30"
                 aria-label="Mover para baixo"
               >
-                ▼
+                <Icon name="chevron-down" className="h-4 w-4" />
               </button>
               <button
                 type="button"

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import SearchableSelect from '../components/SearchableSelect';
 import TrashIcon from '../components/TrashIcon';
+import Icon from '../components/Icon';
 import {
   DAYS_OF_WEEK,
   MEAL_TYPES,
@@ -157,7 +158,7 @@ export default function Plano() {
         }`}
       >
         {editing ? (
-          '✓'
+          <Icon name="check" className="h-7 w-7" />
         ) : (
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -209,9 +210,10 @@ export default function Plano() {
           <button
             type="button"
             onClick={() => setEditing(true)}
-            className="mt-2 text-brand-600 hover:underline dark:text-brand-400"
+            className="mt-2 inline-flex items-center gap-1 text-brand-600 hover:underline dark:text-brand-400"
           >
-            ✏️ Começar a editar →
+            <Icon name="pencil" className="h-4 w-4" /> Começar a editar{' '}
+            <Icon name="arrow-right" className="h-4 w-4" />
           </button>
         </div>
       )}
@@ -263,8 +265,14 @@ function DaySummary({
     <div className="rounded-xl bg-zinc-100 px-4 py-3 dark:bg-zinc-800">
       {/* Header row */}
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-          {isToday ? '🌟 Hoje' : dayLabel}
+        <p className="inline-flex items-center gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          {isToday ? (
+            <>
+              <Icon name="star" className="h-3.5 w-3.5" /> Hoje
+            </>
+          ) : (
+            dayLabel
+          )}
         </p>
         {totalCount > 0 && (
           <span className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -319,9 +327,10 @@ function DaySummary({
       {!targets && (
         <Link
           to="/perfil"
-          className="mt-1 block text-[10px] text-brand-600 hover:underline dark:text-brand-400"
+          className="mt-1 inline-flex items-center gap-1 text-[10px] text-brand-600 hover:underline dark:text-brand-400"
         >
-          Defina seu perfil para ver metas diárias →
+          Defina seu perfil para ver metas diárias{' '}
+          <Icon name="arrow-right" className="h-3.5 w-3.5" />
         </Link>
       )}
 
@@ -468,12 +477,10 @@ function PlanMealCard({
                 : 'border-zinc-300 text-transparent hover:border-brand-400 dark:border-zinc-600'
             }`}
           >
-            ✓
+            <Icon name="check" className="h-3 w-3" />
           </button>
         )}
-        <span className="text-lg" aria-hidden>
-          {def?.icon}
-        </span>
+        <Icon name={def?.icon ?? 'utensils'} className="h-5 w-5" />
         <h3
           className={`text-sm font-semibold ${
             isDone ? 'text-zinc-400 dark:text-zinc-500' : ''
@@ -498,19 +505,19 @@ function PlanMealCard({
                     <KindChip
                       active={item.kind === 'meal'}
                       onClick={() => changeKind(idx, 'meal')}
-                      icon="🍱"
+                      icon="utensils-crossed"
                       label="Refeição"
                     />
                     <KindChip
                       active={item.kind === 'recipe'}
                       onClick={() => changeKind(idx, 'recipe')}
-                      icon="🍳"
+                      icon="chef-hat"
                       label="Receita"
                     />
                     <KindChip
                       active={item.kind === 'ingredient'}
                       onClick={() => changeKind(idx, 'ingredient')}
-                      icon="🥕"
+                      icon="carrot"
                       label="Ingrediente"
                     />
                     <button
@@ -585,20 +592,20 @@ function PlanMealCard({
                     onClick={() => toggleExpanded(item.id)}
                     className="flex w-full items-center gap-2 px-2 py-1.5 text-left text-sm"
                   >
-                    <span aria-hidden>🍱</span>
+                    <Icon name="utensils-crossed" className="h-4 w-4" />
                     <span className="flex-1 font-medium text-zinc-900 dark:text-zinc-100">
                       {refeicao.name}
                     </span>
                     <Link
                       to={`/refeicoes/${refeicao.id}`}
                       onClick={(e) => e.stopPropagation()}
-                      className="shrink-0 text-xs text-zinc-400 hover:text-brand-600 dark:text-zinc-500 dark:hover:text-brand-400"
+                      className="shrink-0 text-zinc-400 hover:text-brand-600 dark:text-zinc-500 dark:hover:text-brand-400"
                       aria-label="Ver refeição"
                     >
-                      ↗
+                      <Icon name="arrow-up-right" className="h-4 w-4" />
                     </Link>
-                    <span className="shrink-0 text-xs text-zinc-400 dark:text-zinc-500">
-                      {isExpanded ? '▲' : '▼'}
+                    <span className="shrink-0 text-zinc-400 dark:text-zinc-500">
+                      <Icon name={isExpanded ? 'chevron-up' : 'chevron-down'} className="h-4 w-4" />
                     </span>
                   </button>
                   {isExpanded && <MealItemsExpanded meal={refeicao} />}
@@ -611,7 +618,7 @@ function PlanMealCard({
               return (
                 <li key={item.id} className="rounded-lg bg-zinc-50 dark:bg-zinc-950">
                   <div className="flex items-center gap-2 px-2 py-1.5 text-sm">
-                    <span aria-hidden>🍳</span>
+                    <Icon name="chef-hat" className="h-4 w-4" />
                     <span className="flex-1 font-medium text-zinc-900 dark:text-zinc-100">
                       {recipe.name}
                     </span>
@@ -623,10 +630,10 @@ function PlanMealCard({
                     )}
                     <Link
                       to={`/receitas/${recipe.id}`}
-                      className="shrink-0 text-xs text-zinc-400 hover:text-brand-600 dark:text-zinc-500 dark:hover:text-brand-400"
+                      className="shrink-0 text-zinc-400 hover:text-brand-600 dark:text-zinc-500 dark:hover:text-brand-400"
                       aria-label="Ver receita"
                     >
-                      ↗
+                      <Icon name="arrow-up-right" className="h-4 w-4" />
                     </Link>
                   </div>
                 </li>
@@ -638,7 +645,7 @@ function PlanMealCard({
               return (
                 <li key={item.id} className="rounded-lg bg-zinc-50 dark:bg-zinc-950">
                   <div className="flex items-center gap-2 px-2 py-1.5 text-sm">
-                    <span aria-hidden>🥕</span>
+                    <Icon name="carrot" className="h-4 w-4" />
                     <span className="flex-1 font-medium text-zinc-900 dark:text-zinc-100">
                       {ing.brand ? `${ing.brand} — ${ing.name}` : ing.name}
                     </span>
@@ -650,10 +657,10 @@ function PlanMealCard({
                     )}
                     <Link
                       to={`/ingredientes/${ing.id}`}
-                      className="shrink-0 text-xs text-zinc-400 hover:text-brand-600 dark:text-zinc-500 dark:hover:text-brand-400"
+                      className="shrink-0 text-zinc-400 hover:text-brand-600 dark:text-zinc-500 dark:hover:text-brand-400"
                       aria-label="Ver ingrediente"
                     >
-                      ↗
+                      <Icon name="arrow-up-right" className="h-4 w-4" />
                     </Link>
                   </div>
                 </li>
@@ -669,23 +676,23 @@ function PlanMealCard({
           <button
             type="button"
             onClick={() => addItem('meal')}
-            className="rounded-lg border-2 border-dashed border-zinc-300 py-1.5 text-xs text-zinc-500 hover:border-brand-500 hover:text-brand-600 dark:border-zinc-700 dark:text-zinc-400"
+            className="inline-flex items-center justify-center gap-1 rounded-lg border-2 border-dashed border-zinc-300 py-1.5 text-xs text-zinc-500 hover:border-brand-500 hover:text-brand-600 dark:border-zinc-700 dark:text-zinc-400"
           >
-            + 🍱 Refeição
+            + <Icon name="utensils-crossed" className="h-4 w-4" /> Refeição
           </button>
           <button
             type="button"
             onClick={() => addItem('recipe')}
-            className="rounded-lg border-2 border-dashed border-zinc-300 py-1.5 text-xs text-zinc-500 hover:border-brand-500 hover:text-brand-600 dark:border-zinc-700 dark:text-zinc-400"
+            className="inline-flex items-center justify-center gap-1 rounded-lg border-2 border-dashed border-zinc-300 py-1.5 text-xs text-zinc-500 hover:border-brand-500 hover:text-brand-600 dark:border-zinc-700 dark:text-zinc-400"
           >
-            + 🍳 Receita
+            + <Icon name="chef-hat" className="h-4 w-4" /> Receita
           </button>
           <button
             type="button"
             onClick={() => addItem('ingredient')}
-            className="rounded-lg border-2 border-dashed border-zinc-300 py-1.5 text-xs text-zinc-500 hover:border-brand-500 hover:text-brand-600 dark:border-zinc-700 dark:text-zinc-400"
+            className="inline-flex items-center justify-center gap-1 rounded-lg border-2 border-dashed border-zinc-300 py-1.5 text-xs text-zinc-500 hover:border-brand-500 hover:text-brand-600 dark:border-zinc-700 dark:text-zinc-400"
           >
-            + 🥕 Ingrediente
+            + <Icon name="carrot" className="h-4 w-4" /> Ingrediente
           </button>
         </div>
       )}
@@ -712,9 +719,9 @@ function KindChip({
         active
           ? 'bg-brand-500 text-white dark:bg-brand-600'
           : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300'
-      }`}
+      } inline-flex items-center gap-1`}
     >
-      <span aria-hidden>{icon}</span> {label}
+      <Icon name={icon} className="h-3.5 w-3.5" /> {label}
     </button>
   );
 }
@@ -771,9 +778,7 @@ function MealItemsExpanded({ meal }: { meal: Meal }) {
           const recipe = findRecipeById(item.recipe_id);
           return (
             <li key={item.id} className="flex items-center gap-1.5">
-              <span className="text-xs" aria-hidden>
-                🍳
-              </span>
+              <Icon name="chef-hat" className="h-3.5 w-3.5" />
               {recipe ? (
                 <Link
                   to={`/receitas/${recipe.id}`}
@@ -799,9 +804,7 @@ function MealItemsExpanded({ meal }: { meal: Meal }) {
           const ing = findIngredientById(item.ingredient_id);
           return (
             <li key={item.id} className="flex items-center gap-1.5">
-              <span className="text-xs" aria-hidden>
-                🥕
-              </span>
+              <Icon name="carrot" className="h-3.5 w-3.5" />
               {ing ? (
                 <Link
                   to={`/ingredientes/${ing.id}`}

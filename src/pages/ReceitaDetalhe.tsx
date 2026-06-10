@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
+import Icon from '../components/Icon';
 import TrashIcon from '../components/TrashIcon';
 import { findRecipeById, findCategory, isSeedRecipe } from '../data/recipes';
 import { findIngredientById } from '../data/ingredients';
@@ -122,10 +123,10 @@ export default function ReceitaDetalhe() {
           <button
             type="button"
             onClick={handleRevert}
-            className="shrink-0 rounded-full bg-zinc-100 px-3 py-1 text-sm text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+            className="inline-flex shrink-0 items-center justify-center rounded-full bg-zinc-100 px-3 py-1 text-sm text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
             title="Descartar edições e voltar ao original"
           >
-            ↺
+            <Icon name="rotate-ccw" className="h-4 w-4" />
           </button>
         )}
         <button
@@ -139,38 +140,60 @@ export default function ReceitaDetalhe() {
       </HeaderSlot>
 
       {isUserOverlay && isSeedRecipe(recipe.id) && (
-        <div className="mb-3 rounded-lg bg-brand-50 px-3 py-1.5 text-[11px] text-brand-700 dark:bg-brand-900/30 dark:text-brand-300">
-          ✏️ Versão editada por você (sobrescreve o seed original)
+        <div className="mb-3 inline-flex items-center gap-1.5 rounded-lg bg-brand-50 px-3 py-1.5 text-[11px] text-brand-700 dark:bg-brand-900/30 dark:text-brand-300">
+          <Icon name="pencil" className="h-3.5 w-3.5" /> Versão editada por você (sobrescreve o seed
+          original)
         </div>
       )}
 
       <div
-        className="mb-3 flex h-32 items-center justify-center rounded-xl bg-zinc-100 text-6xl dark:bg-zinc-800"
+        className="mb-3 flex h-32 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800"
         aria-hidden
       >
-        {category?.icon ?? '🍽️'}
+        <Icon name={category?.icon ?? 'utensils'} className="h-16 w-16 text-zinc-400 dark:text-zinc-500" />
       </div>
 
       <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
         {category && (
-          <span>
-            {category.icon} {category.name}
+          <span className="inline-flex items-center gap-1">
+            <Icon name={category.icon} className="h-3.5 w-3.5" /> {category.name}
           </span>
         )}
-        {recipe.prep_time_min && <span>⏱ {recipe.prep_time_min} min</span>}
-        {recipe.difficulty && <span>{difficultyLabel(recipe.difficulty)}</span>}
-        {recipe.season && <span>☀️ {seasonLabel(recipe.season)}</span>}
+        {recipe.prep_time_min && (
+          <span className="inline-flex items-center gap-1">
+            <Icon name="clock" className="h-3.5 w-3.5" /> {recipe.prep_time_min} min
+          </span>
+        )}
+        {recipe.difficulty && (
+          <span className="inline-flex items-center gap-1">
+            <Icon name={difficultyIcon(recipe.difficulty)} className="h-3.5 w-3.5" />{' '}
+            {difficultyLabel(recipe.difficulty)}
+          </span>
+        )}
+        {recipe.season && (
+          <span className="inline-flex items-center gap-1">
+            <Icon name="sun" className="h-3.5 w-3.5" /> {seasonLabel(recipe.season)}
+          </span>
+        )}
         {recipe.rating && (
-          <span className="text-amber-500" aria-label={`${recipe.rating} estrelas`}>
-            {'⭐'.repeat(recipe.rating)}
+          <span
+            className="inline-flex items-center text-amber-500"
+            aria-label={`${recipe.rating} estrelas`}
+          >
+            {Array.from({ length: recipe.rating }).map((_, i) => (
+              <Icon key={i} name="star" className="h-3.5 w-3.5" />
+            ))}
           </span>
         )}
       </div>
 
       {recipe.needs_review && (
-        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-300">
-          ⚠️ Esta receita está em revisão. Ingredientes e modo de preparo ainda não foram totalmente
-          estruturados a partir do livro de receitas.
+        <div className="mb-4 flex items-start gap-1.5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-300">
+          <Icon name="alert-triangle" className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <span>
+            Esta receita está em revisão. Ingredientes e modo de preparo ainda não foram totalmente
+            estruturados a partir do livro de receitas.
+          </span>
         </div>
       )}
 
@@ -185,16 +208,16 @@ export default function ReceitaDetalhe() {
             <button
               type="button"
               onClick={() => handleAddToShoppingList(false)}
-              className="rounded-full bg-brand-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
+              className="inline-flex items-center gap-1.5 rounded-full bg-brand-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
             >
-              🛒 Adicionar todos à Lista
+              <Icon name="shopping-cart" className="h-4 w-4" /> Adicionar todos à Lista
             </button>
             <button
               type="button"
               onClick={() => handleAddToShoppingList(true)}
-              className="rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+              className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
             >
-              🛒 Só os faltantes
+              <Icon name="shopping-cart" className="h-4 w-4" /> Só os faltantes
             </button>
           </div>
         </Section>
@@ -256,9 +279,13 @@ export default function ReceitaDetalhe() {
                 <button
                   type="button"
                   onClick={() => setShowSkipped((s) => !s)}
-                  className="text-brand-600 hover:underline dark:text-brand-400"
+                  className="inline-flex items-center gap-1 text-brand-600 hover:underline dark:text-brand-400"
                 >
-                  {showSkipped ? '▾' : '▸'} {nutrition.skipped} ignorado(s)
+                  <Icon
+                    name={showSkipped ? 'chevron-down' : 'chevron-right'}
+                    className="h-3.5 w-3.5"
+                  />{' '}
+                  {nutrition.skipped} ignorado(s)
                 </button>
               </>
             )}
@@ -369,7 +396,7 @@ function IngredientList({
                   aria-label="Adicionar à lista de compras"
                   title="Adicionar à lista de compras"
                 >
-                  {justAdded ? '✓' : '🛒'}
+                  <Icon name={justAdded ? 'check' : 'shopping-cart'} className="h-4 w-4" />
                 </button>
               )}
             </span>
@@ -417,7 +444,11 @@ function collectAllIngredients(recipe: Recipe): RecipeIngredient[] {
 }
 
 function difficultyLabel(d: string): string {
-  return { facil: '😌 Fácil', medio: '😅 Médio', dificil: '🔥 Difícil' }[d] ?? d;
+  return { facil: 'Fácil', medio: 'Médio', dificil: 'Difícil' }[d] ?? d;
+}
+
+function difficultyIcon(d: string): string {
+  return { facil: 'smile', medio: 'meh', dificil: 'flame' }[d] ?? 'smile';
 }
 
 function seasonLabel(s: string): string {

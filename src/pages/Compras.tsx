@@ -6,6 +6,7 @@ import ScanButton from '../components/ScanButton';
 import FilterButton from '../components/FilterButton';
 import BarcodeScannerModal from '../components/BarcodeScannerModal';
 import TrashIcon from '../components/TrashIcon';
+import Icon from '../components/Icon';
 import {
   upsertShoppingItem,
   deleteShoppingItem,
@@ -169,13 +170,14 @@ export default function Compras() {
                 key={opt.value}
                 type="button"
                 onClick={() => setStoreFilter(opt.value)}
-                className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                   storeFilter === opt.value
                     ? 'bg-brand-500 text-white dark:bg-brand-600'
                     : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700'
                 }`}
               >
-                {opt.value === UNGROUPED ? '🏪 Sem mercado' : `🏪 ${opt.value}`}{' '}
+                <Icon name="store" className="h-3.5 w-3.5" />
+                {opt.value === UNGROUPED ? 'Sem mercado' : opt.value}{' '}
                 <span className="opacity-70">({opt.count})</span>
               </button>
             ))}
@@ -200,7 +202,7 @@ export default function Compras() {
         }`}
       >
         {adding ? (
-          '✕'
+          <Icon name="x" className="h-7 w-7" />
         ) : (
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -245,9 +247,10 @@ export default function Compras() {
           </p>
           <Link
             to="/receitas"
-            className="text-sm text-brand-600 hover:underline dark:text-brand-400"
+            className="inline-flex items-center gap-1 text-sm text-brand-600 hover:underline dark:text-brand-400"
           >
-            Adicione itens a partir de uma receita →
+            Adicione itens a partir de uma receita{' '}
+            <Icon name="arrow-right" className="h-4 w-4" />
           </Link>
         </div>
       ) : grouped.length === 0 ? (
@@ -278,7 +281,7 @@ export default function Compras() {
                         }`}
                         aria-label={item.checked ? 'Desmarcar' : 'Marcar comprado'}
                       >
-                        {item.checked && '✓'}
+                        {item.checked && <Icon name="check" className="h-3.5 w-3.5" />}
                       </button>
                       <button
                         type="button"
@@ -309,11 +312,16 @@ export default function Compras() {
                             </span>
                           )}
                           {item.source === 'from_recipe' && (
-                            <span>
-                              ← {recipe ? recipe.name : 'receita'}
+                            <span className="inline-flex items-center gap-1">
+                              <Icon name="arrow-left" className="h-3.5 w-3.5" />
+                              {recipe ? recipe.name : 'receita'}
                             </span>
                           )}
-                          {item.source === 'from_pantry' && <span>← vencido na dispensa</span>}
+                          {item.source === 'from_pantry' && (
+                            <span className="inline-flex items-center gap-1">
+                              <Icon name="arrow-left" className="h-3.5 w-3.5" /> vencido na dispensa
+                            </span>
+                          )}
                         </div>
                       </button>
                       <label
@@ -373,7 +381,9 @@ export default function Compras() {
           {totalChecked > 0 && (
             <div className="mb-3 rounded-xl border border-brand-200 bg-brand-50 p-3 dark:border-brand-900/40 dark:bg-brand-900/20">
               <p className="mb-2 text-xs font-medium text-brand-800 dark:text-brand-300">
-                {totalChecked} item(s) marcado(s) → enviar para a Dispensa
+                <span className="inline-flex items-center gap-1">
+                  {totalChecked} item(s) marcado(s) <Icon name="arrow-right" className="h-3.5 w-3.5" /> enviar para a Dispensa
+                </span>
               </p>
               <button
                 type="button"
@@ -484,7 +494,7 @@ function QuickAdd({
             label: i.brand ? `${i.brand} — ${i.name}` : i.name,
           }))}
           placeholder="Selecione um ingrediente…"
-          createLabel="➕ Criar novo ingrediente"
+          createLabel="Criar novo ingrediente"
           onCreate={(q) => {
             const params = new URLSearchParams();
             params.set('return', '/compras');
@@ -524,7 +534,7 @@ function QuickAdd({
           onChange={setStore}
           options={knownStores.map((s) => ({ value: s, label: s }))}
           placeholder="— Sem mercado"
-          createLabel="➕ Outro mercado…"
+          createLabel="Outro mercado…"
           onCreate={(q) => { if (q?.trim()) setStore(q.trim()); }}
           className="text-sm"
         />

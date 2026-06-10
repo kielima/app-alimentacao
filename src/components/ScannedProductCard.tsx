@@ -1,4 +1,5 @@
 import type { OffLookupResult } from '../lib/openFoodFacts';
+import Icon from './Icon';
 
 export type ScanAction =
   | 'add-shopping'
@@ -7,10 +8,10 @@ export type ScanAction =
   | 'manual-not-found';
 
 const ACTION_LABELS: Record<ScanAction, { label: string; icon: string }> = {
-  'add-shopping': { label: 'Adicionar à lista de compras', icon: '🛒' },
-  'add-pantry': { label: 'Adicionar à dispensa', icon: '🥫' },
-  'create-ingredient': { label: 'Salvar como ingrediente', icon: '➕' },
-  'manual-not-found': { label: 'Cadastrar manualmente', icon: '✍️' },
+  'add-shopping': { label: 'Adicionar à lista de compras', icon: 'shopping-cart' },
+  'add-pantry': { label: 'Adicionar à dispensa', icon: 'can' },
+  'create-ingredient': { label: 'Salvar como ingrediente', icon: 'plus' },
+  'manual-not-found': { label: 'Cadastrar manualmente', icon: 'pencil' },
 };
 
 interface Props {
@@ -47,8 +48,8 @@ export default function ScannedProductCard({
               loading="lazy"
             />
           ) : (
-            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-zinc-800 text-3xl">
-              📦
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-zinc-800 text-zinc-400">
+              <Icon name="package" className="h-8 w-8" />
             </div>
           )}
           <div className="min-w-0 flex-1">
@@ -92,7 +93,7 @@ export default function ScannedProductCard({
               onClick={() => onAction(action)}
               className="flex w-full items-center gap-2 rounded-full bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
             >
-              <span aria-hidden>{label.icon}</span>
+              <Icon name={label.icon} className="h-4 w-4" />
               {label.label}
             </button>
           );

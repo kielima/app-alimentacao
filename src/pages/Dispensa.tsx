@@ -9,6 +9,7 @@ import TrashIcon from '../components/TrashIcon';
 import { usePantry, type PantryFilter } from '../hooks/usePantry';
 import { useLongPress } from '../hooks/useLongPress';
 import { expiryStatus, expiryLabel, statusColor, statusIcon } from '../utils/expiry';
+import Icon from '../components/Icon';
 import { unitLabel } from '../utils/units';
 import { upsertShoppingItem } from '../data/shoppingList';
 import { upsertPantryItem, deletePantryItem } from '../data/pantry';
@@ -16,12 +17,12 @@ import { useAllIngredients } from '../data/ingredients';
 import { handleScanForPantry } from '../lib/scanActions';
 import type { PantryItem } from '../types/pantry';
 
-const filterChips: { value: PantryFilter; label: string }[] = [
-  { value: 'todos', label: 'Todos' },
-  { value: 'expired', label: '❌ Vencidos' },
-  { value: 'soon', label: '⚠️ Vencendo' },
-  { value: 'fresh', label: '✅ Disponíveis' },
-  { value: 'no-date', label: '— Sem data' },
+const filterChips: { value: PantryFilter; label: string; icon: string | null }[] = [
+  { value: 'todos', label: 'Todos', icon: null },
+  { value: 'expired', label: 'Vencidos', icon: 'x-circle' },
+  { value: 'soon', label: 'Vencendo', icon: 'alert-triangle' },
+  { value: 'fresh', label: 'Disponíveis', icon: 'check-circle' },
+  { value: 'no-date', label: 'Sem data', icon: null },
 ];
 
 export default function Dispensa() {
@@ -128,12 +129,13 @@ export default function Dispensa() {
                   key={c.value}
                   type="button"
                   onClick={() => setFilter(c.value)}
-                  className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                  className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                     filter === c.value
                       ? 'bg-brand-500 text-white dark:bg-brand-600'
                       : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700'
                   }`}
                 >
+                  {c.icon && <Icon name={c.icon} className="h-3.5 w-3.5" />}
                   {c.label} {count > 0 && <span className="opacity-70">({count})</span>}
                 </button>
               );
@@ -199,7 +201,7 @@ export default function Dispensa() {
           actions={[
             {
               label: 'Duplicar item',
-              icon: <span className="text-lg">📋</span>,
+              icon: <Icon name="clipboard" className="h-4 w-4" />,
               onClick: () => duplicatePantryItem(actionItem),
             },
             {
@@ -238,9 +240,13 @@ function PantryCard({ item, onOpen, onSendToList, onLongPress }: PantryCardProps
         className="cursor-pointer select-none rounded-xl border border-zinc-200 bg-white p-3 hover:bg-zinc-50 [-webkit-touch-callout:none] dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800/60"
       >
         <div className="flex items-start gap-2">
-          <span className="text-xl" aria-hidden>
-            {statusIcon(status)}
-          </span>
+          {statusIcon(status) ? (
+            <Icon name={statusIcon(status)!} className={`h-5 w-5 shrink-0 ${statusColor(status)}`} />
+          ) : (
+            <span className={`text-xl leading-none ${statusColor(status)}`} aria-hidden>
+              —
+            </span>
+          )}
           <div className="min-w-0 flex-1">
             <span className="block truncate text-sm font-medium">{item.raw_text}</span>
             <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
@@ -264,7 +270,7 @@ function PantryCard({ item, onOpen, onSendToList, onLongPress }: PantryCardProps
             aria-label="Adicionar à lista de compras"
             title="Adicionar à lista de compras"
           >
-            🛒
+            <Icon name="shopping-cart" className="h-4 w-4" />
           </button>
         </div>
       </div>

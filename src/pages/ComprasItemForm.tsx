@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import TrashIcon from '../components/TrashIcon';
+import Icon from '../components/Icon';
 import {
   getAllIngredients,
   findIngredientById,
@@ -314,7 +315,7 @@ export default function ComprasItemForm() {
               {s}
             </option>
           ))}
-          <option value="__outro__">➕ Outro...</option>
+          <option value="__outro__">Outro...</option>
         </select>
         {storeSelect === '__outro__' && (
           <input
@@ -369,9 +370,7 @@ export default function ComprasItemForm() {
                     to={`/receitas/${r.id}`}
                     className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
                   >
-                    <span aria-hidden className="text-lg">
-                      {cat?.icon ?? '🍽️'}
-                    </span>
+                    <Icon name={cat?.icon ?? 'utensils'} className="h-5 w-5 shrink-0" />
                     <span className="min-w-0 flex-1 truncate">{r.name}</span>
                     <span className="text-zinc-400 dark:text-zinc-500">›</span>
                   </Link>
@@ -399,9 +398,7 @@ export default function ComprasItemForm() {
                     to={`/refeicoes/${m.id}`}
                     className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
                   >
-                    <span aria-hidden className="text-lg">
-                      {slotDef?.icon ?? '🍽️'}
-                    </span>
+                    <Icon name={slotDef?.icon ?? 'utensils'} className="h-5 w-5 shrink-0" />
                     <span className="min-w-0 flex-1 truncate">{m.name}</span>
                     <span className="text-zinc-400 dark:text-zinc-500">›</span>
                   </Link>
@@ -415,9 +412,9 @@ export default function ComprasItemForm() {
       <Link
         to="/compras"
         aria-label="Cancelar"
-        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-cream text-2xl text-brand-700 shadow-lg hover:bg-brand-100 dark:bg-brand-cream dark:text-brand-700 dark:hover:bg-brand-100"
+        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-cream text-brand-700 shadow-lg hover:bg-brand-100 dark:bg-brand-cream dark:text-brand-700 dark:hover:bg-brand-100"
       >
-        ✕
+        <Icon name="x" className="h-7 w-7" />
       </Link>
     </form>
   );

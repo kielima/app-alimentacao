@@ -2,6 +2,7 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import TrashIcon from '../components/TrashIcon';
+import Icon from '../components/Icon';
 import { getMarket, upsertMarket, deleteMarket } from '../data/markets';
 import { useShoppingItems } from '../data/shoppingList';
 import { useAllIngredients } from '../data/ingredients';
@@ -208,14 +209,15 @@ export default function MercadoForm() {
 
       {matchingShoppingItems.length > 0 && (
         <section className="mb-4 rounded-xl border border-brand-200 bg-brand-50 p-3 dark:border-brand-900/40 dark:bg-brand-900/20">
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-brand-700 dark:text-brand-300">
-            🛒 {matchingShoppingItems.length} item
+          <h2 className="mb-2 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-brand-700 dark:text-brand-300">
+            <Icon name="shopping-cart" className="h-4 w-4" />
+            {matchingShoppingItems.length} item
             {matchingShoppingItems.length !== 1 ? 's' : ''} na lista de compras
           </h2>
           <ul className="space-y-1">
             {matchingShoppingItems.map((item) => (
               <li key={item.id} className="flex items-center gap-2">
-                {item.checked && <span className="text-xs text-zinc-400">✓</span>}
+                {item.checked && <Icon name="check" className="h-3.5 w-3.5 text-zinc-400" />}
                 <span
                   className={`text-sm ${
                     item.checked
@@ -235,9 +237,10 @@ export default function MercadoForm() {
           </ul>
           <Link
             to="/compras"
-            className="mt-2 block text-xs text-brand-600 hover:underline dark:text-brand-400"
+            className="mt-2 inline-flex items-center gap-1 text-xs text-brand-600 hover:underline dark:text-brand-400"
           >
-            Ver lista de compras →
+            Ver lista de compras
+            <Icon name="arrow-right" className="h-4 w-4" />
           </Link>
         </section>
       )}
@@ -245,9 +248,9 @@ export default function MercadoForm() {
       <Link
         to="/mercados"
         aria-label="Cancelar"
-        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-cream text-2xl text-brand-700 shadow-lg hover:bg-brand-100 dark:bg-brand-cream dark:text-brand-700 dark:hover:bg-brand-100"
+        className="fixed bottom-4 right-4 z-[60] inline-flex h-14 w-14 items-center justify-center rounded-full bg-brand-cream text-brand-700 shadow-lg hover:bg-brand-100 dark:bg-brand-cream dark:text-brand-700 dark:hover:bg-brand-100"
       >
-        ✕
+        <Icon name="x" className="h-6 w-6" />
       </Link>
     </form>
   );

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme';
 import { useOffContributions } from '../data/offContributions';
+import Icon from './Icon';
 
 type Tab = { to: string; label: string };
 
@@ -48,7 +49,7 @@ export default function NavMenu({ onSignOut }: { onSignOut: () => void }) {
   const pendingOff = offDrafts.filter((d) => !d.submitted_at).length;
   const nextTheme = theme === 'dark' ? 'light' : theme === 'light' ? 'system' : 'dark';
   const themeLabel = theme === 'dark' ? 'Escuro' : theme === 'light' ? 'Claro' : 'Sistema';
-  const themeIcon = theme === 'dark' ? '🌙' : theme === 'light' ? '☀️' : '🖥️';
+  const themeIcon = theme === 'dark' ? 'moon' : theme === 'light' ? 'sun' : 'monitor';
 
   const [tabs, setTabs] = useState<Tab[]>(() => loadStoredOrder());
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -153,7 +154,7 @@ export default function NavMenu({ onSignOut }: { onSignOut: () => void }) {
         aria-label="Abrir menu de navegação"
         aria-expanded={open}
       >
-        ☰
+        <Icon name="menu" className="h-5 w-5" />
       </button>
 
       <div
@@ -181,7 +182,7 @@ export default function NavMenu({ onSignOut }: { onSignOut: () => void }) {
             className="rounded-full p-2 text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
             aria-label="Fechar menu"
           >
-            ☰
+            <Icon name="x" className="h-5 w-5" />
           </button>
         </div>
 
@@ -260,7 +261,7 @@ export default function NavMenu({ onSignOut }: { onSignOut: () => void }) {
               onClick={() => setOpen(false)}
               className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-base font-medium text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800/50"
             >
-              <span className="text-lg" aria-hidden>📤</span>
+              <Icon name="upload" className="h-5 w-5" />
               <span className="flex-1">Contribuições OFF</span>
               {pendingOff > 0 && (
                 <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
@@ -275,7 +276,7 @@ export default function NavMenu({ onSignOut }: { onSignOut: () => void }) {
             className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-base font-medium text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800/50"
             aria-label={`Tema: ${themeLabel}. Clique para alternar.`}
           >
-            <span className="text-lg" aria-hidden>{themeIcon}</span>
+            <Icon name={themeIcon} className="h-5 w-5" />
             <span>Tema: {themeLabel}</span>
           </button>
           <button

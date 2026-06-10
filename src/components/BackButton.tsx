@@ -1,4 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
+import Icon from './Icon';
 
 function fallbackPath(pathname: string): string {
   if (pathname.startsWith('/ingredientes')) return '/ingredientes';
@@ -26,7 +27,7 @@ export default function BackButton() {
       className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 px-3 text-base text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
       aria-label="Voltar"
     >
-      ←
+      <Icon name="arrow-left" className="h-5 w-5" />
     </button>
   );
 }

@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import Icon from '../components/Icon';
 import {
   deleteOffContribution,
   upsertOffContribution,
@@ -35,9 +36,9 @@ export default function OffContribuicoes() {
       <div className="mb-4 flex items-center gap-3">
         <Link
           to="/ingredientes"
-          className="rounded-full bg-zinc-100 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+          className="inline-flex items-center justify-center rounded-full bg-zinc-100 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
         >
-          ←
+          <Icon name="arrow-left" className="h-4 w-4" />
         </Link>
         <h1 className="flex-1 text-lg font-semibold">Contribuições pro Open Food Facts</h1>
       </div>
@@ -79,9 +80,10 @@ export default function OffContribuicoes() {
                       href={buildOffNewProductUrl(d.barcode, d.product_name, d.brands)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="rounded-full bg-brand-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-600"
+                      className="inline-flex items-center gap-1 rounded-full bg-brand-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-600"
                     >
-                      Abrir no Open Food Facts ↗
+                      Abrir no Open Food Facts
+                      <Icon name="arrow-up-right" className="h-4 w-4" />
                     </a>
                     <button
                       type="button"

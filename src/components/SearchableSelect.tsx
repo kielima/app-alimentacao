@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import Icon from './Icon';
 
 export interface SearchableOption {
   value: string;
@@ -72,7 +73,7 @@ export default function SearchableSelect({
           }`}
         >
           <span className="truncate">{value ? selectedLabel : placeholder}</span>
-          <span className="shrink-0 text-xs text-zinc-400">▼</span>
+          <Icon name="chevron-down" className="h-4 w-4 shrink-0 text-zinc-400" />
         </button>
       )}
 

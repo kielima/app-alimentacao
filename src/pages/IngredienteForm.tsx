@@ -2,6 +2,7 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import SearchableSelect from '../components/SearchableSelect';
+import Icon from '../components/Icon';
 import { uniqueSlug } from '../utils/slug';
 import { upsertUserIngredient } from '../data/userIngredients';
 import { allIngredientIds, findIngredientById, useAllIngredients } from '../data/ingredients';
@@ -219,7 +220,7 @@ export default function IngredienteForm() {
           onChange={(v) => setCategory(v)}
           options={categoryOptions}
           placeholder="Sem categoria"
-          createLabel={(q) => `➕ Adicionar "${q.trim()}"`}
+          createLabel={(q) => `Adicionar "${q.trim()}"`}
           createMode="whenEmpty"
           onCreate={(q) => {
             const trimmed = (q ?? '').trim();
@@ -311,9 +312,9 @@ export default function IngredienteForm() {
         type="button"
         onClick={() => navigate(-1)}
         aria-label="Cancelar"
-        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-cream text-2xl text-brand-700 shadow-lg hover:bg-brand-100 dark:bg-brand-cream dark:text-brand-700 dark:hover:bg-brand-100"
+        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-cream text-brand-700 shadow-lg hover:bg-brand-100 dark:bg-brand-cream dark:text-brand-700 dark:hover:bg-brand-100"
       >
-        ✕
+        <Icon name="x" className="h-7 w-7" />
       </button>
     </form>
   );

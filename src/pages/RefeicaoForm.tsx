@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
+import Icon from '../components/Icon';
 import SearchableSelect from '../components/SearchableSelect';
 import TrashIcon from '../components/TrashIcon';
 import { useAllIngredients } from '../data/ingredients';
@@ -308,13 +309,13 @@ export default function RefeicaoForm() {
                   }))
                 }
                 aria-pressed={selected}
-                className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                   selected
                     ? 'bg-brand-500 text-white dark:bg-brand-600'
                     : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700'
                 }`}
               >
-                <span aria-hidden>{m.icon}</span> {m.label}
+                <Icon name={m.icon} className="h-3.5 w-3.5" /> {m.label}
               </button>
             );
           })}
@@ -354,7 +355,9 @@ export default function RefeicaoForm() {
                       : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300'
                   }`}
                 >
-                  🍳 Receita
+                  <span className="inline-flex items-center gap-1">
+                    <Icon name="chef-hat" className="h-3.5 w-3.5" /> Receita
+                  </span>
                 </button>
                 <button
                   type="button"
@@ -365,7 +368,9 @@ export default function RefeicaoForm() {
                       : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300'
                   }`}
                 >
-                  🥕 Ingrediente
+                  <span className="inline-flex items-center gap-1">
+                    <Icon name="carrot" className="h-3.5 w-3.5" /> Ingrediente
+                  </span>
                 </button>
                 <button
                   type="button"
@@ -398,7 +403,7 @@ export default function RefeicaoForm() {
                       }))
                 }
                 placeholder="— Selecione —"
-                createLabel={`➕ Criar ${it.kind === 'recipe' ? 'nova receita' : 'novo ingrediente'}`}
+                createLabel={`Criar ${it.kind === 'recipe' ? 'nova receita' : 'novo ingrediente'}`}
                 onCreate={(q) => {
                   const draft: Draft = {
                     state: stateRef.current,
@@ -467,9 +472,9 @@ export default function RefeicaoForm() {
         type="button"
         onClick={() => navigate(-1)}
         aria-label="Cancelar"
-        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-cream text-2xl text-brand-700 shadow-lg hover:bg-brand-100 dark:bg-brand-cream dark:text-brand-700 dark:hover:bg-brand-100"
+        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-cream text-brand-700 shadow-lg hover:bg-brand-100 dark:bg-brand-cream dark:text-brand-700 dark:hover:bg-brand-100"
       >
-        ✕
+        <Icon name="x" className="h-7 w-7" />
       </button>
     </form>
   );

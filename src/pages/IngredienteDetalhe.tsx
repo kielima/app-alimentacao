@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import TrashIcon from '../components/TrashIcon';
+import Icon from '../components/Icon';
 import { findIngredientById, isSeedIngredient } from '../data/ingredients';
 import { deleteUserIngredient, getUserIngredientById } from '../data/userIngredients';
 import { hideIngredient } from '../data/hiddenIngredients';
@@ -199,7 +200,13 @@ export default function IngredienteDetalhe() {
           aria-label={addedToCart ? 'Remover da lista de compras' : 'Adicionar à lista de compras'}
           title={addedToCart ? 'Remover da lista de compras' : 'Adicionar à lista de compras'}
         >
-          {addedToCart ? '✓' : '🛒'}
+          <span className="inline-flex items-center justify-center">
+            {addedToCart ? (
+              <Icon name="check" className="h-4 w-4" />
+            ) : (
+              <Icon name="shopping-cart" className="h-4 w-4" />
+            )}
+          </span>
         </button>
         <button
           type="button"
@@ -212,7 +219,13 @@ export default function IngredienteDetalhe() {
           aria-label={addedToPantry ? 'Remover da dispensa' : 'Adicionar à dispensa'}
           title={addedToPantry ? 'Remover da dispensa' : 'Adicionar à dispensa'}
         >
-          {addedToPantry ? '✓' : '🥫'}
+          <span className="inline-flex items-center justify-center">
+            {addedToPantry ? (
+              <Icon name="check" className="h-4 w-4" />
+            ) : (
+              <Icon name="can" className="h-4 w-4" />
+            )}
+          </span>
         </button>
         <button
           type="button"
@@ -241,8 +254,9 @@ export default function IngredienteDetalhe() {
           (ingredient.needs_review &&
             !ingredient.tbca_code &&
             !ingredient.off_barcode)) && (
-          <p className="mt-2 inline-block rounded-md bg-amber-100 px-2 py-1 text-xs text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-            ⚠️ Valores nutricionais ainda em revisão
+          <p className="mt-2 inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-1 text-xs text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+            <Icon name="alert-triangle" className="h-4 w-4" />
+            Valores nutricionais ainda em revisão
           </p>
         )}
       </div>
@@ -315,9 +329,10 @@ export default function IngredienteDetalhe() {
             <button
               type="button"
               onClick={() => setShowExtras((s) => !s)}
-              className="text-sm text-brand-600 hover:underline dark:text-brand-400"
+              className="inline-flex items-center gap-1 text-sm text-brand-600 hover:underline dark:text-brand-400"
             >
-              {showExtras ? '▾' : '▸'} Micronutrientes ({Object.keys(ingredient.extras_per_100).length})
+              <Icon name={showExtras ? 'chevron-down' : 'chevron-right'} className="h-4 w-4" />
+              Micronutrientes ({Object.keys(ingredient.extras_per_100).length})
             </button>
             {showExtras && (
               <table className="mt-2 w-full text-sm">
@@ -345,7 +360,7 @@ export default function IngredienteDetalhe() {
           <div className="mt-4 space-y-2 border-t border-zinc-200 pt-3 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
             {ingredient.tbca_code && (
               <p>
-                <span aria-hidden>🍽️ </span>
+                <Icon name="utensils" className="mr-1 inline-block h-4 w-4 align-text-bottom" />
                 Composição nutricional baseada na{' '}
                 <a
                   href="http://www.tbca.net.br"
@@ -360,7 +375,7 @@ export default function IngredienteDetalhe() {
             )}
             {ingredient.off_barcode && (
               <p>
-                <span aria-hidden>🏷️ </span>
+                <Icon name="tag" className="mr-1 inline-block h-4 w-4 align-text-bottom" />
                 Dados do rótulo via{' '}
                 <a
                   href={`https://br.openfoodfacts.org/produto/${ingredient.off_barcode}`}
@@ -391,9 +406,7 @@ export default function IngredienteDetalhe() {
                     to={`/receitas/${r.id}`}
                     className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
                   >
-                    <span aria-hidden className="text-lg">
-                      {cat?.icon ?? '🍽️'}
-                    </span>
+                    <Icon name={cat?.icon ?? 'utensils'} className="h-5 w-5 shrink-0" />
                     <span className="min-w-0 flex-1 truncate">{r.name}</span>
                     <span className="text-zinc-400 dark:text-zinc-500">›</span>
                   </Link>
@@ -421,9 +434,7 @@ export default function IngredienteDetalhe() {
                     to={`/refeicoes/${m.id}`}
                     className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
                   >
-                    <span aria-hidden className="text-lg">
-                      {slotDef?.icon ?? '🍽️'}
-                    </span>
+                    <Icon name={slotDef?.icon ?? 'utensils'} className="h-5 w-5 shrink-0" />
                     <span className="min-w-0 flex-1 truncate">{m.name}</span>
                     <span className="text-zinc-400 dark:text-zinc-500">›</span>
                   </Link>
@@ -458,7 +469,7 @@ export default function IngredienteDetalhe() {
 
       {ingredient.ceagesp_slug && (
         <p className="mt-6 border-t border-zinc-200 pt-3 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-          <span aria-hidden>🥬 </span>
+          <Icon name="leaf" className="mr-1 inline-block h-4 w-4 align-text-bottom" />
           Guia de escolha, variedades e sazonalidade no{' '}
           <a
             href={`https://ceagesp.gov.br/hortiescolha/hortipedia/${ingredient.ceagesp_slug}/`}
