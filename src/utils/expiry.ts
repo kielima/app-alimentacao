@@ -55,16 +55,17 @@ export function statusColor(status: ExpiryStatus): string {
   }
 }
 
-export function statusIcon(status: ExpiryStatus): string {
+/** Nome do glifo do componente <Icon /> para cada status (null = sem ícone). */
+export function statusIcon(status: ExpiryStatus): string | null {
   switch (status) {
     case 'expired':
-      return '❌';
+      return 'x-circle';
     case 'soon':
-      return '⚠️';
+      return 'alert-triangle';
     case 'fresh':
-      return '✅';
+      return 'check-circle';
     case 'no-date':
-      return '—';
+      return null;
   }
 }
 

@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
 import { useMemo } from 'react';
 import HeaderSlot from '../components/HeaderSlot';
+import Icon from '../components/Icon';
 import { findMealById } from '../data/meals';
 import { findIngredientById } from '../data/ingredients';
 import { findRecipeById } from '../data/recipes';
@@ -44,7 +45,7 @@ export default function RefeicaoDetalhe() {
               key={slot.value}
               className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
             >
-              <span aria-hidden>{slot.icon}</span> {slot.label}
+              <Icon name={slot.icon} className="h-3.5 w-3.5" /> {slot.label}
             </span>
           ))}
         </div>
@@ -96,7 +97,7 @@ export default function RefeicaoDetalhe() {
                         to={`/receitas/${recipe.id}`}
                         className="flex items-center gap-2 text-sm hover:text-brand-600 dark:hover:text-brand-400"
                       >
-                        <span aria-hidden>🍳</span>
+                        <Icon name="chef-hat" className="h-4 w-4 shrink-0" />
                         <span className="flex-1">{recipe.name}</span>
                         {item.quantity != null && (
                           <span className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -124,7 +125,7 @@ export default function RefeicaoDetalhe() {
                         to={`/ingredientes/${ing.id}`}
                         className="flex items-center gap-2 text-sm hover:text-brand-600 dark:hover:text-brand-400"
                       >
-                        <span aria-hidden>🥕</span>
+                        <Icon name="carrot" className="h-4 w-4 shrink-0" />
                         <span className="flex-1">{ing.brand ? `${ing.brand} — ${ing.name}` : ing.name}</span>
                         {item.quantity != null && (
                           <span className="text-xs text-zinc-500 dark:text-zinc-400">

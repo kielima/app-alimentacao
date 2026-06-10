@@ -1,10 +1,11 @@
 import { NavLink } from 'react-router-dom';
+import Icon from './Icon';
 
 const tabs = [
-  { to: '/plano', icon: '📅', label: 'Plano' },
-  { to: '/receitas', icon: '🍳', label: 'Receitas' },
-  { to: '/dispensa', icon: '🥫', label: 'Dispensa' },
-  { to: '/compras', icon: '🛒', label: 'Compras' },
+  { to: '/plano', icon: 'calendar', label: 'Plano' },
+  { to: '/receitas', icon: 'chef-hat', label: 'Receitas' },
+  { to: '/dispensa', icon: 'can', label: 'Dispensa' },
+  { to: '/compras', icon: 'shopping-cart', label: 'Compras' },
 ];
 
 export default function TabBar() {
@@ -26,9 +27,7 @@ export default function TabBar() {
                 }`
               }
             >
-              <span className="text-2xl" aria-hidden>
-                {tab.icon}
-              </span>
+              <Icon name={tab.icon} className="h-6 w-6" />
               <span>{tab.label}</span>
             </NavLink>
           </li>

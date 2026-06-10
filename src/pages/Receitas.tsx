@@ -4,6 +4,7 @@ import HeaderSlot from '../components/HeaderSlot';
 import FilterButton from '../components/FilterButton';
 import CardActionSheet from '../components/CardActionSheet';
 import TrashIcon from '../components/TrashIcon';
+import Icon from '../components/Icon';
 import { recipeCategories, useHiddenSeedRecipes, allRecipeIds } from '../data/recipes';
 import { unhideRecipe } from '../data/hiddenRecipes';
 import { upsertUserRecipe, deleteUserRecipe } from '../data/userRecipes';
@@ -17,7 +18,7 @@ import type { Recipe, RecipeCategoryId } from '../types/recipe';
 import { uniqueSlug } from '../utils/slug';
 
 const categoryChips: { value: RecipeCategoryId | 'todas'; label: string; icon: string }[] = [
-  { value: 'todas', label: 'Todas', icon: '✨' },
+  { value: 'todas', label: 'Todas', icon: 'sparkles' },
   ...recipeCategories.map((c) => ({ value: c.id, label: c.name, icon: c.icon })),
 ];
 
@@ -27,11 +28,11 @@ const completenessChips: { value: CompletenessFilter; label: string }[] = [
   { value: 'revisao', label: 'Em revisão' },
 ];
 
-const ratingChips: { value: RatingFilter; label: string }[] = [
+const ratingChips: { value: RatingFilter; label: string; star?: boolean }[] = [
   { value: 0, label: 'Qualquer' },
-  { value: 3, label: '⭐ 3+' },
-  { value: 4, label: '⭐ 4+' },
-  { value: 5, label: '⭐ 5' },
+  { value: 3, label: '3+', star: true },
+  { value: 4, label: '4+', star: true },
+  { value: 5, label: '5', star: true },
 ];
 
 export default function Receitas() {
@@ -100,7 +101,7 @@ export default function Receitas() {
           <FilterRow label="Categoria">
             {categoryChips.map((c) => (
               <Chip key={c.value} active={category === c.value} onClick={() => setCategory(c.value)}>
-                <span aria-hidden>{c.icon}</span> {c.label}
+                <Icon name={c.icon} className="h-3.5 w-3.5" /> {c.label}
               </Chip>
             ))}
           </FilterRow>
@@ -118,7 +119,7 @@ export default function Receitas() {
           <FilterRow label="Avaliação">
             {ratingChips.map((r) => (
               <Chip key={r.value} active={minRating === r.value} onClick={() => setMinRating(r.value)}>
-                {r.label}
+                {r.star && <Icon name="star" className="h-3.5 w-3.5 text-amber-500" />} {r.label}
               </Chip>
             ))}
           </FilterRow>
@@ -149,7 +150,7 @@ export default function Receitas() {
           actions={[
             {
               label: 'Duplicar receita',
-              icon: <span className="text-lg">📋</span>,
+              icon: <Icon name="clipboard" className="h-4 w-4" />,
               onClick: () => duplicateRecipe(actionRecipe),
             },
             {
@@ -197,21 +198,30 @@ function RecipeCard({ recipe, onLongPress }: { recipe: Recipe; onLongPress: () =
         className="flex select-none items-start gap-3 rounded-xl border border-zinc-200 bg-white p-3 transition-colors hover:border-brand-500 [-webkit-touch-callout:none] dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-400"
       >
         <div
-          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-3xl dark:bg-zinc-800"
+          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800"
           aria-hidden
         >
-          {cat?.icon ?? '🍽️'}
+          <Icon name={cat?.icon ?? 'utensils'} className="h-7 w-7" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium leading-tight">{recipe.name}</p>
-          <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-            {cat?.name}
-            {recipe.prep_time_min ? ` · ⏱ ${recipe.prep_time_min}min` : ''}
+          <p className="mt-0.5 inline-flex flex-wrap items-center gap-x-1 text-xs text-zinc-500 dark:text-zinc-400">
+            <span>{cat?.name}</span>
+            {recipe.prep_time_min ? (
+              <span className="inline-flex items-center gap-0.5">
+                · <Icon name="clock" className="h-3.5 w-3.5" /> {recipe.prep_time_min}min
+              </span>
+            ) : null}
           </p>
           <div className="mt-1 flex items-center gap-1">
             {recipe.rating && (
-              <span className="text-xs text-amber-500" aria-label={`${recipe.rating} estrelas`}>
-                {'⭐'.repeat(recipe.rating)}
+              <span
+                className="inline-flex items-center text-amber-500"
+                aria-label={`${recipe.rating} estrelas`}
+              >
+                {Array.from({ length: recipe.rating }).map((_, i) => (
+                  <Icon key={i} name="star" className="h-3.5 w-3.5" />
+                ))}
               </span>
             )}
             {recipe.needs_review && (
@@ -235,9 +245,10 @@ function HiddenRecipesPanel() {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="text-xs text-zinc-500 hover:text-brand-600 dark:text-zinc-400 dark:hover:text-brand-400"
+        className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-brand-600 dark:text-zinc-400 dark:hover:text-brand-400"
       >
-        {open ? '▾' : '▸'} {hidden.length} receita(s) oculta(s)
+        <Icon name={open ? 'chevron-down' : 'chevron-right'} className="h-3.5 w-3.5" />{' '}
+        {hidden.length} receita(s) oculta(s)
       </button>
       {open && (
         <ul className="mt-2 space-y-1">
@@ -252,10 +263,10 @@ function HiddenRecipesPanel() {
               <button
                 type="button"
                 onClick={() => unhideRecipe(r.id)}
-                className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-700 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-brand-900/30 dark:hover:text-brand-400"
+                className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-700 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-brand-900/30 dark:hover:text-brand-400"
                 aria-label={`Restaurar ${r.name}`}
               >
-                ↺ restaurar
+                <Icon name="rotate-ccw" className="h-3.5 w-3.5" /> restaurar
               </button>
             </li>
           ))}
@@ -291,7 +302,7 @@ function Chip({
     <button
       type="button"
       onClick={onClick}
-      className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+      className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
         active
           ? 'bg-brand-500 text-white dark:bg-brand-600'
           : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700'

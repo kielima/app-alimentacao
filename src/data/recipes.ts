@@ -7,11 +7,12 @@ import { getHiddenRecipeIds, useHiddenRecipeIds } from './hiddenRecipes';
 export const seedRecipes: Recipe[] = [];
 
 // Lookup table fixa: categorias não são user data.
+// `icon` é o nome de um glifo do componente <Icon /> (não mais emoji).
 export const recipeCategories: RecipeCategoryDef[] = [
-  { id: 'pratos-principais', name: 'Pratos Principais', icon: '🍽️' },
-  { id: 'bebidas', name: 'Bebidas', icon: '🍹' },
-  { id: 'sobremesas-e-lanches', name: 'Sobremesas e Lanches', icon: '🍰' },
-  { id: 'molhos-temperos-acompanhamentos', name: 'Molhos, Temperos e Acompanhamentos', icon: '🥣' },
+  { id: 'pratos-principais', name: 'Pratos Principais', icon: 'utensils' },
+  { id: 'bebidas', name: 'Bebidas', icon: 'cup-soda' },
+  { id: 'sobremesas-e-lanches', name: 'Sobremesas e Lanches', icon: 'cake' },
+  { id: 'molhos-temperos-acompanhamentos', name: 'Molhos, Temperos e Acompanhamentos', icon: 'soup' },
 ];
 
 function applyHidden(list: Recipe[], hidden: Set<string>): Recipe[] {

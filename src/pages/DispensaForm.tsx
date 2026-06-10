@@ -14,6 +14,7 @@ import { UNIT_OPTIONS } from '../utils/units';
 import { uniqueSlug } from '../utils/slug';
 import NutritionTable from '../components/NutritionTable';
 import TrashIcon from '../components/TrashIcon';
+import Icon from '../components/Icon';
 import type { PantryItem } from '../types/pantry';
 import type { Unit } from '../types/ingredient';
 
@@ -292,7 +293,7 @@ export default function DispensaForm() {
               {s}
             </option>
           ))}
-          <option value="__outro__">➕ Outro...</option>
+          <option value="__outro__">Outro...</option>
         </select>
         {storeSelect === '__outro__' && (
           <input
@@ -332,9 +333,9 @@ export default function DispensaForm() {
       <Link
         to="/dispensa"
         aria-label="Cancelar"
-        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-cream text-2xl text-brand-700 shadow-lg hover:bg-brand-100 dark:bg-brand-cream dark:text-brand-700 dark:hover:bg-brand-100"
+        className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-cream text-brand-700 shadow-lg hover:bg-brand-100 dark:bg-brand-cream dark:text-brand-700 dark:hover:bg-brand-100"
       >
-        ✕
+        <Icon name="x" className="h-7 w-7" />
       </Link>
     </form>
   );

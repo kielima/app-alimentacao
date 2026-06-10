@@ -3,6 +3,7 @@ import { useBarcodeScanner } from '../hooks/useBarcodeScanner';
 import { isValidEan, lookupBarcode, type OffLookupResult } from '../lib/openFoodFacts';
 import ScannedProductCard from './ScannedProductCard';
 import type { ScanAction } from './ScannedProductCard';
+import Icon from './Icon';
 
 export interface BarcodeScanResult {
   barcode: string;
@@ -90,9 +91,9 @@ export default function BarcodeScannerModal({ open, onClose, onPick, actions }: 
           type="button"
           onClick={onClose}
           aria-label="Fechar"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-800 text-lg text-zinc-200 hover:bg-zinc-700"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-800 text-zinc-200 hover:bg-zinc-700"
         >
-          ✕
+          <Icon name="x" className="h-5 w-5" />
         </button>
         <h2 className="flex-1 text-base font-semibold text-zinc-100">Escanear código de barras</h2>
       </div>

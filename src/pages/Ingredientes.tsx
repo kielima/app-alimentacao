@@ -6,6 +6,7 @@ import FilterButton from '../components/FilterButton';
 import BarcodeScannerModal from '../components/BarcodeScannerModal';
 import CardActionSheet from '../components/CardActionSheet';
 import TrashIcon from '../components/TrashIcon';
+import Icon from '../components/Icon';
 import {
   useIngredients,
   ingredientNeedsReview,
@@ -260,7 +261,7 @@ export default function Ingredientes() {
           actions={[
             {
               label: 'Duplicar ingrediente',
-              icon: <span className="text-lg">📋</span>,
+              icon: <Icon name="clipboard" className="h-4 w-4" />,
               onClick: () => duplicateIngredient(actionIngredient),
             },
             {
@@ -340,7 +341,11 @@ function IngredientCard({
           aria-label={addedToPantry ? 'Remover da dispensa' : 'Adicionar à dispensa'}
           title={addedToPantry ? 'Remover da dispensa' : 'Adicionar à dispensa'}
         >
-          {addedToPantry ? '✓' : '🥫'}
+          {addedToPantry ? (
+            <Icon name="check" className="h-4 w-4" />
+          ) : (
+            <Icon name="can" className="h-4 w-4" />
+          )}
         </button>
         <button
           type="button"
@@ -358,7 +363,11 @@ function IngredientCard({
           aria-label={addedToCart ? 'Remover da lista de compras' : 'Adicionar à lista de compras'}
           title={addedToCart ? 'Remover da lista de compras' : 'Adicionar à lista de compras'}
         >
-          {addedToCart ? '✓' : '🛒'}
+          {addedToCart ? (
+            <Icon name="check" className="h-4 w-4" />
+          ) : (
+            <Icon name="shopping-cart" className="h-4 w-4" />
+          )}
         </button>
         <span className="text-zinc-400" aria-hidden>
           ›

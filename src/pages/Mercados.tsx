@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import CardActionSheet from '../components/CardActionSheet';
 import TrashIcon from '../components/TrashIcon';
+import Icon from '../components/Icon';
 import { useMarkets, upsertMarket, deleteMarket } from '../data/markets';
 import { useShoppingItems } from '../data/shoppingList';
 import { useAllIngredients } from '../data/ingredients';
@@ -110,7 +111,10 @@ export default function Mercados() {
               onClick={() => navigate('/mercados/novo')}
               className="text-sm text-brand-600 hover:underline dark:text-brand-400"
             >
-              Adicionar primeiro mercado →
+              <span className="inline-flex items-center gap-1">
+                Adicionar primeiro mercado
+                <Icon name="arrow-right" className="h-4 w-4" />
+              </span>
             </button>
           )}
         </div>
@@ -139,7 +143,7 @@ export default function Mercados() {
           actions={[
             {
               label: 'Duplicar mercado',
-              icon: <span className="text-lg">📋</span>,
+              icon: <Icon name="clipboard" className="h-4 w-4" />,
               onClick: () => duplicateMarket(actionMarket),
             },
             {
@@ -192,8 +196,9 @@ function MarketCard({ market, shopCount, ingNames, onLongPress }: MarketCardProp
               </span>
             )}
             {shopCount > 0 && (
-              <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-medium text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
-                🛒 {shopCount} na lista
+              <span className="inline-flex items-center gap-1 rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-medium text-brand-700 dark:bg-brand-900/40 dark:text-brand-300">
+                <Icon name="shopping-cart" className="h-4 w-4" />
+                {shopCount} na lista
               </span>
             )}
           </div>

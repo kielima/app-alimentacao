@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigationType } from 'react-router-dom';
 import NavMenu from './components/NavMenu';
 import BackButton from './components/BackButton';
+import Icon from './components/Icon';
 import { HEADER_SLOT_ID } from './components/HeaderSlot';
 import LoginScreen from './components/LoginScreen';
 import PendingScreen from './components/PendingScreen';
@@ -39,7 +40,7 @@ function PlanoHeaderStrip() {
         className="rounded-full bg-zinc-100 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
         aria-label="Dia anterior"
       >
-        ◀
+        <Icon name="chevron-left" className="h-4 w-4" />
       </button>
       <select
         value={day}
@@ -59,7 +60,7 @@ function PlanoHeaderStrip() {
         className="rounded-full bg-zinc-100 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
         aria-label="Próximo dia"
       >
-        ▶
+        <Icon name="chevron-right" className="h-4 w-4" />
       </button>
     </div>
   );
@@ -76,7 +77,7 @@ function PlanTypeToggleButton() {
       aria-label={`${isTraining ? 'Dia de Treino' : 'Dia de Descanso'}. Clique para alternar.`}
       title={isTraining ? 'Dia de Treino' : 'Dia de Descanso'}
     >
-      <span aria-hidden>{isTraining ? '🏋️' : '😴'}</span>
+      <Icon name={isTraining ? 'dumbbell' : 'bed'} className="h-5 w-5" />
     </button>
   );
 }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import HeaderSlot from '../components/HeaderSlot';
+import Icon from '../components/Icon';
 import { setUserProfile, useUserProfile } from '../data/userProfile';
 import { useAuth } from '../hooks/useAuth';
 import {
@@ -669,8 +670,9 @@ function ImportConfirmation({
       </fieldset>
 
       {strategy === 'replace' && (
-        <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-200">
-          ⚠️ Esta opção apaga dados não presentes no backup. Recomendado exportar antes.
+        <div className="inline-flex items-center gap-1 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-200">
+          <Icon name="alert-triangle" className="h-4 w-4 shrink-0" />
+          Esta opção apaga dados não presentes no backup. Recomendado exportar antes.
         </div>
       )}
 
@@ -792,9 +794,10 @@ function ResetButton({ onClick, title }: { onClick: () => void; title: string })
       onClick={onClick}
       title={title}
       aria-label={title}
-      className="ml-1 rounded px-1 text-sm text-brand-600 hover:underline dark:text-brand-400"
+      className="ml-1 inline-flex items-center gap-1 rounded px-1 text-sm text-brand-600 hover:underline dark:text-brand-400"
     >
-      ↺ padrão
+      <Icon name="rotate-ccw" className="h-4 w-4" />
+      padrão
     </button>
   );
 }

@@ -43,14 +43,15 @@ export const DAYS_OF_WEEK: { value: DayOfWeek; label: string; short: string }[] 
   { value: 6, label: 'Domingo', short: 'Dom' },
 ];
 
+// `icon` é o nome de um glifo do componente <Icon /> (não mais emoji).
 export const MEAL_TYPES: { value: MealType; label: string; icon: string }[] = [
-  { value: 'cafe-manha', label: 'Café da Manhã', icon: '☕' },
-  { value: 'lanche-manha', label: 'Lanche da Manhã', icon: '🥪' },
-  { value: 'almoco', label: 'Almoço', icon: '🥗' },
-  { value: 'pre-treino', label: 'Pré-Treino', icon: '🏋️' },
-  { value: 'pos-treino', label: 'Pós-Treino', icon: '💪' },
-  { value: 'jantar', label: 'Jantar', icon: '🍽️' },
-  { value: 'ceia', label: 'Ceia', icon: '🌙' },
+  { value: 'cafe-manha', label: 'Café da Manhã', icon: 'coffee' },
+  { value: 'lanche-manha', label: 'Lanche da Manhã', icon: 'sandwich' },
+  { value: 'almoco', label: 'Almoço', icon: 'salad' },
+  { value: 'pre-treino', label: 'Pré-Treino', icon: 'dumbbell' },
+  { value: 'pos-treino', label: 'Pós-Treino', icon: 'zap' },
+  { value: 'jantar', label: 'Jantar', icon: 'utensils' },
+  { value: 'ceia', label: 'Ceia', icon: 'moon' },
 ];
 
 /**
