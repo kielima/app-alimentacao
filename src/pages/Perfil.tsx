@@ -22,6 +22,7 @@ import {
   type ImportResult,
   type ImportStrategy,
 } from '../utils/dataImport';
+import { downloadMealsMarkdown } from '../utils/mealsMarkdown';
 import {
   computeTargets,
   getDefaultFatPct,
@@ -460,12 +461,20 @@ function BackupSection() {
   const [strategy, setStrategy] = useState<ImportStrategy>('upsert');
   const [importError, setImportError] = useState<string | null>(null);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const [lastMealsExport, setLastMealsExport] = useState<{ at: number; count: number } | null>(
+    null,
+  );
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   function handleExport() {
     const payload = buildExportPayload();
     downloadExport(payload);
     setLastExport({ at: Date.now(), summary: exportSummary(payload) });
+  }
+
+  function handleExportMealsMarkdown() {
+    const count = downloadMealsMarkdown();
+    setLastMealsExport({ at: Date.now(), count });
   }
 
   async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
@@ -533,6 +542,25 @@ function BackupSection() {
                     </li>
                   ))}
               </ul>
+            </div>
+          )}
+        </div>
+
+        <div className="border-t border-zinc-200 pt-3 dark:border-zinc-700">
+          <p className="text-sm text-zinc-700 dark:text-zinc-300">
+            Exporte suas refeições com as composições completas (itens, quantidades e
+            nutrição) em um arquivo Markdown legível.
+          </p>
+          <button
+            type="button"
+            onClick={handleExportMealsMarkdown}
+            className="mt-3 inline-flex items-center gap-2 rounded-full border border-brand-500 px-4 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50 dark:border-brand-400 dark:text-brand-300 dark:hover:bg-brand-900/20"
+          >
+            Exportar refeições (Markdown)
+          </button>
+          {lastMealsExport && (
+            <div className="mt-3 rounded-lg bg-white px-3 py-2 text-xs text-zinc-600 dark:bg-zinc-900 dark:text-zinc-300">
+              {lastMealsExport.count} refeição(ões) exportada(s) em Markdown.
             </div>
           )}
         </div>
