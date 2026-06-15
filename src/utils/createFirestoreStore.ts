@@ -10,6 +10,7 @@ import {
 import { useEffect, useState } from 'react';
 import { db, firebaseConfigured } from '../lib/firebase';
 import { getCurrentUid, onUidChange } from '../lib/session';
+import { flushPendingWrites, markServerSync } from '../lib/syncStatus';
 
 /**
  * Cache local síncrono + Firestore sob users/{uid}/{collectionName}.
@@ -80,6 +81,7 @@ export function createFirestoreStore<T extends { id: string }>(
     setDoc(doc(userCol(uid), item.id), rest).catch((err) =>
       console.warn(`[store:${collectionName}] upsert failed:`, err),
     );
+    flushPendingWrites();
   }
 
   function fsDelete(id: string) {
@@ -94,6 +96,7 @@ export function createFirestoreStore<T extends { id: string }>(
     deleteDoc(doc(userCol(uid), id)).catch((err) =>
       console.warn(`[store:${collectionName}] delete failed:`, err),
     );
+    flushPendingWrites();
   }
 
   function fsBatchWrite(toDelete: string[], toUpsert: T[]) {
@@ -116,6 +119,7 @@ export function createFirestoreStore<T extends { id: string }>(
     batch
       .commit()
       .catch((err) => console.warn(`[store:${collectionName}] batch failed:`, err));
+    flushPendingWrites();
   }
 
   // --- Subscrição reativa ao uid atual ---
@@ -134,6 +138,8 @@ export function createFirestoreStore<T extends { id: string }>(
         userCol(uid),
         (snapshot) => {
           hydrated = true;
+          // Snapshot vindo do servidor (não do cache) confirma sincronização.
+          if (!snapshot.metadata.fromCache) markServerSync();
           const docs = snapshot.docs.map((d) => ({ ...d.data(), id: d.id } as T));
           setCache(docs);
         },
