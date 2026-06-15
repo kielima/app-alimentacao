@@ -2,7 +2,18 @@ import { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme';
 import { useOffContributions } from '../data/offContributions';
+import { useSyncStatus } from '../lib/syncStatus';
 import Icon from './Icon';
+
+function formatSyncTime(at: number): string {
+  return new Date(at).toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
 
 type Tab = { to: string; label: string };
 
@@ -45,6 +56,7 @@ function loadStoredOrder(): Tab[] {
 export default function NavMenu({ onSignOut }: { onSignOut: () => void }) {
   const [open, setOpen] = useState(false);
   const { theme, setTheme } = useTheme();
+  const sync = useSyncStatus();
   const offDrafts = useOffContributions();
   const pendingOff = offDrafts.filter((d) => !d.submitted_at).length;
   const nextTheme = theme === 'dark' ? 'light' : theme === 'light' ? 'system' : 'dark';
@@ -286,6 +298,20 @@ export default function NavMenu({ onSignOut }: { onSignOut: () => void }) {
           >
             Sair
           </button>
+
+          <div className="flex items-center gap-2 px-4 pt-2 text-xs text-zinc-500 dark:text-zinc-400">
+            <Icon
+              name={sync.pending ? 'rotate-ccw' : sync.lastSyncedAt ? 'check-circle' : 'alert-triangle'}
+              className={`h-4 w-4 shrink-0 ${sync.pending ? 'animate-spin' : ''}`}
+            />
+            <span>
+              {sync.pending
+                ? 'Sincronizando com a nuvem…'
+                : sync.lastSyncedAt
+                  ? `Última sincronização: ${formatSyncTime(sync.lastSyncedAt)}`
+                  : 'Ainda não sincronizado'}
+            </span>
+          </div>
         </div>
       </aside>
     </>
