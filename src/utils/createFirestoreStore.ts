@@ -136,6 +136,10 @@ export function createFirestoreStore<T extends { id: string }>(
     try {
       unsub = onSnapshot(
         userCol(uid),
+        // includeMetadataChanges: necessário para receber o snapshot confirmado
+        // pelo servidor (fromCache=false) mesmo quando os dados não mudaram —
+        // é isso que regista a hora da última sincronização ao abrir o app.
+        { includeMetadataChanges: true },
         (snapshot) => {
           hydrated = true;
           // Snapshot vindo do servidor (não do cache) confirma sincronização.

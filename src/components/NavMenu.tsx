@@ -267,6 +267,19 @@ export default function NavMenu({ onSignOut }: { onSignOut: () => void }) {
         </nav>
 
         <div className="border-t border-zinc-200 px-3 py-3 dark:border-zinc-800 space-y-1">
+          <div className="mb-1 flex items-center gap-2 rounded-2xl bg-zinc-50 px-4 py-2 text-xs text-zinc-500 dark:bg-zinc-800/50 dark:text-zinc-400">
+            <Icon
+              name={sync.pending ? 'rotate-ccw' : sync.lastSyncedAt ? 'check-circle' : 'alert-triangle'}
+              className={`h-4 w-4 shrink-0 ${sync.pending ? 'animate-spin' : ''}`}
+            />
+            <span>
+              {sync.pending
+                ? 'Sincronizando com a nuvem…'
+                : sync.lastSyncedAt
+                  ? `Sincronizado: ${formatSyncTime(sync.lastSyncedAt)}`
+                  : 'Ainda não sincronizado'}
+            </span>
+          </div>
           {offDrafts.length > 0 && (
             <NavLink
               to="/contribuicoes-off"
@@ -298,20 +311,6 @@ export default function NavMenu({ onSignOut }: { onSignOut: () => void }) {
           >
             Sair
           </button>
-
-          <div className="flex items-center gap-2 px-4 pt-2 text-xs text-zinc-500 dark:text-zinc-400">
-            <Icon
-              name={sync.pending ? 'rotate-ccw' : sync.lastSyncedAt ? 'check-circle' : 'alert-triangle'}
-              className={`h-4 w-4 shrink-0 ${sync.pending ? 'animate-spin' : ''}`}
-            />
-            <span>
-              {sync.pending
-                ? 'Sincronizando com a nuvem…'
-                : sync.lastSyncedAt
-                  ? `Última sincronização: ${formatSyncTime(sync.lastSyncedAt)}`
-                  : 'Ainda não sincronizado'}
-            </span>
-          </div>
         </div>
       </aside>
     </>
