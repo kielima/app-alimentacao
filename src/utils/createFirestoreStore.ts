@@ -78,10 +78,16 @@ export function createFirestoreStore<T extends { id: string }>(
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { id: _id, ...rest } = item as T & { id: string };
-    setDoc(doc(userCol(uid), item.id), rest).catch((err) =>
-      console.warn(`[store:${collectionName}] upsert failed:`, err),
-    );
-    flushPendingWrites();
+    try {
+      setDoc(doc(userCol(uid), item.id), rest).catch((err) =>
+        console.warn(`[store:${collectionName}] upsert failed:`, err),
+      );
+      flushPendingWrites();
+    } catch (err) {
+      // setDoc valida os dados de forma síncrona e pode lançar (ex.: valor
+      // inválido). Não deixar isso abortar o salvamento otimista local.
+      console.error(`[store:${collectionName}] upsert inválido:`, err);
+    }
   }
 
   function fsDelete(id: string) {
@@ -109,17 +115,21 @@ export function createFirestoreStore<T extends { id: string }>(
       return;
     }
     const fsDb = db;
-    const batch = writeBatch(fsDb);
-    toDelete.forEach((id) => batch.delete(doc(userCol(uid), id)));
-    toUpsert.forEach((item) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { id: _id, ...rest } = item as T & { id: string };
-      batch.set(doc(userCol(uid), item.id), rest);
-    });
-    batch
-      .commit()
-      .catch((err) => console.warn(`[store:${collectionName}] batch failed:`, err));
-    flushPendingWrites();
+    try {
+      const batch = writeBatch(fsDb);
+      toDelete.forEach((id) => batch.delete(doc(userCol(uid), id)));
+      toUpsert.forEach((item) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { id: _id, ...rest } = item as T & { id: string };
+        batch.set(doc(userCol(uid), item.id), rest);
+      });
+      batch
+        .commit()
+        .catch((err) => console.warn(`[store:${collectionName}] batch failed:`, err));
+      flushPendingWrites();
+    } catch (err) {
+      console.error(`[store:${collectionName}] batch inválido:`, err);
+    }
   }
 
   // --- Subscrição reativa ao uid atual ---

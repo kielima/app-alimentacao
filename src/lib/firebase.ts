@@ -32,6 +32,12 @@ if (firebaseConfigured) {
     localCache: persistentLocalCache({
       tabManager: persistentMultipleTabManager(),
     }),
+    // Sem isto, qualquer write com campos `undefined` (ex.: itens de refeição
+    // têm recipe_id OU ingredient_id como undefined) faz o setDoc lançar
+    // "Unsupported field value: undefined", abortando o salvamento e impedindo
+    // os dados de chegarem ao Firestore. Ignorar undefined = grava só os campos
+    // definidos.
+    ignoreUndefinedProperties: true,
   });
   _googleProvider = new GoogleAuthProvider();
   _googleProvider.setCustomParameters({ prompt: 'select_account' });
