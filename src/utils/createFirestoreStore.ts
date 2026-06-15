@@ -68,7 +68,13 @@ export function createFirestoreStore<T extends { id: string }>(
   function fsUpsert(item: T) {
     if (!firebaseConfigured || !db) return;
     const uid = getCurrentUid();
-    if (!uid) return;
+    if (!uid) {
+      console.error(
+        `[store:${collectionName}] escrita ignorada (upsert): sem usuário logado. ` +
+          `A alteração ficou apenas no cache local e será perdida no próximo arranque.`,
+      );
+      return;
+    }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { id: _id, ...rest } = item as T & { id: string };
     setDoc(doc(userCol(uid), item.id), rest).catch((err) =>
@@ -79,7 +85,12 @@ export function createFirestoreStore<T extends { id: string }>(
   function fsDelete(id: string) {
     if (!firebaseConfigured || !db) return;
     const uid = getCurrentUid();
-    if (!uid) return;
+    if (!uid) {
+      console.error(
+        `[store:${collectionName}] remoção ignorada: sem usuário logado.`,
+      );
+      return;
+    }
     deleteDoc(doc(userCol(uid), id)).catch((err) =>
       console.warn(`[store:${collectionName}] delete failed:`, err),
     );
@@ -88,7 +99,12 @@ export function createFirestoreStore<T extends { id: string }>(
   function fsBatchWrite(toDelete: string[], toUpsert: T[]) {
     if (!firebaseConfigured || !db) return;
     const uid = getCurrentUid();
-    if (!uid) return;
+    if (!uid) {
+      console.error(
+        `[store:${collectionName}] gravação em lote ignorada: sem usuário logado.`,
+      );
+      return;
+    }
     const fsDb = db;
     const batch = writeBatch(fsDb);
     toDelete.forEach((id) => batch.delete(doc(userCol(uid), id)));
@@ -105,6 +121,11 @@ export function createFirestoreStore<T extends { id: string }>(
   // --- Subscrição reativa ao uid atual ---
 
   let unsub: Unsubscribe | null = null;
+  // `hydrated` = já recebemos pelo menos um snapshot do Firestore para o uid
+  // atual, ou seja, o cache reflete o estado real do servidor. Enquanto for
+  // false, operações destrutivas (apagar em massa via replace) são proibidas,
+  // para não apagar dados do servidor que ainda não chegaram ao cache.
+  let hydrated = false;
 
   function subscribeFor(uid: string) {
     if (!firebaseConfigured || !db) return;
@@ -112,6 +133,7 @@ export function createFirestoreStore<T extends { id: string }>(
       unsub = onSnapshot(
         userCol(uid),
         (snapshot) => {
+          hydrated = true;
           const docs = snapshot.docs.map((d) => ({ ...d.data(), id: d.id } as T));
           setCache(docs);
         },
@@ -123,10 +145,17 @@ export function createFirestoreStore<T extends { id: string }>(
   }
 
   function tearDown() {
+    hydrated = false;
     if (unsub) {
       unsub();
       unsub = null;
     }
+  }
+
+  // Quando não há Firestore configurado, o store é puramente local (localStorage)
+  // e o cache já é a fonte de verdade desde o início.
+  function isHydrated(): boolean {
+    return !firebaseConfigured || !db ? true : hydrated;
   }
 
   // Reage a mudanças de uid: tear down + clear cache + resubscribe.
@@ -165,6 +194,26 @@ export function createFirestoreStore<T extends { id: string }>(
   }
 
   function replace(list: T[]): void {
+    // Proteção contra perda de dados: se ainda não carregamos o estado real do
+    // Firestore (cache pode estar vazio logo após abrir o app), nunca calculamos
+    // remoções a partir desse cache — isso apagaria dados do servidor que ainda
+    // não chegaram. Em vez disso, apenas gravamos (upsert) os itens recebidos.
+    if (!isHydrated()) {
+      console.error(
+        `[store:${collectionName}] replace() sem apagar: dados ainda não ` +
+          `carregados do Firestore. Itens recebidos foram gravados, mas nada ` +
+          `foi removido para evitar perda de dados.`,
+      );
+      const merged = [...cache];
+      list.forEach((item) => {
+        const idx = merged.findIndex((r) => r.id === item.id);
+        if (idx >= 0) merged[idx] = item;
+        else merged.push(item);
+      });
+      setCache(merged);
+      fsBatchWrite([], list);
+      return;
+    }
     const oldIds = new Set(cache.map((r) => r.id));
     const newIds = new Set(list.map((r) => r.id));
     const toDelete = [...oldIds].filter((id) => !newIds.has(id));
@@ -184,5 +233,5 @@ export function createFirestoreStore<T extends { id: string }>(
     return items;
   }
 
-  return { getAll, getById, upsert, remove, replace, useAll };
+  return { getAll, getById, upsert, remove, replace, useAll, isHydrated };
 }

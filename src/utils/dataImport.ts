@@ -195,6 +195,15 @@ export function importData(
     const existingIds = new Set(existing.map((it) => it.id));
 
     if (strategy === 'replace') {
+      // Proteção: um backup que não inclui esta coleção (incoming vazio) NÃO
+      // deve apagar os dados existentes. Quase sempre é um backup parcial, não
+      // a intenção de esvaziar a coleção. Preserva o que já existe.
+      if (incoming.length === 0 && existing.length > 0) {
+        result.added[adapter.key] = 0;
+        result.removed[adapter.key] = 0;
+        result.skipped[adapter.key] = existing.length;
+        continue;
+      }
       adapter.replace(incoming);
       result.added[adapter.key] = incoming.length;
       result.removed[adapter.key] = existing.filter(

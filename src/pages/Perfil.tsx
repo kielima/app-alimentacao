@@ -464,12 +464,26 @@ function BackupSection() {
   const [lastMealsExport, setLastMealsExport] = useState<{ at: number; count: number } | null>(
     null,
   );
+  const [exportWarning, setExportWarning] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   function handleExport() {
     const payload = buildExportPayload();
+    const summary = exportSummary(payload);
+    const total = Object.values(summary).reduce((a, b) => a + b, 0);
+    // Proteção: não deixar exportar um backup vazio. Quase sempre significa que
+    // os dados ainda não carregaram do Firestore ou que está logado na conta
+    // errada — e um backup vazio é perigoso se for usado depois para restaurar.
+    if (total === 0) {
+      setExportWarning(
+        'Nenhum dado para exportar. Aguarde os dados carregarem e confirme que ' +
+          'está logado na conta certa antes de exportar.',
+      );
+      return;
+    }
+    setExportWarning(null);
     downloadExport(payload);
-    setLastExport({ at: Date.now(), summary: exportSummary(payload) });
+    setLastExport({ at: Date.now(), summary });
   }
 
   function handleExportMealsMarkdown() {
@@ -527,6 +541,11 @@ function BackupSection() {
           >
             Exportar dados
           </button>
+          {exportWarning && (
+            <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-200">
+              {exportWarning}
+            </div>
+          )}
           {lastExport && (
             <div className="mt-3 rounded-lg bg-white px-3 py-2 text-xs text-zinc-600 dark:bg-zinc-900 dark:text-zinc-300">
               <div className="mb-1 font-medium text-zinc-800 dark:text-zinc-100">
