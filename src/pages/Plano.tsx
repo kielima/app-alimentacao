@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import SearchableSelect from '../components/SearchableSelect';
 import TrashIcon from '../components/TrashIcon';
 import Icon from '../components/Icon';
+import HydrationCard from '../components/HydrationCard';
 import {
   DAYS_OF_WEEK,
   MEAL_TYPES,
@@ -77,8 +78,27 @@ function saveDone(day: DayOfWeek, planType: PlanType, done: Set<MealType>) {
 
 export default function Plano() {
   const plans = useMealPlans();
-  const { day, planType } = usePlano();
+  const { day, planType, setDay, setPlanType } = usePlano();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [editing, setEditing] = useState(false);
+
+  // Pré-seleção vinda do app de Ritual: ao tocar em "Abrir" no cartão de uma
+  // refeição, o ritual manda para `/#/plano?day=<0-6>&plan=<training_day|rest_day>`.
+  // Aplicamos uma vez e limpamos a query, para o usuário poder navegar à mão
+  // depois sem ela reverter.
+  useEffect(() => {
+    const d = searchParams.get('day');
+    const p = searchParams.get('plan');
+    if (d === null && p === null) return;
+    const dNum = Number(d);
+    if (d !== null && Number.isInteger(dNum) && dNum >= 0 && dNum <= 6) {
+      setDay(dNum as DayOfWeek);
+    }
+    if (p === 'training_day' || p === 'rest_day') {
+      setPlanType(p);
+    }
+    setSearchParams({}, { replace: true });
+  }, [searchParams, setDay, setPlanType, setSearchParams]);
   const [doneMealTypes, setDoneMealTypes] = useState<Set<MealType>>(
     () => loadDone(todayDayOfWeek(), 'training_day'),
   );
@@ -186,6 +206,8 @@ export default function Plano() {
         dayLabel={dayLabel}
         targets={targets}
       />
+
+      <HydrationCard />
 
       <ul className="mt-4 space-y-3">
         {dayPlan.meals.map((meal) => (
