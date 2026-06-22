@@ -1,8 +1,14 @@
 rules_version = '2';
 
-// Threat model: app de uso pessoal. Cada usuário tem seus próprios dados
-// isolados em users/{uid}/.... O acesso requer login com Google e aprovação
-// manual pelo admin. O admin é identificado por email hardcoded.
+// Regras UNIFICADAS para o projeto Firebase compartilhado pelos dois apps
+// (ritual-app e app-alimentacao). Como ambos usam o mesmo login Google e o mesmo
+// uid, cada app lê/escreve os próprios dados em `users/{uid}/...` — o app de
+// comida em `users/{uid}/mealPlan/**`, `userMeals/**`, etc., e o ritual em
+// `users/{uid}/dados/**`. O acesso requer login + aprovação (o dono, kly@sapo.pt,
+// é aprovado automaticamente).
+//
+// Mantém este arquivo IDÊNTICO ao de ritual-app/firestore.rules: os dois repos
+// publicam regras no mesmo projeto, então não podem divergir.
 //
 // Fluxo:
 //   1. Usuário entra com Google → cria users/{uid} com status='pending'.
@@ -55,10 +61,18 @@ service cloud.firestore {
 
       allow delete: if isAdmin();
 
-      // Subcoleções com dados do usuário: somente o próprio se aprovado.
+      // Subcoleções com dados do usuário (mealPlan/, userMeals/, dados/, …):
+      // somente o próprio se aprovado.
       match /{collection}/{docId} {
         allow read, write: if isApprovedSelf(uid);
       }
+    }
+
+    // Versão publicada do app do ritual (verificador de atualização in-app).
+    // Leitura pública (sem dado pessoal); escrita só pelo backend (admin SDK).
+    match /app/{doc} {
+      allow read: if true;
+      allow write: if false;
     }
   }
 }
