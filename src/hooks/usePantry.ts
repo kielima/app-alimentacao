@@ -6,6 +6,11 @@ import { createUIStore } from '../utils/persistentUIState';
 import type { PantryItem } from '../types/pantry';
 
 export type PantryFilter = 'todos' | ExpiryStatus;
+export type PantryKindFilter = 'all' | 'food' | 'household';
+
+function pantryKind(item: PantryItem): 'food' | 'household' {
+  return item.kind === 'household' ? 'household' : 'food';
+}
 
 const STATUS_ORDER: Record<ExpiryStatus, number> = {
   expired: 0,
@@ -20,21 +25,25 @@ interface UsePantryResult {
   setQuery: (q: string) => void;
   filter: PantryFilter;
   setFilter: (f: PantryFilter) => void;
+  kindFilter: PantryKindFilter;
+  setKindFilter: (k: PantryKindFilter) => void;
   showFilters: boolean;
   setShowFilters: (s: boolean | ((prev: boolean) => boolean)) => void;
   total: number;
   countsByStatus: Record<ExpiryStatus, number>;
+  kindCounts: { food: number; household: number };
 }
 
 const ui = createUIStore({
   query: '',
   filter: 'todos' as PantryFilter,
+  kindFilter: 'all' as PantryKindFilter,
   showFilters: false,
 });
 
 export function usePantry(): UsePantryResult {
   const items = usePantryItems();
-  const { query, filter, showFilters } = ui.useStore();
+  const { query, filter, kindFilter, showFilters } = ui.useStore();
 
   const countsByStatus = useMemo(() => {
     const c: Record<ExpiryStatus, number> = { expired: 0, soon: 0, fresh: 0, 'no-date': 0 };
@@ -44,8 +53,19 @@ export function usePantry(): UsePantryResult {
     return c;
   }, [items]);
 
+  const kindCounts = useMemo(() => {
+    let food = 0;
+    let household = 0;
+    for (const item of items) {
+      if (pantryKind(item) === 'household') household++;
+      else food++;
+    }
+    return { food, household };
+  }, [items]);
+
   const list = useMemo(() => {
     return items
+      .filter((i) => (kindFilter === 'all' ? true : pantryKind(i) === kindFilter))
       .filter((i) => (filter === 'todos' ? true : expiryStatus(i.expiry_date) === filter))
       .filter((i) => matches(i.raw_text, query))
       .sort((a, b) => {
@@ -60,7 +80,7 @@ export function usePantry(): UsePantryResult {
         if (b.expiry_date) return 1;
         return a.raw_text.localeCompare(b.raw_text, 'pt-BR');
       });
-  }, [items, query, filter]);
+  }, [items, query, filter, kindFilter]);
 
   return {
     list,
@@ -68,9 +88,12 @@ export function usePantry(): UsePantryResult {
     setQuery: (q) => ui.set('query', q),
     filter,
     setFilter: (f) => ui.set('filter', f),
+    kindFilter,
+    setKindFilter: (k) => ui.set('kindFilter', k),
     showFilters,
     setShowFilters: (s) => ui.set('showFilters', s),
     total: items.length,
     countsByStatus,
+    kindCounts,
   };
 }

@@ -1,3 +1,5 @@
+import type { ItemKind } from './shoppingList';
+
 export interface PantryItem {
   id: string;
   ingredient_id: string | null;
@@ -8,4 +10,6 @@ export interface PantryItem {
   store: string | null;
   added_at: string;
   notes?: string;
+  /** 'household' = item de casa/não-comida. undefined/'food' = comida. */
+  kind?: ItemKind;
 }

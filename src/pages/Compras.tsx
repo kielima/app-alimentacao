@@ -26,14 +26,21 @@ import type { Ingredient } from '../types/ingredient';
 const UNGROUPED = '__sem-mercado__';
 const ALL_STORES = '__todos__';
 
+type KindFilter = 'all' | 'food' | 'household';
+
 const ui = createUIStore({
   storeFilter: ALL_STORES as string,
+  kindFilter: 'all' as KindFilter,
   showFilters: false,
 });
 
 function shortDate(iso: string): string {
   const [, m, d] = iso.split('-');
   return `${d}/${m}`;
+}
+
+function itemKind(item: ShoppingItem): 'food' | 'household' {
+  return item.kind === 'household' ? 'household' : 'food';
 }
 
 export default function Compras() {
@@ -46,8 +53,9 @@ export default function Compras() {
   const returnIngredientId = searchParams.get('ingredient') ?? undefined;
   const [adding, setAdding] = useState(() => Boolean(returnIngredientId));
   const [scanOpen, setScanOpen] = useState(false);
-  const { storeFilter, showFilters } = ui.useStore();
+  const { storeFilter, kindFilter, showFilters } = ui.useStore();
   const setStoreFilter = (s: string) => ui.set('storeFilter', s);
+  const setKindFilter = (k: KindFilter) => ui.set('kindFilter', k);
   const setShowFilters = (s: boolean | ((prev: boolean) => boolean)) =>
     ui.set('showFilters', s);
 
@@ -66,9 +74,24 @@ export default function Compras() {
     );
   }, [pantryItems, items, markets]);
 
+  const kindCounts = useMemo(() => {
+    let food = 0;
+    let household = 0;
+    for (const item of items) {
+      if (itemKind(item) === 'household') household++;
+      else food++;
+    }
+    return { food, household };
+  }, [items]);
+
+  const kindFilteredItems = useMemo(() => {
+    if (kindFilter === 'all') return items;
+    return items.filter((i) => itemKind(i) === kindFilter);
+  }, [items, kindFilter]);
+
   const allGrouped = useMemo(() => {
     const map = new Map<string, ShoppingItem[]>();
-    for (const item of items) {
+    for (const item of kindFilteredItems) {
       const key = item.store ?? UNGROUPED;
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(item);
@@ -78,7 +101,7 @@ export default function Compras() {
       if (b === UNGROUPED) return -1;
       return a.localeCompare(b, 'pt-BR');
     });
-  }, [items]);
+  }, [kindFilteredItems]);
 
   const storeOptions = useMemo(
     () => allGrouped.map(([store, list]) => ({ value: store, count: list.length })),
@@ -95,7 +118,7 @@ export default function Compras() {
     [grouped],
   );
 
-  const hasActiveFilters = storeFilter !== ALL_STORES;
+  const hasActiveFilters = storeFilter !== ALL_STORES || kindFilter !== 'all';
   const isFiltering = hasActiveFilters;
 
   const totalEstimated = filteredItems.reduce((sum, i) => sum + (i.price ?? 0), 0);
@@ -118,6 +141,7 @@ export default function Compras() {
         expiry_date: item.expiry_date ?? null,
         store: item.store,
         added_at: new Date().toISOString(),
+        kind: item.kind,
       });
     }
     // Remove checked from shopping list
@@ -152,7 +176,28 @@ export default function Compras() {
       />
 
       {showFilters && (
-        <div className="sticky top-0 z-10 -mx-4 mb-3 bg-zinc-50/95 px-4 pb-2 pt-2 backdrop-blur supports-[backdrop-filter]:bg-zinc-50/80 dark:bg-zinc-950/95 dark:supports-[backdrop-filter]:bg-zinc-950/80">
+        <div className="sticky top-0 z-10 -mx-4 mb-3 space-y-1.5 bg-zinc-50/95 px-4 pb-2 pt-2 backdrop-blur supports-[backdrop-filter]:bg-zinc-50/80 dark:bg-zinc-950/95 dark:supports-[backdrop-filter]:bg-zinc-950/80">
+          <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {([
+              { value: 'all', label: 'Tudo', icon: null, count: items.length },
+              { value: 'food', label: 'Comida', icon: 'utensils-crossed', count: kindCounts.food },
+              { value: 'household', label: 'Casa', icon: 'package', count: kindCounts.household },
+            ] as const).map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setKindFilter(opt.value)}
+                className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                  kindFilter === opt.value
+                    ? 'bg-brand-500 text-white dark:bg-brand-600'
+                    : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700'
+                }`}
+              >
+                {opt.icon && <Icon name={opt.icon} className="h-3.5 w-3.5" />}
+                {opt.label} {opt.count > 0 && <span className="opacity-70">({opt.count})</span>}
+              </button>
+            ))}
+          </div>
           <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <button
               type="button"
@@ -163,7 +208,7 @@ export default function Compras() {
                   : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700'
               }`}
             >
-              Todos {items.length > 0 && <span className="opacity-70">({items.length})</span>}
+              Todos {kindFilteredItems.length > 0 && <span className="opacity-70">({kindFilteredItems.length})</span>}
             </button>
             {storeOptions.map((opt) => (
               <button
@@ -298,6 +343,11 @@ export default function Compras() {
                           {item.raw_text}
                         </p>
                         <div className="flex flex-wrap items-center gap-x-2 text-[11px] text-zinc-500 dark:text-zinc-400">
+                          {itemKind(item) === 'household' && (
+                            <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                              <Icon name="package" className="h-3.5 w-3.5" /> Casa
+                            </span>
+                          )}
                           {item.quantity != null && item.unit && (
                             <span>
                               {item.quantity} {unitLabel(item.unit)}
@@ -427,6 +477,7 @@ function QuickAdd({
   };
 
   const initIng = getInitialIngredient();
+  const [mode, setMode] = useState<'food' | 'household'>('food');
   const [selectValue, setSelectValue] = useState(initialIngredientId ?? '');
   const [rawText, setRawText] = useState(
     initIng ? (initIng.brand ? `${initIng.brand} — ${initIng.name}` : initIng.name) : '',
@@ -454,13 +505,13 @@ function QuickAdd({
 
   const effectiveRaw = rawText;
 
-  const canAdd = ingredientId !== '';
+  const canAdd = mode === 'household' ? rawText.trim() !== '' : ingredientId !== '';
 
   const handleAdd = () => {
     if (!canAdd) return;
     upsertShoppingItem({
       id: `shopping-${Date.now()}`,
-      ingredient_id: ingredientId || null,
+      ingredient_id: mode === 'household' ? null : ingredientId || null,
       raw_text: effectiveRaw || rawText.trim(),
       quantity: quantity ? Number(quantity) : null,
       unit: unit || null,
@@ -469,6 +520,7 @@ function QuickAdd({
       checked: false,
       source: 'manual',
       added_at: new Date().toISOString(),
+      kind: mode === 'household' ? 'household' : 'food',
     });
     setSelectValue('');
     setRawText('');
@@ -485,25 +537,56 @@ function QuickAdd({
 
   return (
     <div className="mb-4 rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="mb-2 grid grid-cols-2 gap-1.5">
+        {([
+          { value: 'food', label: 'Comida', icon: 'utensils-crossed' },
+          { value: 'household', label: 'Item de casa', icon: 'package' },
+        ] as const).map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => setMode(opt.value)}
+            className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+              mode === opt.value
+                ? 'bg-brand-500 text-white dark:bg-brand-600'
+                : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700'
+            }`}
+          >
+            <Icon name={opt.icon} className="h-4 w-4" />
+            {opt.label}
+          </button>
+        ))}
+      </div>
       <div className="mb-2">
-        <SearchableSelect
-          value={selectValue}
-          onChange={handleIngredientSelect}
-          options={ingredients.map((i) => ({
-            value: i.id,
-            label: i.brand ? `${i.brand} — ${i.name}` : i.name,
-          }))}
-          placeholder="Selecione um ingrediente…"
-          createLabel="Criar novo ingrediente"
-          onCreate={(q) => {
-            const params = new URLSearchParams();
-            params.set('return', '/compras');
-            const trimmed = q?.trim();
-            if (trimmed) params.set('name', trimmed);
-            navigate(`/ingredientes/novo?${params.toString()}`);
-          }}
-          className="text-sm"
-        />
+        {mode === 'household' ? (
+          <input
+            type="text"
+            value={rawText}
+            onChange={(e) => setRawText(e.target.value)}
+            placeholder="Ex.: Papel higiênico, sabonete, caneta…"
+            className={quickAddInputClass}
+            autoFocus
+          />
+        ) : (
+          <SearchableSelect
+            value={selectValue}
+            onChange={handleIngredientSelect}
+            options={ingredients.map((i) => ({
+              value: i.id,
+              label: i.brand ? `${i.brand} — ${i.name}` : i.name,
+            }))}
+            placeholder="Selecione um ingrediente…"
+            createLabel="Criar novo ingrediente"
+            onCreate={(q) => {
+              const params = new URLSearchParams();
+              params.set('return', '/compras');
+              const trimmed = q?.trim();
+              if (trimmed) params.set('name', trimmed);
+              navigate(`/ingredientes/novo?${params.toString()}`);
+            }}
+            className="text-sm"
+          />
+        )}
       </div>
       <div className="mb-2 grid grid-cols-2 gap-2">
         <input
