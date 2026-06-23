@@ -35,13 +35,16 @@ export default function Dispensa() {
     setQuery,
     filter,
     setFilter,
+    kindFilter,
+    setKindFilter,
     showFilters,
     setShowFilters,
     total,
     countsByStatus,
+    kindCounts,
   } = usePantry();
 
-  const hasActiveFilters = filter !== 'todos';
+  const hasActiveFilters = filter !== 'todos' || kindFilter !== 'all';
   const isFiltering = hasActiveFilters || !!query.trim();
 
   const sendToList = (item: PantryItem) => {
@@ -57,6 +60,7 @@ export default function Dispensa() {
       source: 'from_pantry',
       source_ref: item.id,
       added_at: new Date().toISOString(),
+      kind: item.kind,
     });
     deletePantryItem(item.id);
   };
@@ -117,7 +121,28 @@ export default function Dispensa() {
       )}
 
       {showFilters && (
-        <div className="sticky top-0 z-10 -mx-4 mb-3 bg-zinc-50/95 px-4 pb-2 pt-2 backdrop-blur supports-[backdrop-filter]:bg-zinc-50/80 dark:bg-zinc-950/95 dark:supports-[backdrop-filter]:bg-zinc-950/80">
+        <div className="sticky top-0 z-10 -mx-4 mb-3 space-y-1.5 bg-zinc-50/95 px-4 pb-2 pt-2 backdrop-blur supports-[backdrop-filter]:bg-zinc-50/80 dark:bg-zinc-950/95 dark:supports-[backdrop-filter]:bg-zinc-950/80">
+          <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {([
+              { value: 'all', label: 'Tudo', icon: null, count: total },
+              { value: 'food', label: 'Comida', icon: 'utensils-crossed', count: kindCounts.food },
+              { value: 'household', label: 'Casa', icon: 'package', count: kindCounts.household },
+            ] as const).map((c) => (
+              <button
+                key={c.value}
+                type="button"
+                onClick={() => setKindFilter(c.value)}
+                className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                  kindFilter === c.value
+                    ? 'bg-brand-500 text-white dark:bg-brand-600'
+                    : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700'
+                }`}
+              >
+                {c.icon && <Icon name={c.icon} className="h-3.5 w-3.5" />}
+                {c.label} {c.count > 0 && <span className="opacity-70">({c.count})</span>}
+              </button>
+            ))}
+          </div>
           <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {filterChips.map((c) => {
               const count =
@@ -249,11 +274,18 @@ function PantryCard({ item, onOpen, onSendToList, onLongPress }: PantryCardProps
           )}
           <div className="min-w-0 flex-1">
             <span className="block truncate text-sm font-medium">{item.raw_text}</span>
-            <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-              {item.quantity && item.unit
-                ? `${item.quantity} ${unitLabel(item.unit)}`
-                : item.quantity ?? ''}
-              {item.store && ` · ${item.store}`}
+            <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-zinc-500 dark:text-zinc-400">
+              {item.kind === 'household' && (
+                <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                  <Icon name="package" className="h-3.5 w-3.5" /> Casa
+                </span>
+              )}
+              <span>
+                {item.quantity && item.unit
+                  ? `${item.quantity} ${unitLabel(item.unit)}`
+                  : item.quantity ?? ''}
+                {item.store && ` · ${item.store}`}
+              </span>
             </p>
             <p className={`mt-0.5 text-xs font-medium ${statusColor(status)}`}>
               {expiryLabel(item.expiry_date)}
