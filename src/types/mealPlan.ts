@@ -6,6 +6,7 @@ export type MealType =
   | 'almoco'
   | 'pre-treino'
   | 'pos-treino'
+  | 'lanche-tarde'
   | 'jantar'
   | 'ceia';
 
@@ -50,9 +51,23 @@ export const MEAL_TYPES: { value: MealType; label: string; icon: string }[] = [
   { value: 'almoco', label: 'Almoço', icon: 'salad' },
   { value: 'pre-treino', label: 'Pré-Treino', icon: 'dumbbell' },
   { value: 'pos-treino', label: 'Pós-Treino', icon: 'zap' },
+  { value: 'lanche-tarde', label: 'Lanche da Tarde', icon: 'cup-soda' },
   { value: 'jantar', label: 'Jantar', icon: 'utensils' },
   { value: 'ceia', label: 'Ceia', icon: 'moon' },
 ];
+
+// Quais refeições aparecem em cada variante do plano, em ordem. Sincronizado com
+// o treino do dia no app de Ritual: em dia de TREINO (training_day) há pré e
+// pós-treino; em DESCANSO (rest_day) entra o "lanche da tarde" no lugar deles. As
+// demais (café, lanche da manhã, almoço, jantar, ceia) aparecem nas duas.
+const REFEICOES_COMUNS: MealType[] = ['cafe-manha', 'lanche-manha', 'almoco'];
+const REFEICOES_FIM: MealType[] = ['jantar', 'ceia'];
+
+export function mealTypesForPlan(plan: PlanType): MealType[] {
+  const tarde: MealType[] =
+    plan === 'rest_day' ? ['lanche-tarde'] : ['pre-treino', 'pos-treino'];
+  return [...REFEICOES_COMUNS, ...tarde, ...REFEICOES_FIM];
+}
 
 /**
  * Converte JS Date.getDay() (0=Sunday) para nosso DayOfWeek (0=Monday).

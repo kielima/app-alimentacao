@@ -24,6 +24,7 @@ import {
   useMealPlans,
 } from '../data/mealPlan';
 import { useAllMeals } from '../data/meals';
+import { useTiposTreino, planTypeForDay } from '../data/treino';
 import { findRecipeById, useAllRecipes } from '../data/recipes';
 import { findIngredientById, useAllIngredients } from '../data/ingredients';
 import { computePlanItemsNutrition, type NutritionBreakdown } from '../utils/nutrition';
@@ -99,6 +100,16 @@ export default function Plano() {
     }
     setSearchParams({}, { replace: true });
   }, [searchParams, setDay, setPlanType, setSearchParams]);
+
+  // Acompanha o treino do ritual: ao trocar de dia (ou quando a escolha do
+  // ritual muda), seleciona a variante — TREINO → training_day (pré/pós-treino),
+  // FOLGA/sem treino → rest_day (lanche da tarde). O toggle manual e o ?plan= do
+  // link ainda podem sobrepor depois (este efeito só reage a dia/escolha).
+  const tiposTreino = useTiposTreino();
+  useEffect(() => {
+    setPlanType(planTypeForDay(day, tiposTreino));
+  }, [day, tiposTreino, setPlanType]);
+
   const [doneMealTypes, setDoneMealTypes] = useState<Set<MealType>>(
     () => loadDone(todayDayOfWeek(), 'training_day'),
   );
