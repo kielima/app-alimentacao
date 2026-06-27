@@ -8,7 +8,7 @@ import type {
   PlanMealItemKind,
   MealType,
 } from '../types/mealPlan';
-import { MEAL_TYPES, planKey } from '../types/mealPlan';
+import { mealTypesForPlan, planKey } from '../types/mealPlan';
 
 const store = createFirestoreStore<DayPlan>('app-alimentacao:meal-plan', 'mealPlan');
 
@@ -28,7 +28,7 @@ export function emptyDayPlan(day: DayOfWeek, plan: PlanType): DayPlan {
     id: planKey(day, plan),
     day_of_week: day,
     plan_type: plan,
-    meals: MEAL_TYPES.map((mt) => emptyPlanMeal(mt.value)),
+    meals: mealTypesForPlan(plan).map((mt) => emptyPlanMeal(mt)),
   };
 }
 
@@ -64,20 +64,28 @@ function migrateItem(item: unknown): PlanMealItem | null {
 }
 
 export function ensureMealStructure(dayPlan: DayPlan): DayPlan {
-  // Garante que todas as meal_types estão presentes (mesmo vazias) na ordem correta.
-  // Migra itens em formato antigo (sem `kind`) para o novo formato com kind: 'meal'.
+  // Garante as meal_types da VARIANTE (training_day/rest_day) presentes (mesmo
+  // vazias) na ordem correta. Migra itens em formato antigo (sem `kind`).
   const byType = new Map(dayPlan.meals.map((m) => [m.meal_type, m]));
-  return {
-    ...dayPlan,
-    meals: MEAL_TYPES.map((mt) => {
-      const existing = byType.get(mt.value);
-      if (!existing) return emptyPlanMeal(mt.value);
-      const items = existing.items
-        .map(migrateItem)
-        .filter((it): it is PlanMealItem => it !== null);
-      return { ...existing, items };
-    }),
-  };
+  const tipos = mealTypesForPlan(dayPlan.plan_type);
+  const meals: PlanMeal[] = tipos.map((mt) => {
+    const existing = byType.get(mt);
+    if (!existing) return emptyPlanMeal(mt);
+    const items = existing.items
+      .map(migrateItem)
+      .filter((it): it is PlanMealItem => it !== null);
+    return { ...existing, items };
+  });
+  // Não perder dados: refeições FORA da variante que já tenham itens cadastrados
+  // continuam aparecendo (ex.: pré-treino preenchido num plano de descanso).
+  for (const m of dayPlan.meals) {
+    if (tipos.includes(m.meal_type)) continue;
+    const items = m.items
+      .map(migrateItem)
+      .filter((it): it is PlanMealItem => it !== null);
+    if (items.length > 0) meals.push({ ...m, items });
+  }
+  return { ...dayPlan, meals };
 }
 
 export function newPlanMealItem(kind: PlanMealItemKind = 'meal'): PlanMealItem {
