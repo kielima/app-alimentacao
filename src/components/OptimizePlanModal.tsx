@@ -1,6 +1,7 @@
 import Icon from './Icon';
 import { MEAL_TYPES, type PlanType } from '../types/mealPlan';
 import { KCAL_TOLERANCE } from '../utils/profileTargets';
+import { unitLabel } from '../utils/units';
 import type { Macros, OptimizeResult } from '../utils/planOptimizer';
 
 const mealLabel = (value: string) =>
@@ -8,6 +9,14 @@ const mealLabel = (value: string) =>
 
 const fmt = (v: number, d = 0) =>
   v.toLocaleString('pt-BR', { maximumFractionDigits: d, minimumFractionDigits: 0 });
+
+/** Formata a quantidade de um item: gramas, medida (unidade/fatia…) ou ×N de porção. */
+function formatQty(unit: string | null, value: number): string {
+  if (unit === '×') return `×${value.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}`;
+  if (unit === 'g' || unit === 'ml') return `${fmt(value)} ${unit}`;
+  const n = value.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+  return unit ? `${n} ${unitLabel(unit)}` : n;
+}
 
 function DeltaRow({
   label,
@@ -143,11 +152,11 @@ export default function OptimizePlanModal({
                   </span>
                   <span className="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">
                     <span className="line-through">
-                      {fmt(item.currentQuantity ?? 0)}
+                      {formatQty(item.unit, item.currentQuantity ?? 0)}
                     </span>{' '}
                     →{' '}
                     <span className="font-semibold text-zinc-800 dark:text-zinc-100">
-                      {fmt(item.suggestedQuantity ?? 0)} {item.unit}
+                      {formatQty(item.unit, item.suggestedQuantity ?? 0)}
                     </span>
                   </span>
                 </li>

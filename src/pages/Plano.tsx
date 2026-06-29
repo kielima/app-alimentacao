@@ -682,6 +682,11 @@ function PlanMealCard({
                     <span className="flex-1 font-medium text-zinc-900 dark:text-zinc-100">
                       {refeicao.name}
                     </span>
+                    {item.quantity != null && item.quantity !== 1 && (
+                      <span className="shrink-0 rounded bg-brand-100 px-1.5 py-0.5 text-[11px] font-semibold text-brand-700 dark:bg-brand-900/30 dark:text-brand-300">
+                        ×{item.quantity.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}
+                      </span>
+                    )}
                     <Link
                       to={`/refeicoes/${refeicao.id}`}
                       onClick={(e) => e.stopPropagation()}
