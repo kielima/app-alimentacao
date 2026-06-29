@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme';
 import { useOffContributions } from '../data/offContributions';
+import { useDataGaps } from '../hooks/useDataGaps';
 import { useSyncStatus } from '../lib/syncStatus';
 import Icon from './Icon';
 
@@ -25,6 +26,7 @@ const defaultTabs: Tab[] = [
   { to: '/dispensa', label: 'Lista da Dispensa' },
   { to: '/compras', label: 'Lista de Compras' },
   { to: '/mercados', label: 'Lista de Mercados' },
+  { to: '/pendencias', label: 'Dados a completar' },
   { to: '/perfil', label: 'Dados pessoais' },
 ];
 
@@ -59,6 +61,7 @@ export default function NavMenu({ onSignOut }: { onSignOut: () => void }) {
   const sync = useSyncStatus();
   const offDrafts = useOffContributions();
   const pendingOff = offDrafts.filter((d) => !d.submitted_at).length;
+  const gaps = useDataGaps();
   const nextTheme = theme === 'dark' ? 'light' : theme === 'light' ? 'system' : 'dark';
   const themeLabel = theme === 'dark' ? 'Escuro' : theme === 'light' ? 'Claro' : 'Sistema';
   const themeIcon = theme === 'dark' ? 'moon' : theme === 'light' ? 'sun' : 'monitor';
@@ -238,7 +241,12 @@ export default function NavMenu({ onSignOut }: { onSignOut: () => void }) {
                         }`
                       }
                     >
-                      <span>{tab.label}</span>
+                      <span className="flex-1">{tab.label}</span>
+                      {tab.to === '/pendencias' && gaps.total > 0 && (
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                          {gaps.total}
+                        </span>
+                      )}
                     </NavLink>
                     <button
                       type="button"
