@@ -1,0 +1,17 @@
+{
+  "name": "app-alimentacao-functions",
+  "description": "Cloud Functions do app-alimentacao (proxy do Gemini para leitura de tabela nutricional)",
+  "private": true,
+  "type": "commonjs",
+  "main": "index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "deploy": "firebase deploy --only functions"
+  },
+  "dependencies": {
+    "firebase-functions": "^6.1.0"
+  }
+}

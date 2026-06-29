@@ -6,6 +6,7 @@ import {
   persistentMultipleTabManager,
   type Firestore,
 } from 'firebase/firestore';
+import { getFunctions, type Functions } from 'firebase/functions';
 
 const config = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -23,11 +24,13 @@ export const firebaseConfigured = Boolean(
 let app: FirebaseApp | null = null;
 let _auth: Auth | null = null;
 let _db: Firestore | null = null;
+let _functions: Functions | null = null;
 let _googleProvider: GoogleAuthProvider | null = null;
 
 if (firebaseConfigured) {
   app = initializeApp(config);
   _auth = getAuth(app);
+  _functions = getFunctions(app);
   _db = initializeFirestore(app, {
     localCache: persistentLocalCache({
       tabManager: persistentMultipleTabManager(),
@@ -49,6 +52,7 @@ if (firebaseConfigured) {
 
 export const auth = _auth;
 export const db = _db;
+export const functions = _functions;
 export const googleProvider = _googleProvider;
 
 export const ADMIN_EMAIL = 'kly@sapo.pt';
