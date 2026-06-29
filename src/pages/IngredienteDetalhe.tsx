@@ -3,7 +3,9 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import TrashIcon from '../components/TrashIcon';
 import Icon from '../components/Icon';
-import { findIngredientById, isSeedIngredient } from '../data/ingredients';
+import NutritionPhotoImport from '../components/NutritionPhotoImport';
+import { geminiConfigured } from '../lib/gemini';
+import { isSeedIngredient, useAllIngredients } from '../data/ingredients';
 import { deleteUserIngredient, getUserIngredientById } from '../data/userIngredients';
 import { hideIngredient } from '../data/hiddenIngredients';
 import {
@@ -53,10 +55,15 @@ function fmt(value: number | null | undefined, digits = 1): string {
 export default function IngredienteDetalhe() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const ingredient = id ? findIngredientById(id) : undefined;
+  const allIngredients = useAllIngredients();
+  const ingredient = useMemo(
+    () => (id ? allIngredients.find((i) => i.id === id) : undefined),
+    [allIngredients, id],
+  );
 
   const [quantity, setQuantity] = useState(100);
   const [showExtras, setShowExtras] = useState(false);
+  const [photoImportOpen, setPhotoImportOpen] = useState(false);
   const shoppingItems = useShoppingItems();
   const pantryItems = usePantryItems();
   const allRecipes = useAllRecipes();
@@ -324,6 +331,21 @@ export default function IngredienteDetalhe() {
           </p>
         )}
 
+        {geminiConfigured && (
+          <button
+            type="button"
+            onClick={() => setPhotoImportOpen(true)}
+            className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+              ingredient.nutrition_per_100
+                ? 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700'
+                : 'bg-brand-500 text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500'
+            }`}
+          >
+            <Icon name="sparkles" className="h-4 w-4" />
+            {ingredient.nutrition_per_100 ? 'Atualizar por foto' : 'Ler tabela por foto'}
+          </button>
+        )}
+
         {ingredient.extras_per_100 && Object.keys(ingredient.extras_per_100).length > 0 && (
           <div className="mt-3">
             <button
@@ -507,6 +529,12 @@ export default function IngredienteDetalhe() {
           <path d="M15 5l4 4" />
         </svg>
       </Link>
+
+      <NutritionPhotoImport
+        ingredient={ingredient}
+        open={photoImportOpen}
+        onClose={() => setPhotoImportOpen(false)}
+      />
     </div>
   );
 }
