@@ -257,6 +257,21 @@ export default function Plano() {
         </button>
       )}
 
+      {dayNutrition && dayNutrition.skipped > 0 && (
+        <Link
+          to="/pendencias"
+          className="mt-2 flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 hover:bg-amber-100 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-200 dark:hover:bg-amber-900/30"
+        >
+          <Icon name="alert-triangle" className="h-4 w-4 shrink-0" />
+          <span className="flex-1">
+            {dayNutrition.skipped}{' '}
+            {dayNutrition.skipped === 1 ? 'item sem cálculo' : 'itens sem cálculo'} neste dia —
+            falta porção padrão, quantidade ou tabela nutricional.
+          </span>
+          <span className="shrink-0 font-medium underline">Completar</span>
+        </Link>
+      )}
+
       <HydrationCard />
 
       <ul className="mt-4 space-y-3">
