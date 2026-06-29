@@ -31,9 +31,28 @@ export interface NutritionBreakdown {
   skippedReasons: { raw: string; reason: string }[];
 }
 
-function unitToBase(quantity: number, unit: string): number | null {
+/**
+ * Converte uma quantidade na sua unidade para gramas (base do cálculo nutricional).
+ *
+ * `g`/`ml` são 1:1. As demais medidas (unidade, fatia, xícara, colher, dente,
+ * maço, pacote) usam a porção padrão do ingrediente — `serving_size_g`, o peso
+ * de 1 daquela medida. Sem porção padrão definida não há como converter → null.
+ */
+export function quantityToGrams(
+  quantity: number | null | undefined,
+  unit: string | null | undefined,
+  servingSizeG?: number | null,
+): number | null {
+  if (quantity == null || !unit) return null;
   if (unit === 'g' || unit === 'ml') return quantity;
+  if (unit === 'a_gosto') return null;
+  if (servingSizeG != null && servingSizeG > 0) return quantity * servingSizeG;
   return null;
+}
+
+/** A unidade precisa da porção padrão (g) do ingrediente para virar gramas? */
+function needsServingSize(unit: string): boolean {
+  return unit !== 'g' && unit !== 'ml' && unit !== 'a_gosto';
 }
 
 export function computeNutrition(items: NutritionItem[]): NutritionBreakdown {
@@ -64,10 +83,15 @@ export function computeNutrition(items: NutritionItem[]): NutritionBreakdown {
       skippedReasons.push({ raw: item.raw_text, reason: 'quantidade não informada' });
       continue;
     }
-    const base = unitToBase(item.quantity, item.unit);
+    const base = quantityToGrams(item.quantity, item.unit, ing.serving_size_g);
     if (base === null) {
       skipped++;
-      skippedReasons.push({ raw: item.raw_text, reason: `unidade "${item.unit}" sem conversão` });
+      skippedReasons.push({
+        raw: item.raw_text,
+        reason: needsServingSize(item.unit)
+          ? `defina a porção padrão (g) de "${ing.name}" para usar a unidade "${item.unit}"`
+          : `unidade "${item.unit}" sem conversão`,
+      });
       continue;
     }
     const factor = base / 100;
@@ -96,10 +120,10 @@ export function recipeNutritionPer100g(
   let totalWeight = 0;
   for (const ing of recipe.ingredients) {
     if (!ing.ingredient_id || ing.quantity == null || !ing.unit) continue;
-    const base = unitToBase(ing.quantity, ing.unit);
-    if (base === null) continue;
     const ingredient = findIngredientById(ing.ingredient_id);
     if (!ingredient?.nutrition_per_100) continue;
+    const base = quantityToGrams(ing.quantity, ing.unit, ingredient.serving_size_g);
+    if (base === null) continue;
     totalWeight += base;
     const factor = base / 100;
     for (const key of NUTRIENT_KEYS) {
@@ -141,17 +165,10 @@ function accumulateMealItem(
   totals: Partial<Record<keyof NutritionPer100, number>>,
   skipped: { raw: string; reason: string }[],
 ): boolean {
-  if (item.quantity == null || !item.unit) {
-    skipped.push({ raw: `(item ${item.id})`, reason: 'quantidade não informada' });
-    return false;
-  }
-  const base = unitToBase(item.quantity, item.unit);
-  if (base === null) {
-    skipped.push({ raw: `(item ${item.id})`, reason: `unidade "${item.unit}" sem conversão` });
-    return false;
-  }
   let per100: Partial<Record<keyof NutritionPer100, number>> | null = null;
   let label = '(item)';
+  // Receitas não têm porção padrão (são medidas em g/ml); ingredientes podem ter.
+  let servingSizeG: number | null = null;
   if (item.kind === 'recipe' && item.recipe_id) {
     const recipe = findRecipeById(item.recipe_id);
     if (!recipe) {
@@ -167,6 +184,7 @@ function accumulateMealItem(
       return false;
     }
     label = ing.name;
+    servingSizeG = ing.serving_size_g ?? null;
     if (ing.nutrition_per_100) {
       const cleaned: Partial<Record<keyof NutritionPer100, number>> = {};
       for (const key of NUTRIENT_KEYS) {
@@ -181,6 +199,21 @@ function accumulateMealItem(
   }
   if (!per100) {
     skipped.push({ raw: label, reason: 'sem dados nutricionais' });
+    return false;
+  }
+  if (item.quantity == null || !item.unit) {
+    skipped.push({ raw: label, reason: 'quantidade não informada' });
+    return false;
+  }
+  const base = quantityToGrams(item.quantity, item.unit, servingSizeG);
+  if (base === null) {
+    skipped.push({
+      raw: label,
+      reason:
+        needsServingSize(item.unit) && item.kind === 'ingredient'
+          ? `defina a porção padrão (g) de "${label}" para usar a unidade "${item.unit}"`
+          : `unidade "${item.unit}" sem conversão`,
+    });
     return false;
   }
   const factor = base / 100;
@@ -257,10 +290,19 @@ export function computePlanItemsNutrition(
       skippedReasons.push({ raw: planItem.meal_id, reason: 'refeição não encontrada' });
       continue;
     }
+    // `quantity` de um item do tipo refeição é um multiplicador de porção
+    // (1 = porção padrão). O otimizador o ajusta sem mexer na refeição original.
+    const portion = planItem.quantity != null && planItem.quantity > 0 ? planItem.quantity : 1;
+    const mealTotals: Partial<Record<keyof NutritionPer100, number>> = {};
     for (const item of meal.items) {
-      const ok = accumulateMealItem(item, totals, skippedReasons);
+      const ok = accumulateMealItem(item, mealTotals, skippedReasons);
       if (ok) counted++;
       else skipped++;
+    }
+    for (const key of NUTRIENT_KEYS) {
+      if (mealTotals[key] !== undefined) {
+        totals[key] = (totals[key] ?? 0) + mealTotals[key]! * portion;
+      }
     }
   }
 
