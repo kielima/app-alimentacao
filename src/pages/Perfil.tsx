@@ -24,6 +24,7 @@ import {
 } from '../utils/dataImport';
 import { downloadMealsMarkdown } from '../utils/mealsMarkdown';
 import {
+  REFERENCE_PLAN_TARGETS,
   computeTargets,
   getDefaultFatPct,
   getDefaultProteinPerKg,
@@ -78,6 +79,14 @@ export default function Perfil() {
     formatNumberInput(current.proteinPerKgOverride),
   );
   const [fatPctStr, setFatPctStr] = useState(() => formatPctInput(current.fatPctOverride));
+  const [trainKcalStr, setTrainKcalStr] = useState(() => formatNumberInput(current.trainingDayKcal));
+  const [trainProtStr, setTrainProtStr] = useState(() =>
+    formatNumberInput(current.trainingDayProteinMin),
+  );
+  const [restKcalStr, setRestKcalStr] = useState(() => formatNumberInput(current.restDayKcal));
+  const [restProtStr, setRestProtStr] = useState(() =>
+    formatNumberInput(current.restDayProteinMin),
+  );
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
 
@@ -91,6 +100,10 @@ export default function Perfil() {
     setGoal(stored.goal ?? '');
     setProteinPerKgStr(formatNumberInput(stored.proteinPerKgOverride));
     setFatPctStr(formatPctInput(stored.fatPctOverride));
+    setTrainKcalStr(formatNumberInput(stored.trainingDayKcal));
+    setTrainProtStr(formatNumberInput(stored.trainingDayProteinMin));
+    setRestKcalStr(formatNumberInput(stored.restDayKcal));
+    setRestProtStr(formatNumberInput(stored.restDayProteinMin));
   }, [stored]);
 
   const proteinOverride = parseNumber(proteinPerKgStr);
@@ -106,6 +119,10 @@ export default function Perfil() {
     goal: goal || null,
     proteinPerKgOverride: proteinOverride,
     fatPctOverride,
+    trainingDayKcal: parseNumber(trainKcalStr),
+    trainingDayProteinMin: parseNumber(trainProtStr),
+    restDayKcal: parseNumber(restKcalStr),
+    restDayProteinMin: parseNumber(restProtStr),
   };
 
   const previewTargets = computeTargets(draft);
@@ -126,6 +143,17 @@ export default function Perfil() {
     }
     if (fatPctParsed != null && (fatPctParsed <= 0 || fatPctParsed >= 100)) {
       return 'Percentual de gordura fora do intervalo (0–100).';
+    }
+    const dayMetaChecks: [number | null, string, number][] = [
+      [parseNumber(trainKcalStr), 'calorias de treino', 6000],
+      [parseNumber(restKcalStr), 'calorias de descanso', 6000],
+      [parseNumber(trainProtStr), 'proteína de treino', 400],
+      [parseNumber(restProtStr), 'proteína de descanso', 400],
+    ];
+    for (const [val, label, max] of dayMetaChecks) {
+      if (val != null && (val <= 0 || val > max)) {
+        return `Valor de ${label} fora do intervalo (1–${max}).`;
+      }
     }
     return null;
   }
@@ -333,6 +361,37 @@ export default function Perfil() {
             Preencha todos os campos acima para ver suas metas diárias.
           </div>
         )}
+      </Section>
+
+      <Section title="Metas por tipo de dia (otimizador do Plano)">
+        <div className="space-y-4 rounded-xl bg-zinc-100 px-4 py-3 dark:bg-zinc-800">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            Usadas pelo botão <span className="font-medium">“Ajustar quantidades para a meta”</span>{' '}
+            no Plano. A caloria é o alvo principal; a proteína é o mínimo obrigatório (carbo e
+            gordura são as alavancas de ajuste). Deixe em branco para usar os valores de
+            referência.
+          </p>
+
+          <DayMetaFields
+            title="Dia de treino"
+            kcalStr={trainKcalStr}
+            onKcal={setTrainKcalStr}
+            protStr={trainProtStr}
+            onProt={setTrainProtStr}
+            kcalPlaceholder={String(REFERENCE_PLAN_TARGETS.training_day.calories)}
+            protPlaceholder={String(REFERENCE_PLAN_TARGETS.training_day.proteinMin)}
+          />
+
+          <DayMetaFields
+            title="Dia de descanso"
+            kcalStr={restKcalStr}
+            onKcal={setRestKcalStr}
+            protStr={restProtStr}
+            onProt={setRestProtStr}
+            kcalPlaceholder={String(REFERENCE_PLAN_TARGETS.rest_day.calories)}
+            protPlaceholder={String(REFERENCE_PLAN_TARGETS.rest_day.proteinMin)}
+          />
+        </div>
       </Section>
 
       <AdminSection />
@@ -768,6 +827,52 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       </h2>
       {children}
     </section>
+  );
+}
+
+function DayMetaFields({
+  title,
+  kcalStr,
+  onKcal,
+  protStr,
+  onProt,
+  kcalPlaceholder,
+  protPlaceholder,
+}: {
+  title: string;
+  kcalStr: string;
+  onKcal: (v: string) => void;
+  protStr: string;
+  onProt: (v: string) => void;
+  kcalPlaceholder: string;
+  protPlaceholder: string;
+}) {
+  return (
+    <div>
+      <h3 className="mb-2 text-xs font-semibold text-zinc-700 dark:text-zinc-200">{title}</h3>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Calorias (kcal)">
+          <input
+            type="text"
+            inputMode="numeric"
+            value={kcalStr}
+            onChange={(e) => onKcal(e.target.value)}
+            className={inputClass}
+            placeholder={kcalPlaceholder}
+          />
+        </Field>
+        <Field label="Proteína mín. (g)">
+          <input
+            type="text"
+            inputMode="numeric"
+            value={protStr}
+            onChange={(e) => onProt(e.target.value)}
+            className={inputClass}
+            placeholder={protPlaceholder}
+          />
+        </Field>
+      </div>
+    </div>
   );
 }
 

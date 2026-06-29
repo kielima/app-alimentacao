@@ -13,6 +13,12 @@ export interface UserProfile {
   goal: Goal | null;
   proteinPerKgOverride?: number | null;
   fatPctOverride?: number | null;
+  // Metas por tipo de dia, usadas pelo otimizador de quantidades do Plano.
+  // Quando ausentes, caem nos valores de referência (REFERENCE_PLAN_TARGETS).
+  trainingDayKcal?: number | null;
+  trainingDayProteinMin?: number | null;
+  restDayKcal?: number | null;
+  restDayProteinMin?: number | null;
   updatedAt?: string;
 }
 
@@ -79,4 +85,8 @@ export const EMPTY_USER_PROFILE: UserProfile = {
   goal: null,
   proteinPerKgOverride: null,
   fatPctOverride: null,
+  trainingDayKcal: null,
+  trainingDayProteinMin: null,
+  restDayKcal: null,
+  restDayProteinMin: null,
 };

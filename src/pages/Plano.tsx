@@ -28,8 +28,10 @@ import { useTiposTreino, planTypeForDay } from '../data/treino';
 import { findRecipeById, useAllRecipes } from '../data/recipes';
 import { findIngredientById, useAllIngredients } from '../data/ingredients';
 import { computePlanItemsNutrition, type NutritionBreakdown } from '../utils/nutrition';
-import { useNutritionTargets } from '../hooks/useNutritionTargets';
-import type { NutritionTargets } from '../types/userProfile';
+import { useUserProfile } from '../data/userProfile';
+import { dayTargets, type PlanDayTargets } from '../utils/profileTargets';
+import { optimizeDayPlan, type OptimizeResult } from '../utils/planOptimizer';
+import OptimizePlanModal from '../components/OptimizePlanModal';
 import { getMealSlots, type Meal } from '../types/meal';
 import type { Recipe } from '../types/recipe';
 import type { Ingredient } from '../types/ingredient';
@@ -131,7 +133,9 @@ export default function Plano() {
   const allMeals = useAllMeals();
   const allRecipes = useAllRecipes();
   const allIngredients = useAllIngredients();
-  const targets = useNutritionTargets();
+  const profile = useUserProfile();
+  const dayTarget = useMemo(() => dayTargets(profile, planType), [profile, planType]);
+  const [optimizeResult, setOptimizeResult] = useState<OptimizeResult | null>(null);
 
   const dayPlan = useMemo(() => {
     const found = plans.find((p) => p.day_of_week === day && p.plan_type === planType);
@@ -176,6 +180,29 @@ export default function Plano() {
     upsertMealPlan(next);
   };
 
+  const handleOptimize = () => {
+    setOptimizeResult(optimizeDayPlan(dayPlan.meals, allMeals, dayTarget));
+  };
+
+  const handleApplyOptimize = () => {
+    if (!optimizeResult) return;
+    const newQtyById = new Map(
+      optimizeResult.changed.map((i) => [i.itemId, i.suggestedQuantity]),
+    );
+    if (newQtyById.size > 0) {
+      upsertMealPlan({
+        ...dayPlan,
+        meals: dayPlan.meals.map((m) => ({
+          ...m,
+          items: m.items.map((it) =>
+            newQtyById.has(it.id) ? { ...it, quantity: newQtyById.get(it.id) ?? it.quantity } : it,
+          ),
+        })),
+      });
+    }
+    setOptimizeResult(null);
+  };
+
   return (
     <div className="mx-auto max-w-md px-4 pt-2 pb-28">
       <button
@@ -215,8 +242,20 @@ export default function Plano() {
         totalCount={totalMealsWithItems}
         isToday={isToday}
         dayLabel={dayLabel}
-        targets={targets}
+        target={dayTarget}
       />
+
+      {allItems.length > 0 && (
+        <button
+          type="button"
+          onClick={handleOptimize}
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-4 py-2.5 text-sm font-medium text-brand-700 hover:bg-brand-100 dark:border-brand-900/40 dark:bg-brand-900/20 dark:text-brand-300 dark:hover:bg-brand-900/30"
+        >
+          <Icon name="sparkles" className="h-4 w-4" />
+          Ajustar quantidades para a meta (
+          {planType === 'training_day' ? 'treino' : 'descanso'})
+        </button>
+      )}
 
       <HydrationCard />
 
@@ -250,6 +289,16 @@ export default function Plano() {
           </button>
         </div>
       )}
+
+      {optimizeResult && (
+        <OptimizePlanModal
+          result={optimizeResult}
+          dayLabel={dayLabel}
+          planType={planType}
+          onApply={handleApplyOptimize}
+          onClose={() => setOptimizeResult(null)}
+        />
+      )}
     </div>
   );
 }
@@ -261,7 +310,7 @@ function DaySummary({
   totalCount,
   isToday,
   dayLabel,
-  targets,
+  target,
 }: {
   nutrition: NutritionBreakdown | null;
   consumed: NutritionBreakdown | null;
@@ -269,8 +318,13 @@ function DaySummary({
   totalCount: number;
   isToday: boolean;
   dayLabel: string;
-  targets: NutritionTargets | null;
+  target: PlanDayTargets;
 }) {
+  const macroTargets: Record<'protein' | 'carbs' | 'fat', number> = {
+    protein: target.proteinMin,
+    carbs: target.carbs,
+    fat: target.fat,
+  };
   if (!nutrition || nutrition.counted === 0) {
     return (
       <div className="rounded-xl bg-zinc-100 px-4 py-3 text-xs text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
@@ -347,25 +401,24 @@ function DaySummary({
       )}
 
       {/* Daily target line */}
-      {targets && (
-        <div className="mt-1 flex items-center justify-between text-[10px] text-zinc-500 dark:text-zinc-400">
-          <span>Meta: {fmt(targets.calories)} kcal</span>
-          {hasConsumed && (
-            <span>
-              {pct(consumed!.totals.calories, targets.calories) ?? 0}% da meta
-            </span>
+      <div className="mt-1 flex items-center justify-between gap-2 text-[10px] text-zinc-500 dark:text-zinc-400">
+        <span>
+          Meta: {fmt(target.calories)} kcal · ≥{fmt(target.proteinMin)} g prot.
+          {target.source === 'reference' && (
+            <Link
+              to="/perfil"
+              className="ml-1 text-brand-600 hover:underline dark:text-brand-400"
+            >
+              personalizar
+            </Link>
           )}
-        </div>
-      )}
-      {!targets && (
-        <Link
-          to="/perfil"
-          className="mt-1 inline-flex items-center gap-1 text-[10px] text-brand-600 hover:underline dark:text-brand-400"
-        >
-          Defina seu perfil para ver metas diárias{' '}
-          <Icon name="arrow-right" className="h-3.5 w-3.5" />
-        </Link>
-      )}
+        </span>
+        {hasConsumed && (
+          <span className="shrink-0">
+            {pct(consumed!.totals.calories, target.calories) ?? 0}% da meta
+          </span>
+        )}
+      </div>
 
       {/* Macros */}
       <div className="mt-2 grid grid-cols-3 gap-1 text-xs text-zinc-600 dark:text-zinc-300">
@@ -373,7 +426,7 @@ function DaySummary({
           const total = nutrition.totals[key];
           const cons = consumed?.totals[key];
           const p = pct(cons, total);
-          const target = targets?.[key];
+          const macroTarget = macroTargets[key];
           return (
             <div key={key}>
               {hasConsumed ? (
@@ -390,9 +443,9 @@ function DaySummary({
                   {label}: {fmt(total, 1)}g
                 </div>
               )}
-              {target != null && (
+              {macroTarget != null && (
                 <div className="text-[10px] text-zinc-400 dark:text-zinc-500">
-                  Meta: {target}g
+                  Meta: {macroTarget}g
                 </div>
               )}
             </div>

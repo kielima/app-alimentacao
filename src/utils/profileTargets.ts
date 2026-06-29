@@ -1,3 +1,4 @@
+import type { PlanType } from '../types/mealPlan';
 import {
   ACTIVITY_FACTORS,
   FAT_PCT_OF_KCAL,
@@ -8,6 +9,60 @@ import {
   type Sex,
   type UserProfile,
 } from '../types/userProfile';
+
+/**
+ * Metas por tipo de dia (treino vs descanso).
+ *
+ * `calories` é o alvo principal do otimizador; `proteinMin` é uma restrição
+ * obrigatória (o total do dia nunca deve ficar abaixo). `carbs`/`fat` são
+ * apenas referências exibidas — o otimizador usa carbo/gordura como alavancas
+ * para fechar a meta calórica sem mexer na proteína.
+ */
+export interface PlanDayTargets {
+  calories: number;
+  proteinMin: number;
+  carbs: number;
+  fat: number;
+  /** De onde vieram kcal/proteína: metas salvas no perfil ou os valores de referência. */
+  source: 'profile' | 'reference';
+}
+
+/**
+ * Valores de referência usados quando o perfil ainda não tem metas por tipo de
+ * dia salvas. Espelham o plano alimentar atual (hipertrofia, ~67 kg):
+ * treino ~2.650 kcal / ≥181 g de proteína; descanso ~2.100 kcal / ≥168 g.
+ * Editáveis no Perfil.
+ */
+export const REFERENCE_PLAN_TARGETS: Record<
+  PlanType,
+  { calories: number; proteinMin: number; carbs: number; fat: number }
+> = {
+  training_day: { calories: 2650, proteinMin: 181, carbs: 235, fat: 80 },
+  rest_day: { calories: 2100, proteinMin: 168, carbs: 168, fat: 74 },
+};
+
+/** Tolerância calórica (kcal) aceita como "bateu a meta". */
+export const KCAL_TOLERANCE = 50;
+
+/**
+ * Metas do dia para um tipo de plano. Usa as metas salvas no perfil quando
+ * presentes (kcal e/ou proteína), senão cai nos valores de referência.
+ */
+export function dayTargets(p: UserProfile | null, planType: PlanType): PlanDayTargets {
+  const ref = REFERENCE_PLAN_TARGETS[planType];
+  const kcalOverride = planType === 'training_day' ? p?.trainingDayKcal : p?.restDayKcal;
+  const proteinOverride =
+    planType === 'training_day' ? p?.trainingDayProteinMin : p?.restDayProteinMin;
+  const hasKcal = kcalOverride != null && kcalOverride > 0;
+  const hasProtein = proteinOverride != null && proteinOverride > 0;
+  return {
+    calories: hasKcal ? kcalOverride : ref.calories,
+    proteinMin: hasProtein ? proteinOverride : ref.proteinMin,
+    carbs: ref.carbs,
+    fat: ref.fat,
+    source: hasKcal || hasProtein ? 'profile' : 'reference',
+  };
+}
 
 export function getEffectiveProteinPerKg(p: Pick<UserProfile, 'goal' | 'proteinPerKgOverride'>): {
   value: number;
