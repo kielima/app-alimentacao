@@ -307,7 +307,10 @@ async function geminiExtractRecipe(apiKey, parts) {
     }
     logger.error('Gemini retornou erro (receita)', { status: res.status, detail });
     if (res.status === 429) {
-      throw new HttpsError('resource-exhausted', 'Limite de uso do Gemini atingido. Tente mais tarde.');
+      throw new HttpsError(
+        'resource-exhausted',
+        'Limite de uso do Gemini atingido (cota grátis da IA). Tente novamente em alguns minutos.',
+      );
     }
     if (res.status === 400 || res.status === 403) {
       throw new HttpsError('failed-precondition', 'Chave do Gemini inválida ou sem permissão.');
@@ -472,6 +475,12 @@ async function runApifyActor(actor, input, token) {
     logger.error('Apify retornou erro', { status: res.status, actor });
     if (res.status === 401 || res.status === 403) {
       throw new HttpsError('failed-precondition', 'Token da Apify inválido ou sem permissão.');
+    }
+    if (res.status === 429) {
+      throw new HttpsError(
+        'resource-exhausted',
+        'Limite/crédito da Apify atingido. Verifique seu saldo mensal na Apify.',
+      );
     }
     throw new HttpsError('unavailable', `Apify: HTTP ${res.status}`);
   }
