@@ -16,8 +16,11 @@ const APIFY_API_TOKEN = defineSecret('APIFY_API_TOKEN');
 // Mantém igual ao ADMIN_EMAIL do cliente / às firestore.rules.
 const ADMIN_EMAIL = 'kly@sapo.pt';
 
-// Modelo de visão do free tier. Pode ser sobrescrito por variável de ambiente.
-const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+// Modelo do free tier. Usamos o flash-lite porque tem cota grátis maior que o
+// flash (o Google apertou muito o tier grátis em 2026). Pode ser sobrescrito
+// por variável de ambiente GEMINI_MODEL (ex.: 'gemini-2.5-flash' para mais
+// qualidade em vídeo do YouTube, à custa de bater na cota grátis mais cedo).
+const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite';
 
 // JSON Schema que força a saída estruturada do Gemini.
 const RESPONSE_SCHEMA = {
