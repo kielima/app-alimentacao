@@ -33,6 +33,10 @@ export interface Recipe {
   season?: Season;
   needs_review?: boolean;
   nutrition_per_100g?: Record<string, number | null>;
+  /** URL de origem quando a receita foi importada de um link (TikTok, YouTube, web…). */
+  source_url?: string;
+  /** Plataforma de origem: 'youtube' | 'tiktok' | 'instagram' | 'web' | 'text'. */
+  source_platform?: string;
 }
 
 export interface RecipeCategoryDef {

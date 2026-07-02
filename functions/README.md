@@ -9,6 +9,36 @@ extraídos. Assim a chave do Gemini **nunca vai para o bundle do cliente**.
 - O cliente chama via `httpsCallable(functions, 'extractNutrition')`
   (ver `src/lib/gemini.ts`).
 
+## `extractRecipeFromUrl` — importar receita de um link
+
+Recebe `{ url }` (ou `{ text }`) e devolve a receita estruturada (nome,
+ingredientes, passos, categoria…). O cliente chama via
+`httpsCallable(functions, 'extractRecipeFromUrl')` (ver `src/lib/recipeImport.ts`).
+
+Como cada fonte é lida:
+
+- **YouTube** — o Gemini lê a URL do vídeo nativamente (`fileData.fileUri`). Não
+  precisa de terceiros.
+- **Página web** — a função baixa o HTML e tenta extrair `schema.org/Recipe`
+  (JSON-LD). Se não houver, manda o texto da página para o Gemini.
+- **TikTok / Instagram** — passam por um scraper da **Apify** (essas plataformas
+  bloqueiam acesso direto). A função pega legenda + transcrição e manda para o
+  Gemini. **Precisa do secret `APIFY_API_TOKEN`** (veja abaixo). Sem ele, o app
+  cai no modo "colar texto".
+- **Colar texto** — vai direto para o Gemini; não precisa de Apify.
+
+### Secret opcional `APIFY_API_TOKEN` (só para TikTok/Instagram)
+
+1. Crie uma conta grátis em https://apify.com (o plano free dá ~$5/mês de crédito,
+   suficiente para uso pessoal) e pegue o token em **Settings → Integrations → API token**.
+2. Console → Security → **Secret Manager** → *Create secret*
+   - Name: `APIFY_API_TOKEN`
+   - Secret value: o seu token
+   - (CLI: `firebase functions:secrets:set APIFY_API_TOKEN`)
+3. Actors usados (configuráveis por variável de ambiente da função, opcional):
+   `APIFY_TIKTOK_ACTOR` (padrão `clockworks~tiktok-scraper`) e
+   `APIFY_INSTAGRAM_ACTOR` (padrão `apify~instagram-scraper`).
+
 ## Pré-requisitos (uma vez)
 
 Como você não roda nada localmente, faça tudo pelo **Console do Google Cloud /
