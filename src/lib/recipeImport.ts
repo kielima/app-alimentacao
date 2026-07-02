@@ -57,7 +57,7 @@ function friendlyError(err: unknown): string {
     case 'functions/permission-denied':
       return 'Sua conta não tem permissão para usar este recurso.';
     case 'functions/resource-exhausted':
-      return 'Limite de uso atingido (Gemini/Apify). Tente novamente mais tarde.';
+      return fe.message || 'Limite de uso atingido. Tente novamente mais tarde.';
     case 'functions/failed-precondition':
       return fe.message || 'Servidor sem as chaves necessárias configuradas.';
     case 'functions/unavailable':
