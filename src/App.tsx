@@ -13,6 +13,7 @@ import Compras from './pages/Compras';
 import Plano from './pages/Plano';
 import ReceitaDetalhe from './pages/ReceitaDetalhe';
 import ReceitaForm from './pages/ReceitaForm';
+import ReceitaImportar from './pages/ReceitaImportar';
 import DispensaForm from './pages/DispensaForm';
 import ComprasItemForm from './pages/ComprasItemForm';
 import Ingredientes from './pages/Ingredientes';
@@ -179,6 +180,7 @@ export default function App() {
             <Route path="/" element={<Navigate to="/receitas" replace />} />
             <Route path="/receitas" element={<Receitas />} />
             <Route path="/receitas/nova" element={<ReceitaForm />} />
+            <Route path="/receitas/importar" element={<ReceitaImportar />} />
             <Route path="/receitas/:id/editar" element={<ReceitaForm />} />
             <Route path="/receitas/:id" element={<ReceitaDetalhe />} />
             <Route path="/dispensa" element={<Dispensa />} />

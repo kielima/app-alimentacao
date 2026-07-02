@@ -1,0 +1,200 @@
+import { httpsCallable, type FunctionsError } from 'firebase/functions';
+import { functions, firebaseConfigured } from './firebase';
+import { normalize } from '../utils/search';
+import { uniqueSlug } from '../utils/slug';
+import { allRecipeIds, recipeCategories } from '../data/recipes';
+import type { Ingredient } from '../types/ingredient';
+import type { Recipe, RecipeCategoryId, RecipeIngredient } from '../types/recipe';
+
+// A importação de receitas por link passa por uma Cloud Function
+// (extractRecipeFromUrl) que guarda as chaves (Gemini/Apify) no servidor —
+// nada de chave no bundle do cliente. Disponível sempre que o Firebase estiver
+// configurado.
+export const recipeImportConfigured = firebaseConfigured;
+
+/** Um ingrediente cru extraído pela IA (antes de casar com o catálogo). */
+export interface ExtractedIngredient {
+  raw_text: string;
+  name: string | null;
+  quantity: number | null;
+  unit: string | null;
+}
+
+/** Receita bruta devolvida pela Cloud Function. */
+export interface ExtractedRecipe {
+  found: boolean;
+  name: string | null;
+  category: RecipeCategoryId | null;
+  prep_time_min: number | null;
+  difficulty: 'facil' | 'medio' | 'dificil' | null;
+  servings: number | null;
+  ingredients: ExtractedIngredient[];
+  steps: string[];
+  notes: string | null;
+  image_url: string | null;
+  source_platform: string | null;
+  source_url: string | null;
+}
+
+type CallInput = { url?: string; text?: string };
+
+const VALID_CATEGORIES = new Set<string>(recipeCategories.map((c) => c.id));
+
+const PLATFORM_LABEL: Record<string, string> = {
+  youtube: 'YouTube',
+  tiktok: 'TikTok',
+  instagram: 'Instagram',
+  web: 'página web',
+  text: 'texto colado',
+};
+
+/** Traduz erros da Cloud Function para mensagens amigáveis. */
+function friendlyError(err: unknown): string {
+  const fe = err as Partial<FunctionsError> & { message?: string };
+  switch (fe?.code) {
+    case 'functions/unauthenticated':
+      return 'Faça login para importar receitas.';
+    case 'functions/permission-denied':
+      return 'Sua conta não tem permissão para usar este recurso.';
+    case 'functions/resource-exhausted':
+      return 'Limite de uso atingido (Gemini/Apify). Tente novamente mais tarde.';
+    case 'functions/failed-precondition':
+      return fe.message || 'Servidor sem as chaves necessárias configuradas.';
+    case 'functions/unavailable':
+      return fe.message || 'Falha de rede ao ler o link. Tente novamente.';
+    case 'functions/not-found':
+      return fe.message || 'Não consegui ler o conteúdo desse link.';
+    case 'functions/invalid-argument':
+      return fe.message || 'Link ou texto inválido.';
+    default:
+      return fe?.message || 'Falha ao importar a receita. Tente novamente.';
+  }
+}
+
+/** Normaliza a saída bruta (defensivo: a função pode devolver campos nulos). */
+function normalizeExtracted(raw: Partial<ExtractedRecipe>): ExtractedRecipe {
+  const category =
+    raw.category && VALID_CATEGORIES.has(raw.category) ? (raw.category as RecipeCategoryId) : null;
+  const ingredients = Array.isArray(raw.ingredients)
+    ? raw.ingredients
+        .filter((i) => i && typeof i.raw_text === 'string' && i.raw_text.trim())
+        .map((i) => ({
+          raw_text: i.raw_text.trim(),
+          name: i.name?.trim() || null,
+          quantity: typeof i.quantity === 'number' && Number.isFinite(i.quantity) ? i.quantity : null,
+          unit: i.unit?.trim() || null,
+        }))
+    : [];
+  const steps = Array.isArray(raw.steps)
+    ? raw.steps.map((s) => String(s).trim()).filter(Boolean)
+    : [];
+  return {
+    found: Boolean(raw.found),
+    name: raw.name?.trim() || null,
+    category,
+    prep_time_min:
+      typeof raw.prep_time_min === 'number' && Number.isFinite(raw.prep_time_min)
+        ? raw.prep_time_min
+        : null,
+    difficulty: raw.difficulty ?? null,
+    servings:
+      typeof raw.servings === 'number' && Number.isFinite(raw.servings) ? raw.servings : null,
+    ingredients,
+    steps,
+    notes: raw.notes?.trim() || null,
+    image_url: raw.image_url?.trim() || null,
+    source_platform: raw.source_platform?.trim() || null,
+    source_url: raw.source_url?.trim() || null,
+  };
+}
+
+/**
+ * Chama a Cloud Function para extrair uma receita de um link ou de texto colado.
+ * Lança Error com mensagem amigável em caso de falha.
+ */
+export async function extractRecipe(input: CallInput): Promise<ExtractedRecipe> {
+  if (!functions) {
+    throw new Error('Firebase não configurado.');
+  }
+  const callable = httpsCallable<CallInput, Partial<ExtractedRecipe>>(
+    functions,
+    'extractRecipeFromUrl',
+  );
+  try {
+    const resp = await callable(input);
+    return normalizeExtracted(resp.data ?? {});
+  } catch (err) {
+    throw new Error(friendlyError(err));
+  }
+}
+
+/** Casa o nome de um ingrediente extraído com um do catálogo (best-effort). */
+function matchIngredientId(
+  extracted: ExtractedIngredient,
+  byName: Map<string, string>,
+): string | null {
+  const candidate = extracted.name || extracted.raw_text;
+  if (!candidate) return null;
+  const key = normalize(candidate).trim();
+  if (!key) return null;
+  // Match exato normalizado primeiro; depois "contém" (o mais curto que casa).
+  if (byName.has(key)) return byName.get(key) as string;
+  for (const [name, id] of byName) {
+    if (name.length >= 3 && key.includes(name)) return id;
+  }
+  return null;
+}
+
+/**
+ * Converte a receita extraída para o tipo `Recipe` do app, casando ingredientes
+ * com o catálogo existente e marcando `needs_review`. Não persiste — quem chama
+ * revisa e depois salva via upsertUserRecipe.
+ */
+export function extractedToRecipe(
+  data: ExtractedRecipe,
+  existingIngredients: Ingredient[],
+): Recipe {
+  const byName = new Map<string, string>();
+  for (const ing of existingIngredients) {
+    const k = normalize(ing.name).trim();
+    if (k && !byName.has(k)) byName.set(k, ing.id);
+  }
+
+  const ingredients: RecipeIngredient[] = data.ingredients.map((i) => ({
+    raw_text: i.raw_text,
+    ingredient_id: matchIngredientId(i, byName),
+    quantity: i.quantity,
+    unit: i.unit,
+  }));
+
+  const name = data.name || 'Receita importada';
+  const id = uniqueSlug(name, allRecipeIds());
+
+  const platformLabel = data.source_platform
+    ? PLATFORM_LABEL[data.source_platform] ?? data.source_platform
+    : null;
+  const attribution =
+    platformLabel && data.source_url
+      ? `Importada de ${platformLabel}: ${data.source_url}`
+      : platformLabel
+        ? `Importada de ${platformLabel}.`
+        : null;
+  const notes = [data.notes, attribution].filter(Boolean).join('\n\n') || undefined;
+
+  return {
+    id,
+    name,
+    category: data.category ?? 'pratos-principais',
+    prep_time_min: data.prep_time_min,
+    difficulty: data.difficulty,
+    rating: null,
+    photos: data.image_url ? [data.image_url] : [],
+    ingredients,
+    steps: data.steps,
+    notes,
+    source_lines: [0, 0],
+    needs_review: true,
+    source_url: data.source_url ?? undefined,
+    source_platform: data.source_platform ?? undefined,
+  };
+}

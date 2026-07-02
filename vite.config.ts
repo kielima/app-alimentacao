@@ -29,6 +29,15 @@ export default defineConfig({
         orientation: 'portrait',
         scope: '/',
         start_url: '/',
+        // Registra o app no menu "Compartilhar" do Android. Ao compartilhar um
+        // link (TikTok, YouTube, Instagram, web), o SO abre o app em
+        // /receitas/importar com a URL nos query params. Uma ponte no main.tsx
+        // converte para a rota de hash (o app usa HashRouter).
+        share_target: {
+          action: '/receitas/importar',
+          method: 'GET',
+          params: { title: 'title', text: 'text', url: 'url' },
+        },
         icons: [
           { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
