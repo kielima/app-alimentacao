@@ -150,6 +150,35 @@ function matchIngredientId(
  * com o catálogo existente e marcando `needs_review`. Não persiste — quem chama
  * revisa e depois salva via upsertUserRecipe.
  */
+/** Códigos de unidade que os formulários de receita do app usam. */
+const APP_UNITS = new Set(['g', 'ml', 'unit', 'xc', 'cs', 'cc', 'dt', 'mç', 'pct', 'a_gosto']);
+
+/** Unidades em texto livre (como a IA devolve) → códigos do app. */
+const UNIT_ALIASES: Record<string, string> = {
+  g: 'g', grama: 'g', gramas: 'g', gr: 'g',
+  ml: 'ml', mililitro: 'ml', mililitros: 'ml',
+  unidade: 'unit', unidades: 'unit', un: 'unit', und: 'unit', unid: 'unit', u: 'unit',
+  xicara: 'xc', xicaras: 'xc', xic: 'xc',
+  'colher de sopa': 'cs', 'colheres de sopa': 'cs', 'colher sopa': 'cs',
+  'colher de cha': 'cc', 'colheres de cha': 'cc', 'colher cha': 'cc',
+  dente: 'dt', dentes: 'dt',
+  maco: 'mç', macos: 'mç',
+  pacote: 'pct', pacotes: 'pct',
+  'a gosto': 'a_gosto', 'a criterio': 'a_gosto', qb: 'a_gosto',
+};
+
+/**
+ * Normaliza a unidade devolvida pela IA para um código do app. Retorna null
+ * quando não reconhece — o texto original continua no raw_text, então nada
+ * se perde e o usuário pode escolher a unidade na revisão.
+ */
+function normalizeUnit(raw: string | null): string | null {
+  if (!raw) return null;
+  if (APP_UNITS.has(raw)) return raw;
+  const key = normalize(raw).trim().replace(/\.$/, '');
+  return UNIT_ALIASES[key] ?? null;
+}
+
 export function extractedToRecipe(
   data: ExtractedRecipe,
   existingIngredients: Ingredient[],
@@ -164,7 +193,7 @@ export function extractedToRecipe(
     raw_text: i.raw_text,
     ingredient_id: matchIngredientId(i, byName),
     quantity: i.quantity,
-    unit: i.unit,
+    unit: normalizeUnit(i.unit),
   }));
 
   const name = data.name || 'Receita importada';

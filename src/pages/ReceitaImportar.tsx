@@ -3,11 +3,28 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import Icon from '../components/Icon';
 import TrashIcon from '../components/TrashIcon';
+import SearchableSelect from '../components/SearchableSelect';
 import { useAllIngredients } from '../data/ingredients';
 import { recipeCategories } from '../data/recipes';
 import { upsertUserRecipe } from '../data/userRecipes';
 import { extractRecipe, extractedToRecipe } from '../lib/recipeImport';
-import type { Recipe, RecipeCategoryId } from '../types/recipe';
+import type { Ingredient } from '../types/ingredient';
+import type { Recipe, RecipeCategoryId, RecipeIngredient } from '../types/recipe';
+
+// Mesmas opções de unidade da tela de editar receita (ReceitaForm).
+const UNIT_OPTIONS = [
+  { value: '', label: '—' },
+  { value: 'g', label: 'g' },
+  { value: 'ml', label: 'ml' },
+  { value: 'unit', label: 'unidade' },
+  { value: 'xc', label: 'xícara' },
+  { value: 'cs', label: 'colher de sopa' },
+  { value: 'cc', label: 'colher de chá' },
+  { value: 'dt', label: 'dente' },
+  { value: 'mç', label: 'maço' },
+  { value: 'pct', label: 'pacote' },
+  { value: 'a_gosto', label: 'a gosto' },
+];
 
 /** Extrai a primeira URL http(s) de um texto (o share do Android às vezes manda
  *  a URL dentro de `text`, com texto extra). */
@@ -199,6 +216,7 @@ export default function ReceitaImportar() {
       {stage.kind === 'review' && (
         <ReviewForm
           recipe={stage.recipe}
+          catalog={ingredients}
           onSave={handleSave}
           onDiscard={() => setStage({ kind: 'input' })}
         />
@@ -207,31 +225,61 @@ export default function ReceitaImportar() {
   );
 }
 
+/** Ingrediente no formato editável da revisão (campos separados, como no app). */
+interface FormIngredient {
+  /** Texto original da IA — usado como nome quando não há ingrediente do catálogo. */
+  raw_text: string;
+  ingredient_id: string;
+  quantity: string;
+  unit: string;
+}
+
+function toFormIngredient(i: RecipeIngredient): FormIngredient {
+  return {
+    raw_text: i.raw_text,
+    ingredient_id: i.ingredient_id ?? '',
+    quantity: i.quantity != null ? String(i.quantity) : '',
+    unit: i.unit ?? '',
+  };
+}
+
 function ReviewForm({
   recipe,
+  catalog,
   onSave,
   onDiscard,
 }: {
   recipe: Recipe;
+  catalog: Ingredient[];
   onSave: (recipe: Recipe) => void;
   onDiscard: () => void;
 }) {
   const [name, setName] = useState(recipe.name);
   const [category, setCategory] = useState<RecipeCategoryId>(recipe.category);
   const [prepTime, setPrepTime] = useState(recipe.prep_time_min?.toString() ?? '');
-  // Mantém ingredient_id/quantity/unit sob o capô; usuário edita o texto.
-  const [ingredients, setIngredients] = useState(recipe.ingredients ?? []);
+  const [ingredients, setIngredients] = useState<FormIngredient[]>(() =>
+    (recipe.ingredients ?? []).map(toFormIngredient),
+  );
   const [steps, setSteps] = useState(recipe.steps ?? []);
+
+  const ingredientMap = useMemo(() => new Map(catalog.map((i) => [i.id, i])), [catalog]);
+  const options = useMemo(
+    () =>
+      [...catalog]
+        .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+        .map((i) => ({ value: i.id, label: i.brand ? `${i.brand} — ${i.name}` : i.name })),
+    [catalog],
+  );
   const matchedCount = ingredients.filter((i) => i.ingredient_id).length;
 
-  const updateIngredient = (idx: number, raw_text: string) =>
-    setIngredients((list) => list.map((it, i) => (i === idx ? { ...it, raw_text } : it)));
+  const updateIngredient = (idx: number, patch: Partial<FormIngredient>) =>
+    setIngredients((list) => list.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
   const removeIngredient = (idx: number) =>
     setIngredients((list) => list.filter((_, i) => i !== idx));
   const addIngredient = () =>
     setIngredients((list) => [
       ...list,
-      { raw_text: '', ingredient_id: null, quantity: null, unit: null },
+      { raw_text: '', ingredient_id: '', quantity: '', unit: '' },
     ]);
 
   const updateStep = (idx: number, value: string) =>
@@ -241,8 +289,20 @@ function ReviewForm({
 
   const handleSave = () => {
     const cleanedIngredients = ingredients
-      .map((i) => ({ ...i, raw_text: i.raw_text.trim() }))
-      .filter((i) => i.raw_text);
+      .map((fi): RecipeIngredient | null => {
+        const ing = fi.ingredient_id ? ingredientMap.get(fi.ingredient_id) : undefined;
+        const qty = fi.quantity ? Number(fi.quantity) : null;
+        const unit = fi.unit || null;
+        if (!ing) {
+          // Sem ingrediente do catálogo: preserva o texto original da IA.
+          const raw = fi.raw_text.trim();
+          return raw ? { raw_text: raw, ingredient_id: null, quantity: qty, unit } : null;
+        }
+        const namePart = ing.brand ? `${ing.brand} — ${ing.name}` : ing.name;
+        const raw = qty != null ? `${qty}${unit ? ` ${unit}` : ''} de ${namePart}` : namePart;
+        return { raw_text: raw || namePart, ingredient_id: fi.ingredient_id, quantity: qty, unit };
+      })
+      .filter((i): i is RecipeIngredient => i !== null);
     const cleanedSteps = steps.map((s) => s.trim()).filter(Boolean);
     onSave({
       ...recipe,
@@ -304,33 +364,63 @@ function ReviewForm({
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
           Ingredientes
         </h2>
-        <ul className="space-y-2">
+        <ul className="space-y-3">
           {ingredients.map((ing, idx) => (
-            <li key={idx} className="flex items-center gap-2">
-              {ing.ingredient_id && (
-                <span
-                  className="shrink-0 text-emerald-500"
-                  title="Reconhecido no seu catálogo"
-                  aria-label="Reconhecido no seu catálogo"
-                >
-                  <Icon name="check-circle" className="h-4 w-4" />
-                </span>
+            <li
+              key={idx}
+              className="rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900"
+            >
+              {!ing.ingredient_id && ing.raw_text.trim() && (
+                <p className="mb-1.5 flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
+                  <Icon name="sparkles" className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">{ing.raw_text}</span>
+                </p>
               )}
-              <input
-                type="text"
-                value={ing.raw_text}
-                onChange={(e) => updateIngredient(idx, e.target.value)}
-                className={`${inputClass} text-sm`}
-                placeholder="Ex.: 2 xícaras de farinha"
-              />
-              <button
-                type="button"
-                onClick={() => removeIngredient(idx)}
-                className="shrink-0 rounded-md bg-red-100 px-2 py-1.5 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
-                aria-label="Remover ingrediente"
-              >
-                <TrashIcon className="h-4 w-4" />
-              </button>
+              <div className="mb-2 grid grid-cols-[minmax(0,1fr),auto] gap-2">
+                <SearchableSelect
+                  value={ing.ingredient_id}
+                  onChange={(id) => {
+                    const matched = ingredientMap.get(id);
+                    updateIngredient(idx, {
+                      ingredient_id: id,
+                      unit: matched && !ing.unit ? matched.default_unit : ing.unit,
+                    });
+                  }}
+                  options={options}
+                  placeholder="— Selecione um ingrediente —"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeIngredient(idx)}
+                  className="inline-flex items-center justify-center rounded-md bg-red-100 px-2 py-1 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
+                  aria-label="Remover ingrediente"
+                >
+                  <TrashIcon className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="grid grid-cols-[80px,1fr] gap-2">
+                <input
+                  type="number"
+                  min={0}
+                  step="any"
+                  inputMode="decimal"
+                  value={ing.quantity}
+                  onChange={(e) => updateIngredient(idx, { quantity: e.target.value })}
+                  placeholder="Qtd"
+                  className={`${inputClass} text-sm`}
+                />
+                <select
+                  value={ing.unit}
+                  onChange={(e) => updateIngredient(idx, { unit: e.target.value })}
+                  className={`${inputClass} text-sm`}
+                >
+                  {UNIT_OPTIONS.map((u) => (
+                    <option key={u.value} value={u.value}>
+                      {u.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </li>
           ))}
         </ul>

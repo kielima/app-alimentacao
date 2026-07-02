@@ -120,12 +120,17 @@ function formIngredientsToRecipe(
   ingredientMap: Map<string, Ingredient>,
 ): RecipeIngredient[] {
   return items
-    .filter((i) => i.ingredient_id)
+    // Mantém linhas com ingrediente do catálogo OU com texto livre (ex.: itens
+    // de uma receita importada que não casaram com um ingrediente do catálogo).
+    .filter((i) => i.ingredient_id || i.raw_text.trim())
     .map((i) => {
-      const ing = ingredientMap.get(i.ingredient_id);
+      const ing = i.ingredient_id ? ingredientMap.get(i.ingredient_id) : undefined;
       const qty = i.quantity ? Number(i.quantity) : null;
       const unit = i.unit || null;
-      const namePart = ing ? (ing.brand ? `${ing.brand} — ${ing.name}` : ing.name) : i.raw_text;
+      if (!ing) {
+        return { raw_text: i.raw_text.trim(), ingredient_id: null, quantity: qty, unit };
+      }
+      const namePart = ing.brand ? `${ing.brand} — ${ing.name}` : ing.name;
       const raw = qty != null ? `${qty}${unit ? ` ${unit}` : ''} de ${namePart}` : namePart;
       return {
         raw_text: raw || namePart,
