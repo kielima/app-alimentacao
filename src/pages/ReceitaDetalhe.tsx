@@ -146,12 +146,7 @@ export default function ReceitaDetalhe() {
         </div>
       )}
 
-      <div
-        className="mb-3 flex h-32 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800"
-        aria-hidden
-      >
-        <Icon name={category?.icon ?? 'utensils'} className="h-16 w-16 text-zinc-400 dark:text-zinc-500" />
-      </div>
+      <RecipePhoto photo={recipe.photos?.[0]} icon={category?.icon ?? 'utensils'} />
 
       <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
         {category && (
@@ -332,6 +327,28 @@ export default function ReceitaDetalhe() {
           <path d="M15 5l4 4" />
         </svg>
       </Link>
+    </div>
+  );
+}
+
+function RecipePhoto({ photo, icon }: { photo?: string; icon: string }) {
+  const [failed, setFailed] = useState(false);
+  if (photo && !failed) {
+    return (
+      <img
+        src={photo}
+        alt=""
+        onError={() => setFailed(true)}
+        className="mb-3 h-44 w-full rounded-xl object-cover"
+      />
+    );
+  }
+  return (
+    <div
+      className="mb-3 flex h-32 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800"
+      aria-hidden
+    >
+      <Icon name={icon} className="h-16 w-16 text-zinc-400 dark:text-zinc-500" />
     </div>
   );
 }

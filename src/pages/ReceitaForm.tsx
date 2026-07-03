@@ -8,6 +8,7 @@ import TrashIcon from '../components/TrashIcon';
 import { findRecipeById, recipeCategories, allRecipeIds } from '../data/recipes';
 import { upsertUserRecipe } from '../data/userRecipes';
 import { uniqueSlug } from '../utils/slug';
+import { compressImageToDataUrl } from '../utils/image';
 import type { Difficulty, Rating, Recipe, RecipeCategoryId, RecipeIngredient } from '../types/recipe';
 import type { Ingredient } from '../types/ingredient';
 
@@ -62,6 +63,7 @@ interface FormState {
   difficulty: Difficulty | '';
   rating: Rating | 0;
   notes: string;
+  photos: string[];
   ingredients: FormIngredient[];
   ingredients_molho: FormIngredient[];
   steps: string[];
@@ -91,6 +93,7 @@ function recipeToForm(r: Recipe | undefined, initialName = ''): FormState {
       difficulty: '',
       rating: 0,
       notes: '',
+      photos: [],
       ingredients: [emptyIngredient()],
       ingredients_molho: [],
       steps: [''],
@@ -105,6 +108,7 @@ function recipeToForm(r: Recipe | undefined, initialName = ''): FormState {
     difficulty: r.difficulty ?? '',
     rating: r.rating ?? 0,
     notes: r.notes ?? '',
+    photos: r.photos ?? [],
     ingredients: (r.ingredients ?? []).length
       ? (r.ingredients ?? []).map(recipeIngredientToForm)
       : [emptyIngredient()],
@@ -160,7 +164,7 @@ function formToRecipe(
     prep_time_min: state.prep_time_min ? Number(state.prep_time_min) : null,
     difficulty: state.difficulty || null,
     rating: state.rating || null,
-    photos: original?.photos ?? [],
+    photos: state.photos,
     ingredients,
     ingredients_molho: ingredients_molho.length > 0 ? ingredients_molho : undefined,
     steps,
@@ -230,6 +234,19 @@ export default function ReceitaForm() {
     return recipeToForm(original, initialName);
   });
   const [error, setError] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePhoto = async (file: File | undefined) => {
+    if (!file) return;
+    setPhotoError(null);
+    try {
+      const dataUrl = await compressImageToDataUrl(file);
+      setState((s) => ({ ...s, photos: [dataUrl] }));
+    } catch (err) {
+      setPhotoError(err instanceof Error ? err.message : 'Falha ao processar a imagem.');
+    }
+  };
 
   const stateRef = useRef(state);
   useEffect(() => {
@@ -436,6 +453,57 @@ export default function ReceitaForm() {
           className={inputClass}
           placeholder="Observações sobre a receita…"
         />
+      </Field>
+
+      <Field label="Foto (opcional)">
+        <input
+          ref={photoInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            handlePhoto(e.target.files?.[0]);
+            e.target.value = '';
+          }}
+        />
+        {state.photos[0] ? (
+          <div className="relative">
+            <img
+              src={state.photos[0]}
+              alt="Foto da receita"
+              className="h-44 w-full rounded-xl object-cover"
+            />
+            <div className="absolute right-2 top-2 flex gap-2">
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                className="inline-flex items-center gap-1 rounded-full bg-white/90 px-3 py-1.5 text-xs font-medium text-zinc-700 shadow hover:bg-white dark:bg-zinc-900/90 dark:text-zinc-200"
+              >
+                <Icon name="upload" className="h-3.5 w-3.5" /> Trocar
+              </button>
+              <button
+                type="button"
+                onClick={() => setState((s) => ({ ...s, photos: [] }))}
+                className="inline-flex items-center justify-center rounded-full bg-white/90 p-1.5 text-red-600 shadow hover:bg-white dark:bg-zinc-900/90 dark:text-red-400"
+                aria-label="Remover foto"
+              >
+                <TrashIcon className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => photoInputRef.current?.click()}
+            className="flex h-32 w-full flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-zinc-300 text-sm text-zinc-500 hover:border-brand-500 hover:text-brand-600 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-brand-400 dark:hover:text-brand-400"
+          >
+            <Icon name="upload" className="h-6 w-6" />
+            Tirar foto ou escolher da galeria
+          </button>
+        )}
+        {photoError && (
+          <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">{photoError}</p>
+        )}
       </Field>
 
       <IngredientsSection

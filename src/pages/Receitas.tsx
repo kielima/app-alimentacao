@@ -199,6 +199,8 @@ export default function Receitas() {
 function RecipeCard({ recipe, onLongPress }: { recipe: Recipe; onLongPress: () => void }) {
   const longPress = useLongPress(onLongPress, { delay: 450 });
   const cat = recipeCategories.find((c) => c.id === recipe.category);
+  const [imgFailed, setImgFailed] = useState(false);
+  const photo = recipe.photos?.[0];
   return (
     <li>
       <Link
@@ -206,12 +208,21 @@ function RecipeCard({ recipe, onLongPress }: { recipe: Recipe; onLongPress: () =
         {...longPress}
         className="flex select-none items-start gap-3 rounded-xl border border-zinc-200 bg-white p-3 transition-colors hover:border-brand-500 [-webkit-touch-callout:none] dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-400"
       >
-        <div
-          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800"
-          aria-hidden
-        >
-          <Icon name={cat?.icon ?? 'utensils'} className="h-7 w-7" />
-        </div>
+        {photo && !imgFailed ? (
+          <img
+            src={photo}
+            alt=""
+            onError={() => setImgFailed(true)}
+            className="h-14 w-14 shrink-0 rounded-lg object-cover"
+          />
+        ) : (
+          <div
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800"
+            aria-hidden
+          >
+            <Icon name={cat?.icon ?? 'utensils'} className="h-7 w-7" />
+          </div>
+        )}
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium leading-tight">{recipe.name}</p>
           <p className="mt-0.5 inline-flex flex-wrap items-center gap-x-1 text-xs text-zinc-500 dark:text-zinc-400">
