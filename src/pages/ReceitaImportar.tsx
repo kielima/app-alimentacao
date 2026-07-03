@@ -4,11 +4,14 @@ import HeaderSlot from '../components/HeaderSlot';
 import Icon from '../components/Icon';
 import TrashIcon from '../components/TrashIcon';
 import SearchableSelect from '../components/SearchableSelect';
-import { useAllIngredients } from '../data/ingredients';
+import { useAllIngredients, allIngredientIds } from '../data/ingredients';
 import { recipeCategories } from '../data/recipes';
 import { upsertUserRecipe } from '../data/userRecipes';
-import { extractRecipe, extractedToRecipe } from '../lib/recipeImport';
-import type { Ingredient } from '../types/ingredient';
+import { upsertUserIngredient } from '../data/userIngredients';
+import { uniqueSlug } from '../utils/slug';
+import { normalize } from '../utils/search';
+import { extractRecipe, extractedToRecipe, type ExtractedRecipe } from '../lib/recipeImport';
+import type { Ingredient, Unit } from '../types/ingredient';
 import type { Recipe, RecipeCategoryId, RecipeIngredient } from '../types/recipe';
 
 // Mesmas opções de unidade da tela de editar receita (ReceitaForm).
@@ -41,7 +44,7 @@ function firstUrl(...candidates: (string | null)[]): string {
 type Stage =
   | { kind: 'input' }
   | { kind: 'loading' }
-  | { kind: 'review'; recipe: Recipe }
+  | { kind: 'review'; recipe: Recipe; extracted: ExtractedRecipe }
   | { kind: 'error'; message: string };
 
 export default function ReceitaImportar() {
@@ -76,7 +79,7 @@ export default function ReceitaImportar() {
         });
         return;
       }
-      setStage({ kind: 'review', recipe: extractedToRecipe(data, ingredients) });
+      setStage({ kind: 'review', recipe: extractedToRecipe(data, ingredients), extracted: data });
     } catch (err) {
       setStage({
         kind: 'error',
@@ -216,6 +219,7 @@ export default function ReceitaImportar() {
       {stage.kind === 'review' && (
         <ReviewForm
           recipe={stage.recipe}
+          extracted={stage.extracted}
           catalog={ingredients}
           onSave={handleSave}
           onDiscard={() => setStage({ kind: 'input' })}
@@ -227,29 +231,40 @@ export default function ReceitaImportar() {
 
 /** Ingrediente no formato editável da revisão (campos separados, como no app). */
 interface FormIngredient {
-  /** Texto original da IA — usado como nome quando não há ingrediente do catálogo. */
+  /** Texto original da IA (ex.: "400g de Iogurte desnatado"). */
   raw_text: string;
+  /** Nome "limpo" que a IA extraiu (ex.: "Iogurte desnatado") — base para
+   *  criar o ingrediente no catálogo quando ele ainda não existe. */
+  name: string;
   ingredient_id: string;
   quantity: string;
   unit: string;
 }
 
-function toFormIngredient(i: RecipeIngredient): FormIngredient {
+function toFormIngredient(i: RecipeIngredient, aiName: string): FormIngredient {
   return {
     raw_text: i.raw_text,
+    name: aiName,
     ingredient_id: i.ingredient_id ?? '',
     quantity: i.quantity != null ? String(i.quantity) : '',
     unit: i.unit ?? '',
   };
 }
 
+/** Deriva a unidade padrão do ingrediente (g/ml/unit) a partir da unidade da receita. */
+function toDefaultUnit(unit: string | null): Unit {
+  return unit === 'ml' ? 'ml' : unit === 'unit' ? 'unit' : 'g';
+}
+
 function ReviewForm({
   recipe,
+  extracted,
   catalog,
   onSave,
   onDiscard,
 }: {
   recipe: Recipe;
+  extracted: ExtractedRecipe;
   catalog: Ingredient[];
   onSave: (recipe: Recipe) => void;
   onDiscard: () => void;
@@ -258,7 +273,9 @@ function ReviewForm({
   const [category, setCategory] = useState<RecipeCategoryId>(recipe.category);
   const [prepTime, setPrepTime] = useState(recipe.prep_time_min?.toString() ?? '');
   const [ingredients, setIngredients] = useState<FormIngredient[]>(() =>
-    (recipe.ingredients ?? []).map(toFormIngredient),
+    (recipe.ingredients ?? []).map((ri, idx) =>
+      toFormIngredient(ri, extracted.ingredients[idx]?.name ?? ''),
+    ),
   );
   const [steps, setSteps] = useState(recipe.steps ?? []);
 
@@ -271,6 +288,9 @@ function ReviewForm({
     [catalog],
   );
   const matchedCount = ingredients.filter((i) => i.ingredient_id).length;
+  const toCreateCount = ingredients.filter(
+    (i) => !i.ingredient_id && (i.name || i.raw_text).trim(),
+  ).length;
 
   const updateIngredient = (idx: number, patch: Partial<FormIngredient>) =>
     setIngredients((list) => list.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
@@ -279,7 +299,7 @@ function ReviewForm({
   const addIngredient = () =>
     setIngredients((list) => [
       ...list,
-      { raw_text: '', ingredient_id: '', quantity: '', unit: '' },
+      { raw_text: '', name: '', ingredient_id: '', quantity: '', unit: '' },
     ]);
 
   const updateStep = (idx: number, value: string) =>
@@ -288,21 +308,63 @@ function ReviewForm({
   const addStep = () => setSteps((list) => [...list, '']);
 
   const handleSave = () => {
+    // Índice de ingredientes existentes por nome normalizado + criados neste
+    // import, para casar/deduplicar antes de criar um novo.
+    const nameToId = new Map<string, string>();
+    const idToName = new Map<string, string>();
+    for (const ing of catalog) {
+      const k = normalize(ing.name).trim();
+      if (k && !nameToId.has(k)) nameToId.set(k, ing.id);
+      idToName.set(ing.id, ing.brand ? `${ing.brand} — ${ing.name}` : ing.name);
+    }
+    const takenIds = new Set(allIngredientIds());
+    const created: Ingredient[] = [];
+
+    const ensureIngredient = (label: string, unit: string | null): string => {
+      const key = normalize(label).trim();
+      const existing = nameToId.get(key);
+      if (existing) return existing;
+      const id = uniqueSlug(label, takenIds);
+      takenIds.add(id);
+      const newIng: Ingredient = {
+        id,
+        name: label.trim(),
+        default_unit: toDefaultUnit(unit),
+        nutrition_per_100: null,
+        needs_review: true,
+      };
+      created.push(newIng);
+      nameToId.set(key, id);
+      idToName.set(id, newIng.name);
+      return id;
+    };
+
     const cleanedIngredients = ingredients
       .map((fi): RecipeIngredient | null => {
-        const ing = fi.ingredient_id ? ingredientMap.get(fi.ingredient_id) : undefined;
         const qty = fi.quantity ? Number(fi.quantity) : null;
         const unit = fi.unit || null;
-        if (!ing) {
-          // Sem ingrediente do catálogo: preserva o texto original da IA.
-          const raw = fi.raw_text.trim();
-          return raw ? { raw_text: raw, ingredient_id: null, quantity: qty, unit } : null;
+        let ingredientId: string | null = fi.ingredient_id || null;
+        const label = (fi.name || fi.raw_text).trim();
+
+        // Não casou com o catálogo → cria (ou reusa um já criado neste import).
+        if (!ingredientId && label) {
+          ingredientId = ensureIngredient(label, unit);
         }
-        const namePart = ing.brand ? `${ing.brand} — ${ing.name}` : ing.name;
-        const raw = qty != null ? `${qty}${unit ? ` ${unit}` : ''} de ${namePart}` : namePart;
-        return { raw_text: raw || namePart, ingredient_id: fi.ingredient_id, quantity: qty, unit };
+
+        let raw = fi.raw_text.trim();
+        if (!raw) {
+          // Linha adicionada à mão sem texto: monta a partir do ingrediente.
+          const nm = ingredientId ? idToName.get(ingredientId) : null;
+          if (!nm) return null;
+          raw = qty != null ? `${qty}${unit ? ` ${unit}` : ''} de ${nm}` : nm;
+        }
+        return { raw_text: raw, ingredient_id: ingredientId, quantity: qty, unit };
       })
       .filter((i): i is RecipeIngredient => i !== null);
+
+    // Grava os ingredientes novos no catálogo (sem nutrição → "a completar").
+    created.forEach((ing) => upsertUserIngredient(ing));
+
     const cleanedSteps = steps.map((s) => s.trim()).filter(Boolean);
     onSave({
       ...recipe,
@@ -321,6 +383,8 @@ function ReviewForm({
         <span>
           Confira e ajuste antes de salvar — a leitura automática pode falhar.
           {matchedCount > 0 && ` ${matchedCount} ingrediente(s) casaram com o seu catálogo.`}
+          {toCreateCount > 0 &&
+            ` ${toCreateCount} novo(s) serão criados no seu catálogo (complete a nutrição depois em “Dados a completar”).`}
         </span>
       </div>
 
@@ -370,10 +434,12 @@ function ReviewForm({
               key={idx}
               className="rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900"
             >
-              {!ing.ingredient_id && ing.raw_text.trim() && (
-                <p className="mb-1.5 flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
-                  <Icon name="sparkles" className="h-3.5 w-3.5 shrink-0" />
-                  <span className="truncate">{ing.raw_text}</span>
+              {!ing.ingredient_id && (ing.name || ing.raw_text).trim() && (
+                <p className="mb-1.5 flex items-center gap-1 text-xs text-brand-600 dark:text-brand-400">
+                  <Icon name="plus" className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">
+                    Novo: {(ing.name || ing.raw_text).trim()} — será criado no catálogo
+                  </span>
                 </p>
               )}
               <div className="mb-2 grid grid-cols-[minmax(0,1fr),auto] gap-2">
