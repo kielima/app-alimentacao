@@ -178,7 +178,7 @@ export default function IngredienteDetalhe() {
 
   if (!ingredient) {
     return (
-      <div className="mx-auto max-w-md px-4 pt-12 text-center">
+      <div className="mx-auto max-w-md sm:max-w-2xl lg:max-w-3xl px-4 pt-12 text-center">
         <p className="mb-4 text-zinc-500 dark:text-zinc-400">Ingrediente não encontrado.</p>
         <Link
           to="/ingredientes"
@@ -193,7 +193,7 @@ export default function IngredienteDetalhe() {
   const unitSuffix = ingredient.default_unit === 'ml' ? 'ml' : 'g';
 
   return (
-    <div className="mx-auto max-w-md px-4 pt-2 pb-6">
+    <div className="mx-auto max-w-md sm:max-w-2xl lg:max-w-3xl px-4 pt-2 pb-6">
       <HeaderSlot>
         <h1 className="min-w-0 flex-1 truncate text-lg font-semibold">{ingredient.name}</h1>
         <button
