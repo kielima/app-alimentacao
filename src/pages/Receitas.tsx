@@ -16,6 +16,7 @@ import {
 import { useLongPress } from '../hooks/useLongPress';
 import type { Recipe, RecipeCategoryId } from '../types/recipe';
 import { uniqueSlug } from '../utils/slug';
+import { downloadRecipesMarkdown } from '../utils/recipesMarkdown';
 
 const categoryChips: { value: RecipeCategoryId | 'todas'; label: string; icon: string }[] = [
   { value: 'todas', label: 'Todas', icon: 'sparkles' },
@@ -56,6 +57,14 @@ export default function Receitas() {
     ? list.find((r) => r.id === actionRecipeId) ?? null
     : null;
 
+  const [exportedCount, setExportedCount] = useState<number | null>(null);
+
+  const handleExportMarkdown = () => {
+    const count = downloadRecipesMarkdown();
+    setExportedCount(count);
+    setTimeout(() => setExportedCount(null), 4000);
+  };
+
   const duplicateRecipe = (recipe: Recipe) => {
     const baseName = `${recipe.name} (cópia)`;
     const newId = uniqueSlug(baseName, allRecipeIds());
@@ -83,12 +92,29 @@ export default function Receitas() {
           placeholder="Buscar receita…"
           className="h-9 min-w-0 flex-1 rounded-xl border border-zinc-200 bg-white px-3 text-sm placeholder:text-zinc-400 focus:border-brand-500 focus:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
         />
+        <button
+          type="button"
+          onClick={handleExportMarkdown}
+          disabled={total === 0}
+          aria-label="Exportar todas as receitas em Markdown"
+          title="Exportar todas as receitas (Markdown)"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 hover:border-brand-500 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-brand-400 dark:hover:text-brand-400"
+        >
+          <Icon name="download" className="h-4 w-4" />
+        </button>
         <FilterButton
           active={showFilters}
           hasActiveFilters={hasActiveFilters}
           onClick={() => setShowFilters((f) => !f)}
         />
       </HeaderSlot>
+
+      {exportedCount !== null && (
+        <div className="mb-2 rounded-lg bg-brand-50 px-3 py-2 text-xs text-brand-700 dark:bg-brand-900/30 dark:text-brand-300">
+          {exportedCount} receita{exportedCount !== 1 ? 's' : ''} exportada
+          {exportedCount !== 1 ? 's' : ''} em Markdown.
+        </div>
+      )}
 
       {isFiltering && (
         <p className="mb-2 text-xs text-zinc-400 dark:text-zinc-500">
