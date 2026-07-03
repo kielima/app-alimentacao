@@ -14,7 +14,7 @@ export default function TabBar() {
       className="fixed inset-x-0 bottom-0 z-50 border-t border-zinc-200 bg-white/90 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-900/90"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <ul className="mx-auto flex max-w-md">
+      <ul className="mx-auto flex max-w-md sm:max-w-2xl lg:max-w-3xl">
         {tabs.map((tab) => (
           <li key={tab.to} className="flex-1">
             <NavLink

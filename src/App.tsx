@@ -164,7 +164,7 @@ export default function App() {
   return (
     <PlanoProvider>
       <div className="flex h-full flex-col">
-        <header className="mx-auto flex w-full max-w-md items-center px-4 pt-1.5 pb-1.5 gap-2">
+        <header className="mx-auto flex w-full max-w-md sm:max-w-2xl lg:max-w-3xl items-center px-4 pt-1.5 pb-1.5 gap-2">
           {showBack ? <BackButton /> : <NavMenu onSignOut={signOut} />}
           {isPlano ? (
             <>

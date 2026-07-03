@@ -104,7 +104,7 @@ export default function ReceitaDetalhe() {
 
   if (!recipe) {
     return (
-      <div className="mx-auto max-w-md px-4 pt-12 text-center">
+      <div className="mx-auto max-w-md sm:max-w-2xl lg:max-w-3xl px-4 pt-12 text-center">
         <p className="mb-4 text-zinc-500 dark:text-zinc-400">Receita não encontrada.</p>
         <Link to="/receitas" className="text-brand-600 underline dark:text-brand-400">
           Voltar à lista
@@ -116,7 +116,7 @@ export default function ReceitaDetalhe() {
   const category = findCategory(recipe.category);
 
   return (
-    <div className="mx-auto max-w-md px-4 pt-2 pb-28">
+    <div className="mx-auto max-w-md sm:max-w-2xl lg:max-w-3xl px-4 pt-2 pb-28">
       <HeaderSlot>
         <h1 className="min-w-0 flex-1 truncate text-lg font-semibold">{recipe.name}</h1>
         {canRevert && (

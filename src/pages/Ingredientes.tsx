@@ -160,7 +160,7 @@ export default function Ingredientes() {
   };
 
   return (
-    <div className="mx-auto max-w-md px-4 pt-2">
+    <div className="mx-auto max-w-md sm:max-w-2xl lg:max-w-3xl px-4 pt-2">
       <HeaderSlot>
         <input
           type="search"

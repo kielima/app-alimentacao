@@ -215,7 +215,7 @@ export default function RefeicaoForm() {
 
   if (editing && !original) {
     return (
-      <div className="mx-auto max-w-md px-4 pt-12 text-center">
+      <div className="mx-auto max-w-md sm:max-w-2xl lg:max-w-3xl px-4 pt-12 text-center">
         <p className="mb-4 text-zinc-500 dark:text-zinc-400">Refeição não encontrada.</p>
         <Link to="/refeicoes" className="text-brand-600 underline dark:text-brand-400">
           Voltar à lista
@@ -261,7 +261,7 @@ export default function RefeicaoForm() {
   void meals; // placeholder for future cross-refs
 
   return (
-    <form id="refeicao-form" onSubmit={handleSubmit} className="mx-auto max-w-md px-4 pt-2 pb-28">
+    <form id="refeicao-form" onSubmit={handleSubmit} className="mx-auto max-w-md sm:max-w-2xl lg:max-w-3xl px-4 pt-2 pb-28">
       <HeaderSlot>
         <h1 className="min-w-0 flex-1 truncate text-lg font-semibold">
           {editing ? 'Editar refeição' : 'Nova refeição'}
