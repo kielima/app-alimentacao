@@ -16,6 +16,13 @@ export interface RecipeIngredient {
   ingredient_id: string | null;
   quantity: number | null;
   unit: string | null;
+  /** Alternativas equivalentes a este ingrediente (ex.: leite em pó OU whey).
+   *  Cada uma tem seu próprio vínculo/quantidade/unidade. */
+  substitutes?: RecipeIngredient[];
+  /** Índice em `substitutes` da alternativa em uso. Ausente/null = usar o
+   *  ingrediente principal (este próprio item). Afeta nutrição, dispensa e
+   *  lista de compras. */
+  active_substitute?: number | null;
 }
 
 export interface Recipe {

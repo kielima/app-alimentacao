@@ -3,11 +3,12 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import Icon from '../components/Icon';
 import TrashIcon from '../components/TrashIcon';
-import { findRecipeById, isSeedRecipe } from '../data/recipes';
+import { isSeedRecipe } from '../data/recipes';
 import { useRecipeCategories } from '../data/recipeCategories';
 import { findIngredientById } from '../data/ingredients';
 import { useRecipeNutrition } from '../hooks/useRecipeNutrition';
-import { deleteUserRecipe, getUserRecipeById } from '../data/userRecipes';
+import { activeIngredient } from '../utils/nutrition';
+import { deleteUserRecipe, getUserRecipeById, upsertUserRecipe, useUserRecipes } from '../data/userRecipes';
 import { hideRecipe } from '../data/hiddenRecipes';
 import { upsertShoppingItem } from '../data/shoppingList';
 import { usePantryItems } from '../data/pantry';
@@ -21,7 +22,12 @@ function fmt(value: number | undefined, digits = 0): string {
 export default function ReceitaDetalhe() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const recipe = id ? findRecipeById(id) : undefined;
+  // Assinatura reativa: alternar a alternativa ativa persiste e recalcula ao vivo.
+  const userRecipes = useUserRecipes();
+  const recipe = useMemo(
+    () => (id ? userRecipes.find((r) => r.id === id) : undefined),
+    [userRecipes, id],
+  );
   const nutrition = useRecipeNutrition(recipe);
   const categories = useRecipeCategories();
   const [showSkipped, setShowSkipped] = useState(false);
@@ -85,6 +91,20 @@ export default function ReceitaDetalhe() {
     if (confirm(`${toAdd.length} item(ns) adicionado(s) à Lista de Compras. Ir para a lista agora?`)) {
       navigate('/compras');
     }
+  };
+
+  const handleSetActive = (
+    section: 'main' | 'molho',
+    itemIndex: number,
+    activeIdx: number | null,
+  ) => {
+    if (!recipe) return;
+    const key = section === 'molho' ? 'ingredients_molho' : 'ingredients';
+    const list = [...(recipe[key] ?? [])];
+    const item = list[itemIndex];
+    if (!item) return;
+    list[itemIndex] = { ...item, active_substitute: activeIdx };
+    upsertUserRecipe({ ...recipe, [key]: list });
   };
 
   const handleAddSingleToCart = (item: RecipeIngredient) => {
@@ -200,7 +220,12 @@ export default function ReceitaDetalhe() {
 
       {(recipe.ingredients?.length ?? 0) > 0 && (
         <Section title="Ingredientes">
-          <IngredientList items={recipe.ingredients ?? []} pantryIds={pantryIngredientIds} onAddToCart={handleAddSingleToCart} />
+          <IngredientList
+            items={recipe.ingredients ?? []}
+            pantryIds={pantryIngredientIds}
+            onAddToCart={handleAddSingleToCart}
+            onSetActive={(itemIndex, activeIdx) => handleSetActive('main', itemIndex, activeIdx)}
+          />
           <div className="mt-3 flex flex-wrap gap-2">
             <button
               type="button"
@@ -222,7 +247,12 @@ export default function ReceitaDetalhe() {
 
       {(recipe.ingredients_molho?.length ?? 0) > 0 && (
         <Section title="Ingredientes — molho">
-          <IngredientList items={recipe.ingredients_molho ?? []} pantryIds={pantryIngredientIds} onAddToCart={handleAddSingleToCart} />
+          <IngredientList
+            items={recipe.ingredients_molho ?? []}
+            pantryIds={pantryIngredientIds}
+            onAddToCart={handleAddSingleToCart}
+            onSetActive={(itemIndex, activeIdx) => handleSetActive('molho', itemIndex, activeIdx)}
+          />
         </Section>
       )}
 
@@ -366,73 +396,169 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
+/** As opções de um ingrediente (principal + alternativas). Uma só se não houver. */
+function optionsOf(item: RecipeIngredient): RecipeIngredient[] {
+  if (!item.substitutes || item.substitutes.length === 0) return [item];
+  const principal: RecipeIngredient = {
+    ...item,
+    substitutes: undefined,
+    active_substitute: undefined,
+  };
+  return [principal, ...item.substitutes];
+}
+
+function activeIndexOf(item: RecipeIngredient): number {
+  return item.active_substitute != null ? item.active_substitute + 1 : 0;
+}
+
 function IngredientList({
   items,
   pantryIds,
   onAddToCart,
+  onSetActive,
 }: {
   items: RecipeIngredient[];
   pantryIds: Set<string>;
   onAddToCart: (item: RecipeIngredient) => void;
+  onSetActive: (itemIndex: number, activeIdx: number | null) => void;
 }) {
   const [addedIndices, setAddedIndices] = useState<Set<number>>(new Set());
+  const markAdded = (i: number) => setAddedIndices((s) => new Set(s).add(i));
+
   return (
     <ul className="space-y-1.5">
       {items.map((item, i) => {
-        const ing = item.ingredient_id ? findIngredientById(item.ingredient_id) : undefined;
-        const inPantry = !!item.ingredient_id && pantryIds.has(item.ingredient_id);
-        const justAdded = addedIndices.has(i);
-        const inner = (
-          <span className="flex w-full items-center gap-2 text-sm">
-            <span className="text-zinc-900 dark:text-zinc-100">{item.raw_text}</span>
-            {ing && (
-              <span className="shrink-0 text-xs text-brand-600 dark:text-brand-400">›</span>
-            )}
-            <span className="ml-auto">
-              {inPantry ? (
-                <span
-                  className="inline-flex h-7 w-7 shrink-0 items-center justify-center"
-                  title="Você já tem este ingrediente na dispensa"
-                  aria-label="Já tenho na dispensa"
-                  role="img"
-                >
-                  <span className="block h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onAddToCart(item);
-                    setAddedIndices((s) => new Set(s).add(i));
-                  }}
-                  className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm leading-none transition-colors ${
-                    justAdded
-                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-                      : 'bg-zinc-100 text-zinc-500 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-brand-900/30 dark:hover:text-brand-400'
-                  }`}
-                  aria-label="Adicionar à lista de compras"
-                  title="Adicionar à lista de compras"
-                >
-                  <Icon name={justAdded ? 'check' : 'shopping-cart'} className="h-4 w-4" />
-                </button>
-              )}
-            </span>
-          </span>
-        );
-        return (
-          <li key={i}>
-            {ing ? (
-              <Link
-                to={`/ingredientes/${ing.id}`}
-                className="flex items-center rounded-md px-2 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+        const options = optionsOf(item);
+        const hasSubs = options.length > 1;
+        const activeIdx = activeIndexOf(item);
+
+        // Ação (dispensa/carrinho) do lado direito de uma opção.
+        const action = (opt: RecipeIngredient) => {
+          const inPantry = !!opt.ingredient_id && pantryIds.has(opt.ingredient_id);
+          if (inPantry) {
+            return (
+              <span
+                className="inline-flex h-7 w-7 shrink-0 items-center justify-center"
+                title="Você já tem este ingrediente na dispensa"
+                aria-label="Já tenho na dispensa"
+                role="img"
               >
-                {inner}
-              </Link>
-            ) : (
-              <div className="px-2 py-1">{inner}</div>
-            )}
+                <span className="block h-2.5 w-2.5 rounded-full bg-emerald-500" />
+              </span>
+            );
+          }
+          const justAdded = addedIndices.has(i);
+          return (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onAddToCart(opt);
+                markAdded(i);
+              }}
+              className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm leading-none transition-colors ${
+                justAdded
+                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                  : 'bg-zinc-100 text-zinc-500 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-brand-900/30 dark:hover:text-brand-400'
+              }`}
+              aria-label="Adicionar à lista de compras"
+              title="Adicionar à lista de compras"
+            >
+              <Icon name={justAdded ? 'check' : 'shopping-cart'} className="h-4 w-4" />
+            </button>
+          );
+        };
+
+        // Caso simples: ingrediente sem alternativas (comportamento original).
+        if (!hasSubs) {
+          const ing = item.ingredient_id ? findIngredientById(item.ingredient_id) : undefined;
+          const inner = (
+            <span className="flex w-full items-center gap-2 text-sm">
+              <span className="text-zinc-900 dark:text-zinc-100">{item.raw_text}</span>
+              {ing && (
+                <span className="shrink-0 text-xs text-brand-600 dark:text-brand-400">›</span>
+              )}
+              <span className="ml-auto">{action(item)}</span>
+            </span>
+          );
+          return (
+            <li key={i}>
+              {ing ? (
+                <Link
+                  to={`/ingredientes/${ing.id}`}
+                  className="flex items-center rounded-md px-2 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                >
+                  {inner}
+                </Link>
+              ) : (
+                <div className="px-2 py-1">{inner}</div>
+              )}
+            </li>
+          );
+        }
+
+        // Ingrediente com alternativas: escolha "um OU outro".
+        return (
+          <li key={i} className="rounded-lg border border-zinc-200 dark:border-zinc-800">
+            <ul>
+              {options.map((opt, oi) => {
+                const ing = opt.ingredient_id ? findIngredientById(opt.ingredient_id) : undefined;
+                const isActive = oi === activeIdx;
+                const activate = () => onSetActive(i, oi === 0 ? null : oi - 1);
+                return (
+                  <li
+                    key={oi}
+                    className={`flex items-center gap-2 px-2 py-1.5 text-sm ${
+                      oi > 0 ? 'border-t border-zinc-100 dark:border-zinc-800/60' : ''
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={activate}
+                      aria-label={isActive ? 'Opção em uso' : 'Usar esta opção'}
+                      aria-pressed={isActive}
+                      className="inline-flex h-5 w-5 shrink-0 items-center justify-center"
+                    >
+                      <span
+                        className={`flex h-4 w-4 items-center justify-center rounded-full border-2 ${
+                          isActive
+                            ? 'border-brand-500 dark:border-brand-400'
+                            : 'border-zinc-300 dark:border-zinc-600'
+                        }`}
+                      >
+                        {isActive && (
+                          <span className="block h-2 w-2 rounded-full bg-brand-500 dark:bg-brand-400" />
+                        )}
+                      </span>
+                    </button>
+                    {ing ? (
+                      <Link
+                        to={`/ingredientes/${ing.id}`}
+                        className={`truncate hover:underline ${
+                          isActive
+                            ? 'text-zinc-900 dark:text-zinc-100'
+                            : 'text-zinc-500 dark:text-zinc-400'
+                        }`}
+                      >
+                        {opt.raw_text}
+                      </Link>
+                    ) : (
+                      <span
+                        className={`truncate ${
+                          isActive
+                            ? 'text-zinc-900 dark:text-zinc-100'
+                            : 'text-zinc-500 dark:text-zinc-400'
+                        }`}
+                      >
+                        {opt.raw_text}
+                      </span>
+                    )}
+                    <span className="ml-auto shrink-0">{isActive && action(opt)}</span>
+                  </li>
+                );
+              })}
+            </ul>
           </li>
         );
       })}
@@ -459,7 +585,8 @@ function Steps({ steps }: { steps: string[] }) {
 }
 
 function collectAllIngredients(recipe: Recipe): RecipeIngredient[] {
-  return [...(recipe.ingredients ?? []), ...(recipe.ingredients_molho ?? [])];
+  // Usa a opção em uso de cada ingrediente (principal ou alternativa escolhida).
+  return [...(recipe.ingredients ?? []), ...(recipe.ingredients_molho ?? [])].map(activeIngredient);
 }
 
 function difficultyLabel(d: string): string {

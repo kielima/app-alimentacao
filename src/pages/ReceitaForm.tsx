@@ -33,11 +33,20 @@ const DIFFICULTIES: { value: Difficulty; label: string; icon: string }[] = [
   { value: 'dificil', label: 'Difícil', icon: 'flame' },
 ];
 
+interface FormSubstitute {
+  ingredient_id: string;
+  quantity: string;
+  unit: string;
+}
+
 interface FormIngredient {
   raw_text: string;
   ingredient_id: string;
   quantity: string;
   unit: string;
+  substitutes: FormSubstitute[];
+  /** Índice em `substitutes` da alternativa ativa; null = usar o principal. */
+  active_substitute: number | null;
 }
 
 type IngredientSection = 'main' | 'molho';
@@ -45,6 +54,8 @@ type IngredientSection = 'main' | 'molho';
 interface PendingSlot {
   section: IngredientSection;
   index: number;
+  /** Quando definido, o slot alvo é a alternativa `subIndex` do ingrediente. */
+  subIndex?: number;
 }
 
 interface Draft {
@@ -73,7 +84,11 @@ interface FormState {
 }
 
 function emptyIngredient(): FormIngredient {
-  return { raw_text: '', ingredient_id: '', quantity: '', unit: '' };
+  return { raw_text: '', ingredient_id: '', quantity: '', unit: '', substitutes: [], active_substitute: null };
+}
+
+function emptySubstitute(): FormSubstitute {
+  return { ingredient_id: '', quantity: '', unit: '' };
 }
 
 function recipeIngredientToForm(i: RecipeIngredient): FormIngredient {
@@ -82,6 +97,12 @@ function recipeIngredientToForm(i: RecipeIngredient): FormIngredient {
     ingredient_id: i.ingredient_id ?? '',
     quantity: i.quantity?.toString() ?? '',
     unit: i.unit ?? '',
+    substitutes: (i.substitutes ?? []).map((s) => ({
+      ingredient_id: s.ingredient_id ?? '',
+      quantity: s.quantity?.toString() ?? '',
+      unit: s.unit ?? '',
+    })),
+    active_substitute: i.active_substitute ?? null,
   };
 }
 
@@ -120,6 +141,25 @@ function recipeToForm(r: Recipe | undefined, initialName = ''): FormState {
   };
 }
 
+/** Constrói o `raw_text` de exibição de um ingrediente vinculado ao catálogo. */
+function buildRawText(ing: Ingredient, qty: number | null, unit: string | null): string {
+  const namePart = ing.brand ? `${ing.brand} — ${ing.name}` : ing.name;
+  const raw = qty != null ? `${qty}${unit ? ` ${unit}` : ''} de ${namePart}` : namePart;
+  return raw || namePart;
+}
+
+/** Converte uma alternativa (só vale com ingrediente do catálogo) em RecipeIngredient. */
+function formSubstituteToRecipe(
+  s: FormSubstitute,
+  ingredientMap: Map<string, Ingredient>,
+): RecipeIngredient | null {
+  const ing = s.ingredient_id ? ingredientMap.get(s.ingredient_id) : undefined;
+  if (!ing) return null;
+  const qty = s.quantity ? Number(s.quantity) : null;
+  const unit = s.unit || null;
+  return { raw_text: buildRawText(ing, qty, unit), ingredient_id: s.ingredient_id, quantity: qty, unit };
+}
+
 function formIngredientsToRecipe(
   items: FormIngredient[],
   ingredientMap: Map<string, Ingredient>,
@@ -132,16 +172,32 @@ function formIngredientsToRecipe(
       const ing = i.ingredient_id ? ingredientMap.get(i.ingredient_id) : undefined;
       const qty = i.quantity ? Number(i.quantity) : null;
       const unit = i.unit || null;
-      if (!ing) {
-        return { raw_text: i.raw_text.trim(), ingredient_id: null, quantity: qty, unit };
+
+      // Alternativas válidas (com ingrediente do catálogo). Guarda o índice
+      // original para remapear a alternativa ativa após descartar as vazias.
+      const built = i.substitutes
+        .map((s, origIdx) => ({ origIdx, rec: formSubstituteToRecipe(s, ingredientMap) }))
+        .filter((x): x is { origIdx: number; rec: RecipeIngredient } => x.rec !== null);
+      const substitutes = built.map((x) => x.rec);
+      let active: number | null = null;
+      if (i.active_substitute != null) {
+        const pos = built.findIndex((x) => x.origIdx === i.active_substitute);
+        if (pos >= 0) active = pos;
       }
-      const namePart = ing.brand ? `${ing.brand} — ${ing.name}` : ing.name;
-      const raw = qty != null ? `${qty}${unit ? ` ${unit}` : ''} de ${namePart}` : namePart;
+      const extra =
+        substitutes.length > 0
+          ? { substitutes, ...(active != null ? { active_substitute: active } : {}) }
+          : {};
+
+      if (!ing) {
+        return { raw_text: i.raw_text.trim(), ingredient_id: null, quantity: qty, unit, ...extra };
+      }
       return {
-        raw_text: raw || namePart,
+        raw_text: buildRawText(ing, qty, unit),
         ingredient_id: i.ingredient_id || null,
         quantity: qty,
         unit,
+        ...extra,
       };
     });
 }
@@ -206,26 +262,23 @@ export default function ReceitaForm() {
         if (draft.editingId === (id ?? null)) {
           let restored = draft.state;
           if (newIngredientId && draft.pendingSlot) {
-            const { section, index } = draft.pendingSlot;
-            if (section === 'molho') {
-              const list = [...restored.ingredients_molho];
-              if (list[index]) {
-                list[index] = {
-                  ...list[index],
-                  ingredient_id: newIngredientId,
-                };
+            const { section, index, subIndex } = draft.pendingSlot;
+            const key = section === 'molho' ? 'ingredients_molho' : 'ingredients';
+            const list = [...restored[key]];
+            const target = list[index];
+            if (target) {
+              if (subIndex != null) {
+                // Vincula o ingrediente recém-criado a uma alternativa.
+                const subs = [...target.substitutes];
+                if (subs[subIndex]) {
+                  subs[subIndex] = { ...subs[subIndex], ingredient_id: newIngredientId };
+                  list[index] = { ...target, substitutes: subs };
+                }
+              } else {
+                list[index] = { ...target, ingredient_id: newIngredientId };
               }
-              restored = { ...restored, ingredients_molho: list };
-            } else {
-              const list = [...restored.ingredients];
-              if (list[index]) {
-                list[index] = {
-                  ...list[index],
-                  ingredient_id: newIngredientId,
-                };
-              }
-              restored = { ...restored, ingredients: list };
             }
+            restored = { ...restored, [key]: list };
           }
           return restored;
         }
@@ -287,10 +340,11 @@ export default function ReceitaForm() {
     section: IngredientSection,
     index: number,
     query?: string,
+    subIndex?: number,
   ) => {
     const draft: Draft = {
       state: stateRef.current,
-      pendingSlot: { section, index },
+      pendingSlot: { section, index, subIndex },
       editingId: id ?? null,
     };
     sessionStorage.setItem(draftKey, JSON.stringify(draft));
@@ -515,7 +569,9 @@ export default function ReceitaForm() {
         items={state.ingredients}
         sortedIngredients={sortedIngredients}
         onChange={(items) => setState((s) => ({ ...s, ingredients: items }))}
-        onCreateNew={(idx, query) => handleCreateNewIngredient('main', idx, query)}
+        onCreateNew={(idx, query, subIndex) =>
+          handleCreateNewIngredient('main', idx, query, subIndex)
+        }
       />
 
       <ExtraIngredientsSection
@@ -523,7 +579,9 @@ export default function ReceitaForm() {
         items={state.ingredients_molho}
         sortedIngredients={sortedIngredients}
         onChange={(items) => setState((s) => ({ ...s, ingredients_molho: items }))}
-        onCreateNew={(idx, query) => handleCreateNewIngredient('molho', idx, query)}
+        onCreateNew={(idx, query, subIndex) =>
+          handleCreateNewIngredient('molho', idx, query, subIndex)
+        }
       />
 
       <StepsSection
@@ -567,7 +625,7 @@ function IngredientsSection({
   items: FormIngredient[];
   sortedIngredients: Ingredient[];
   onChange: (items: FormIngredient[]) => void;
-  onCreateNew: (index: number, query?: string) => void;
+  onCreateNew: (index: number, query?: string, subIndex?: number) => void;
 }) {
   const updateItem = (idx: number, patch: Partial<FormIngredient>) =>
     onChange(items.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
@@ -588,7 +646,7 @@ function IngredientsSection({
             sortedIngredients={sortedIngredients}
             onUpdate={(patch) => updateItem(idx, patch)}
             onRemove={() => removeItem(idx)}
-            onCreateNew={(query) => onCreateNew(idx, query)}
+            onCreateNew={(query, subIndex) => onCreateNew(idx, query, subIndex)}
           />
         ))}
       </ul>
@@ -614,7 +672,7 @@ function ExtraIngredientsSection({
   items: FormIngredient[];
   sortedIngredients: Ingredient[];
   onChange: (items: FormIngredient[]) => void;
-  onCreateNew: (index: number, query?: string) => void;
+  onCreateNew: (index: number, query?: string, subIndex?: number) => void;
 }) {
   if (items.length === 0) {
     return (
@@ -649,8 +707,33 @@ function IngredientRow({
   sortedIngredients: Ingredient[];
   onUpdate: (patch: Partial<FormIngredient>) => void;
   onRemove: () => void;
-  onCreateNew: (query?: string) => void;
+  onCreateNew: (query?: string, subIndex?: number) => void;
 }) {
+  const options = sortedIngredients.map((i) => ({
+    value: i.id,
+    label: i.brand ? `${i.brand} — ${i.name}` : i.name,
+  }));
+  const labelFor = (id: string) => options.find((o) => o.value === id)?.label ?? 'Alternativa';
+
+  const addSubstitute = () =>
+    onUpdate({ substitutes: [...ing.substitutes, emptySubstitute()] });
+
+  const updateSubstitute = (idx: number, patch: Partial<FormSubstitute>) =>
+    onUpdate({
+      substitutes: ing.substitutes.map((s, i) => (i === idx ? { ...s, ...patch } : s)),
+    });
+
+  const removeSubstitute = (idx: number) => {
+    const substitutes = ing.substitutes.filter((_, i) => i !== idx);
+    // Reajusta a alternativa ativa após a remoção.
+    let active = ing.active_substitute;
+    if (active === idx) active = null;
+    else if (active != null && active > idx) active -= 1;
+    onUpdate({ substitutes, active_substitute: active });
+  };
+
+  const hasSubs = ing.substitutes.length > 0;
+
   return (
     <li className="rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
       <div className="mb-2 grid grid-cols-[minmax(0,1fr),auto] gap-2">
@@ -663,13 +746,10 @@ function IngredientRow({
               unit: matched && !ing.unit ? matched.default_unit : ing.unit,
             });
           }}
-          options={sortedIngredients.map((i) => ({
-            value: i.id,
-            label: i.brand ? `${i.brand} — ${i.name}` : i.name,
-          }))}
+          options={options}
           placeholder="— Selecione um ingrediente —"
           createLabel="Criar novo ingrediente"
-          onCreate={onCreateNew}
+          onCreate={(query) => onCreateNew(query)}
         />
         <button
           type="button"
@@ -703,7 +783,124 @@ function IngredientRow({
           ))}
         </select>
       </div>
+
+      {/* Alternativas (substituições equivalentes: ex. leite em pó OU whey) */}
+      {hasSubs && (
+        <div className="mt-3 space-y-2 border-t border-dashed border-zinc-200 pt-3 dark:border-zinc-700">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+            Alternativas (ou…)
+          </p>
+          {ing.substitutes.map((sub, i) => (
+            <div key={i} className="rounded-lg bg-zinc-50 p-2 dark:bg-zinc-800/50">
+              <div className="mb-2 grid grid-cols-[minmax(0,1fr),auto] gap-2">
+                <SearchableSelect
+                  value={sub.ingredient_id}
+                  onChange={(newId) => {
+                    const matched = sortedIngredients.find((x) => x.id === newId);
+                    updateSubstitute(i, {
+                      ingredient_id: newId,
+                      unit: matched && !sub.unit ? matched.default_unit : sub.unit,
+                    });
+                  }}
+                  options={options}
+                  placeholder="— Ingrediente alternativo —"
+                  createLabel="Criar novo ingrediente"
+                  onCreate={(query) => onCreateNew(query, i)}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeSubstitute(i)}
+                  className="inline-flex items-center justify-center rounded-md bg-red-100 px-2 py-1 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
+                  aria-label="Remover alternativa"
+                >
+                  <TrashIcon className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="grid grid-cols-[80px,1fr] gap-2">
+                <input
+                  type="number"
+                  min={0}
+                  step="any"
+                  inputMode="decimal"
+                  value={sub.quantity}
+                  onChange={(e) => updateSubstitute(i, { quantity: e.target.value })}
+                  placeholder="Qtd"
+                  className={`${inputClass} text-sm`}
+                />
+                <select
+                  value={sub.unit}
+                  onChange={(e) => updateSubstitute(i, { unit: e.target.value })}
+                  className={`${inputClass} text-sm`}
+                >
+                  {UNIT_OPTIONS.map((u) => (
+                    <option key={u.value} value={u.value}>
+                      {u.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={addSubstitute}
+        className="mt-2 text-xs font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
+      >
+        + Adicionar alternativa
+      </button>
+
+      {/* Qual opção conta na nutrição / vai para a lista de compras */}
+      {hasSubs && (
+        <div className="mt-3">
+          <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+            Usar no cálculo
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            <SubstituteChip
+              label={ing.ingredient_id ? labelFor(ing.ingredient_id) : 'Principal'}
+              active={ing.active_substitute == null}
+              onClick={() => onUpdate({ active_substitute: null })}
+            />
+            {ing.substitutes.map((sub, i) => (
+              <SubstituteChip
+                key={i}
+                label={sub.ingredient_id ? labelFor(sub.ingredient_id) : `Alternativa ${i + 1}`}
+                active={ing.active_substitute === i}
+                onClick={() => onUpdate({ active_substitute: i })}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </li>
+  );
+}
+
+function SubstituteChip({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex max-w-full items-center gap-1 truncate rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+        active
+          ? 'bg-brand-500 text-white dark:bg-brand-600'
+          : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+      }`}
+    >
+      {active && <Icon name="check" className="h-3 w-3 shrink-0" />}
+      <span className="truncate">{label}</span>
+    </button>
   );
 }
 

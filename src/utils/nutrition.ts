@@ -4,7 +4,20 @@ import { findRecipeById } from '../data/recipes';
 import type { NutritionPer100 } from '../types/ingredient';
 import type { Meal, MealItem } from '../types/meal';
 import type { PlanMealItem } from '../types/mealPlan';
-import type { Recipe } from '../types/recipe';
+import type { Recipe, RecipeIngredient } from '../types/recipe';
+
+/**
+ * Resolve a opção "em uso" de um ingrediente com alternativas. Se
+ * `active_substitute` aponta para uma alternativa válida, retorna-a; caso
+ * contrário retorna o próprio ingrediente principal. É por meio dela que
+ * nutrição, dispensa e compras seguem a escolha do usuário.
+ */
+export function activeIngredient(item: RecipeIngredient): RecipeIngredient {
+  const subs = item.substitutes;
+  const idx = item.active_substitute;
+  if (subs && idx != null && idx >= 0 && idx < subs.length) return subs[idx];
+  return item;
+}
 
 const NUTRIENT_KEYS: (keyof NutritionPer100)[] = [
   'calories',
@@ -118,7 +131,8 @@ export function recipeNutritionPer100g(
   if (!recipe.ingredients || recipe.ingredients.length === 0) return null;
   const totals: Partial<Record<keyof NutritionPer100, number>> = {};
   let totalWeight = 0;
-  for (const ing of recipe.ingredients) {
+  for (const raw of recipe.ingredients) {
+    const ing = activeIngredient(raw);
     if (!ing.ingredient_id || ing.quantity == null || !ing.unit) continue;
     const ingredient = findIngredientById(ing.ingredient_id);
     if (!ingredient?.nutrition_per_100) continue;
