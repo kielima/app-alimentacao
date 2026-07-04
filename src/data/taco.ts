@@ -24,11 +24,20 @@ const FOODS = (tacoData as { foods: TacoFood[] }).foods;
 export const TACO_SOURCE =
   'Tabela Brasileira de Composição de Alimentos (TACO), 4ª ed. — NEPA/UNICAMP';
 
-// Palavras que não ajudam a distinguir alimentos.
+// Palavras que não ajudam a distinguir alimentos. "comum"/"normal"/"simples"
+// são qualificadores genéricos ("batata comum") que a TACO não usa.
 const STOPWORDS = new Set([
   'de', 'da', 'do', 'das', 'dos', 'com', 'sem', 'e', 'em', 'ao', 'a', 'o',
-  'tipo', 'the', 'of',
+  'tipo', 'the', 'of', 'comum', 'normal', 'simples',
 ]);
+
+// Variedade padrão quando o ingrediente cita só o alimento base, sem qualificar.
+// Ex.: "batata" (comum) na TACO é a "batata, inglesa" — não a baroa (mandioquinha)
+// nem a doce. Aplicado como leve desempate; um qualificador explícito ("batata
+// doce") sempre vence, pois casa mais tokens.
+const PREFERRED_VARIETY: Record<string, string> = {
+  batata: 'inglesa',
+};
 
 // Sinônimos/regionalismos → termo usado na TACO (já normalizados, sem acento).
 const ALIASES: Record<string, string> = {
@@ -88,10 +97,13 @@ export function findTacoMatch(name: string, _brand?: string | null): TacoMatch |
     // Priorizar quando o termo principal do ingrediente é o 1º token evita casar
     // "Leite integral" com "Canjica, com leite integral".
     const mainNoun = tokens[0] === primary ? 2 : 0;
+    // Sem variedade citada, prefere a padrão (ex.: "batata" → "inglesa"), para
+    // não cair numa variedade arbitrária ("baroa") só por ordem alfabética.
+    const preferred = PREFERRED_VARIETY[primary] && tokenSet.has(PREFERRED_VARIETY[primary]) ? 1.5 : 0;
 
     // Mais tokens em comum é melhor; empata a favor da versão "crua" (genérica)
     // e da que tem menos descritores sobrando.
-    const score = matched * 3 + mainNoun + (isRaw ? 1 : 0) - extra * 0.25;
+    const score = matched * 3 + mainNoun + preferred + (isRaw ? 1 : 0) - extra * 0.25;
 
     if (!best || score > best.score || (score === best.score && extra < best.extra)) {
       best = { food, score, coverage, extra };
