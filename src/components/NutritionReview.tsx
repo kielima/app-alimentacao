@@ -69,7 +69,7 @@ function sourceBanner(
         tone: 'ok',
         title: 'Tabela TACO (NEPA/UNICAMP)',
         body: matchName
-          ? `Casado com "${matchName}". Valores por 100 ${unitSuffix} — confira e ajuste se precisar.`
+          ? `Valores de "${matchName}" (TACO), por 100 ${unitSuffix}. Se não for o mesmo alimento, feche e use foto ou IA.`
           : `Valores por 100 ${unitSuffix} — confira e ajuste se precisar.`,
       };
     case 'off':
