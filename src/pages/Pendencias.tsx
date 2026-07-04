@@ -8,8 +8,15 @@ import type { NutritionSource } from '../components/NutritionReview';
 import { upsertUserIngredient } from '../data/userIngredients';
 import { useDataGaps } from '../hooks/useDataGaps';
 import { autoFillNutrition } from '../lib/autoNutrition';
-import { estimateNutritionByName, geminiConfigured, type ExtractedNutrition } from '../lib/gemini';
+import {
+  estimateNutritionByName,
+  estimateServingSize,
+  geminiConfigured,
+  type ExtractedNutrition,
+} from '../lib/gemini';
 import type { Ingredient } from '../types/ingredient';
+import type { ServingGap } from '../utils/dataGaps';
+import { unitLabel } from '../utils/units';
 
 export default function Pendencias() {
   const gaps = useDataGaps();
@@ -37,7 +44,7 @@ export default function Pendencias() {
         </div>
       ) : (
         <div className="space-y-6">
-          <ServingGapSection ingredients={gaps.ingredientsNoServing} />
+          <ServingGapSection gaps={gaps.ingredientsNoServing} />
 
           <NutritionGapSection ingredients={gaps.ingredientsNoNutrition} />
 
@@ -348,8 +355,8 @@ function GapRow({ to, title, subtitle }: { to: string; title: string; subtitle: 
   );
 }
 
-function ServingGapSection({ ingredients }: { ingredients: Ingredient[] }) {
-  if (ingredients.length === 0) return null;
+function ServingGapSection({ gaps }: { gaps: ServingGap[] }) {
+  if (gaps.length === 0) return null;
   return (
     <section>
       <div className="mb-1 flex items-center gap-2">
@@ -357,34 +364,60 @@ function ServingGapSection({ ingredients }: { ingredients: Ingredient[] }) {
           Ingredientes sem porção padrão (g)
         </h2>
         <span className="rounded-full bg-zinc-100 px-1.5 text-[11px] font-semibold text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
-          {ingredients.length}
+          {gaps.length}
         </span>
       </div>
       <p className="mb-2 text-[11px] text-zinc-400 dark:text-zinc-500">
-        São usados em medidas como unidade/fatia. Informe quantas gramas tem 1 dessas medidas para
-        o cálculo funcionar.
+        São usados em medidas como unidade/fatia. Informe quantas gramas tem 1 dessas medidas
+        {geminiConfigured ? ' — ou deixe a IA estimar e confira o valor' : ''}.
       </p>
       <ul className="space-y-1.5">
-        {ingredients.map((ing) => (
-          <ServingRow key={ing.id} ingredient={ing} />
+        {gaps.map((gap) => (
+          <ServingRow key={gap.ingredient.id} gap={gap} />
         ))}
       </ul>
     </section>
   );
 }
 
-function ServingRow({ ingredient }: { ingredient: Ingredient }) {
+function ServingRow({ gap }: { gap: ServingGap }) {
+  const { ingredient, units } = gap;
   const unitSuffix = ingredient.default_unit === 'ml' ? 'ml' : 'g';
   const [value, setValue] = useState('');
   const [saved, setSaved] = useState(false);
+  const [estimating, setEstimating] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
 
   const parsed = Number(value.replace(',', '.'));
   const valid = value.trim() !== '' && Number.isFinite(parsed) && parsed > 0;
+
+  // Rótulos legíveis das medidas usadas (ex.: "fatia", "colher de sopa").
+  const measureLabels = units.map(unitLabel).filter(Boolean);
 
   const save = () => {
     if (!valid) return;
     upsertUserIngredient({ ...ingredient, serving_size_g: parsed });
     setSaved(true);
+  };
+
+  const estimate = async () => {
+    setEstimating(true);
+    setMessage(null);
+    try {
+      const res = await estimateServingSize(ingredient.name, ingredient.brand, measureLabels);
+      if (res.found && res.grams != null) {
+        setValue(String(res.grams));
+        setSaved(false);
+        const measure = res.measureLabel ? ` (${res.measureLabel})` : '';
+        setMessage(`Estimativa da IA: ${res.grams} ${unitSuffix}${measure}. Confira e ajuste antes de salvar.`);
+      } else {
+        setMessage('A IA não conseguiu estimar. Preencha o valor manualmente.');
+      }
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'Falha na estimativa por IA.');
+    } finally {
+      setEstimating(false);
+    }
   };
 
   return (
@@ -402,6 +435,11 @@ function ServingRow({ ingredient }: { ingredient: Ingredient }) {
           </span>
         )}
       </div>
+      {measureLabels.length > 0 && (
+        <p className="mb-2 text-[11px] text-zinc-400 dark:text-zinc-500">
+          Usado como: {measureLabels.join(', ')}
+        </p>
+      )}
       <div className="flex items-center gap-2">
         <span className="text-xs text-zinc-500 dark:text-zinc-400">1 medida =</span>
         <input
@@ -425,6 +463,29 @@ function ServingRow({ ingredient }: { ingredient: Ingredient }) {
           Salvar
         </button>
       </div>
+      {geminiConfigured && (
+        <div className="mt-2">
+          <button
+            type="button"
+            onClick={estimate}
+            disabled={estimating}
+            className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-200 disabled:opacity-50 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+          >
+            {estimating ? (
+              <>
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-zinc-400/40 border-t-zinc-500" />
+                Estimando…
+              </>
+            ) : (
+              <>
+                <Icon name="sparkles" className="h-3.5 w-3.5" />
+                Estimar com IA
+              </>
+            )}
+          </button>
+        </div>
+      )}
+      {message && <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">{message}</p>}
     </li>
   );
 }

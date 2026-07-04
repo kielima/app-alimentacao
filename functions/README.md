@@ -9,6 +9,18 @@ extraídos. Assim a chave do Gemini **nunca vai para o bundle do cliente**.
 - O cliente chama via `httpsCallable(functions, 'extractNutrition')`
   (ver `src/lib/gemini.ts`).
 
+## Estimativas por nome (sem foto)
+
+Duas funções completam a tela "Dados a completar" a partir só do nome do
+ingrediente (mesma proteção por e-mail do dono e mesmo proxy do Gemini):
+
+- `estimateNutritionByName` — recebe `{ name, brand, unit }` e devolve a tabela
+  nutricional típica por 100 g/ml.
+- `estimateServingSize` — recebe `{ name, brand, measures }` (as medidas com que
+  o ingrediente é usado, ex.: `["fatia", "colher de sopa"]`) e devolve o peso
+  em gramas de 1 medida (`porção padrão`). Ambas são **estimativas**, revisadas
+  pela pessoa antes de salvar.
+
 ## `extractRecipeFromUrl` — importar receita de um link
 
 Recebe `{ url }` (ou `{ text }`) e devolve a receita estruturada (nome,

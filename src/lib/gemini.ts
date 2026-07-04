@@ -204,3 +204,60 @@ export async function estimateNutritionByName(
 
   return normalize(raw);
 }
+
+/** Resultado bruto da função `estimateServingSize` (peso de 1 medida). */
+interface GeminiServingRaw {
+  found: boolean;
+  grams: number | null;
+  measure_label: string | null;
+  notes: string | null;
+}
+
+/** Estimativa de porção padrão (gramas de 1 medida), já validada. */
+export interface ServingEstimate {
+  /** true quando há um peso positivo utilizável. */
+  found: boolean;
+  /** Peso em gramas de 1 medida (null se a IA não soube estimar). */
+  grams: number | null;
+  /** Medida que a IA considerou (ex.: "1 unidade", "1 fatia"). */
+  measureLabel: string | null;
+  notes: string | null;
+}
+
+/**
+ * Estima a PORÇÃO PADRÃO (gramas de 1 medida caseira) de um ingrediente a
+ * partir do nome e das medidas com que ele é usado (unidade, fatia, colher…),
+ * via Cloud Function `estimateServingSize`. É ESTIMATIVA — deve ser revisada
+ * antes de salvar.
+ */
+export async function estimateServingSize(
+  name: string,
+  brand: string | null | undefined,
+  measures: string[],
+): Promise<ServingEstimate> {
+  if (!functions) {
+    throw new Error('Firebase não configurado.');
+  }
+
+  const callable = httpsCallable<
+    { name: string; brand: string; measures: string[] },
+    GeminiServingRaw
+  >(functions, 'estimateServingSize');
+
+  let raw: GeminiServingRaw;
+  try {
+    const resp = await callable({ name, brand: brand ?? '', measures });
+    raw = resp.data;
+  } catch (err) {
+    throw new Error(friendlyError(err));
+  }
+
+  const grams = num(raw.grams);
+  const valid = Boolean(raw.found) && grams !== null && grams > 0;
+  return {
+    found: valid,
+    grams: valid ? round(grams as number, 1) : null,
+    measureLabel: raw.measure_label?.trim() || null,
+    notes: raw.notes?.trim() || null,
+  };
+}

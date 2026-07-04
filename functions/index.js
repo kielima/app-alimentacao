@@ -310,6 +310,154 @@ exports.estimateNutritionByName = onCall(
 );
 
 // ---------------------------------------------------------------------------
+// Estimar a PORÇÃO PADRÃO (gramas de 1 medida caseira) de um ingrediente a
+// partir do nome e das medidas com que ele é usado (unidade, fatia, colher…).
+// Serve para converter medidas contáveis em gramas no cálculo nutricional.
+// Mesmo proxy/segredo do Gemini; a saída é forçada por JSON Schema.
+// ---------------------------------------------------------------------------
+
+const SERVING_RESPONSE_SCHEMA = {
+  type: 'object',
+  properties: {
+    found: { type: 'boolean' },
+    grams: { type: 'number', nullable: true },
+    measure_label: { type: 'string', nullable: true },
+    notes: { type: 'string', nullable: true },
+  },
+  required: ['found'],
+};
+
+const SERVING_PROMPT = `Você é um nutricionista que estima o PESO TÍPICO, em gramas, de uma medida caseira de um alimento (padrão Brasil).
+
+Responda APENAS com o JSON definido pelo schema.
+
+Contexto: um app mede este ingrediente por medidas contáveis (ex.: unidade, fatia, colher de sopa) e precisa saber quantas gramas pesa 1 dessas medidas para converter em gramas no cálculo nutricional.
+
+Regras importantes:
+- "grams" = peso médio, em gramas, de 1 medida padrão do alimento (a parte comumente consumida). Exemplos: 1 ovo de galinha ≈ 50 g; 1 fatia de pão de forma ≈ 25 g; 1 colher de sopa de margarina ≈ 15 g; 1 limão ≈ 100 g; 1 dente de alho ≈ 4 g.
+- Se vierem medidas no campo "Medidas usadas", estime o peso de 1 dessas medidas (use a primeira/mais comum). Sem medida informada, use a medida caseira mais natural do alimento (em geral "1 unidade").
+- Preencha "measure_label" com a medida que você considerou (ex.: "1 unidade", "1 fatia", "1 colher de sopa").
+- Use ponto como separador decimal e NÃO inclua unidades no número.
+- Se o nome for genérico demais ou não der para estimar com razoável confiança, retorne found = false.
+- É uma ESTIMATIVA; será revisada por uma pessoa antes de salvar.`;
+
+exports.estimateServingSize = onCall(
+  {
+    secrets: [GEMINI_API_KEY],
+    timeoutSeconds: 60,
+    memory: '256MiB',
+    maxInstances: 3,
+  },
+  async (request) => {
+    // 1) Exige login e restringe ao dono do app.
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'Faça login para usar este recurso.');
+    }
+    const email = request.auth.token && request.auth.token.email;
+    if (!email || email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+      throw new HttpsError('permission-denied', 'Sem permissão para usar este recurso.');
+    }
+
+    // 2) Valida a entrada.
+    const data = request.data || {};
+    const name = typeof data.name === 'string' ? data.name.trim() : '';
+    const brand = typeof data.brand === 'string' ? data.brand.trim() : '';
+    const measures = Array.isArray(data.measures)
+      ? data.measures.filter((m) => typeof m === 'string' && m.trim()).map((m) => m.trim())
+      : [];
+    if (!name) {
+      throw new HttpsError('invalid-argument', 'Informe o nome do ingrediente.');
+    }
+
+    // 3) Chama o Gemini (texto) com a chave do servidor.
+    const descriptor = brand ? `${name} (marca: ${brand})` : name;
+    const measuresLine = measures.length ? measures.join(', ') : '(não informado)';
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(
+      GEMINI_API_KEY.value(),
+    )}`;
+    const body = {
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: SERVING_PROMPT },
+            { text: `Alimento: ${descriptor}\nMedidas usadas: ${measuresLine}` },
+          ],
+        },
+      ],
+      generationConfig: {
+        temperature: 0,
+        responseMimeType: 'application/json',
+        responseSchema: SERVING_RESPONSE_SCHEMA,
+      },
+    };
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 45000);
+    let res;
+    try {
+      res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+    } catch (err) {
+      logger.error('Falha de rede ao chamar o Gemini (porção)', err);
+      throw new HttpsError('unavailable', 'Falha ao consultar o Gemini. Tente novamente.');
+    } finally {
+      clearTimeout(timer);
+    }
+
+    if (!res.ok) {
+      let detail = '';
+      try {
+        const errJson = await res.json();
+        detail = errJson && errJson.error && errJson.error.message ? errJson.error.message : '';
+      } catch (_) {
+        // sem corpo legível
+      }
+      logger.error('Gemini retornou erro (porção)', { status: res.status, detail });
+      if (res.status === 429) {
+        throw new HttpsError(
+          'resource-exhausted',
+          'Limite de uso do Gemini atingido. Tente mais tarde.',
+        );
+      }
+      if (res.status === 400 || res.status === 403) {
+        throw new HttpsError('failed-precondition', 'Chave do Gemini inválida ou sem permissão.');
+      }
+      throw new HttpsError('internal', `Gemini: HTTP ${res.status}`);
+    }
+
+    const json = await res.json();
+    if (json.promptFeedback && json.promptFeedback.blockReason) {
+      throw new HttpsError('invalid-argument', 'O Gemini bloqueou a solicitação.');
+    }
+
+    const parts =
+      json.candidates &&
+      json.candidates[0] &&
+      json.candidates[0].content &&
+      json.candidates[0].content.parts;
+    const text = Array.isArray(parts) ? parts.map((p) => p.text || '').join('') : '';
+    if (!text.trim()) {
+      throw new HttpsError('internal', 'O Gemini não retornou dados. Tente novamente.');
+    }
+
+    let raw;
+    try {
+      raw = JSON.parse(text);
+    } catch (_) {
+      throw new HttpsError('internal', 'Resposta do Gemini em formato inesperado.');
+    }
+
+    // 4) Devolve o objeto bruto; o cliente valida/arredonda.
+    return raw;
+  },
+);
+
+// ---------------------------------------------------------------------------
 // Importar receita de um link (TikTok / Instagram / YouTube / página web).
 // Mesma ideia do extractNutrition: a chave fica no servidor e a saída é forçada
 // por JSON Schema. YouTube e páginas web não precisam de terceiros; TikTok e
