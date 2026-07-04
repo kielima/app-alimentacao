@@ -45,7 +45,6 @@ export default function Receitas() {
     setQuery,
     categories,
     toggleCategory,
-    clearCategories,
     completeness,
     setCompleteness,
     minRating,
@@ -155,9 +154,6 @@ export default function Receitas() {
               </button>
             </div>
             <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <Chip active={categories.length === 0} onClick={clearCategories}>
-                <Icon name="sparkles" className="h-3.5 w-3.5" /> Todas
-              </Chip>
               {cats.map((c) => (
                 <Chip
                   key={c.id}
