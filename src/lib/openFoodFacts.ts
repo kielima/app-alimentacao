@@ -1,4 +1,5 @@
 import type { NutritionPer100 } from '../types/ingredient';
+import { normalize } from '../utils/search';
 
 const USER_AGENT = 'app-alimentacao/0.2 (https://github.com/kielima/app-alimentacao)';
 const CACHE_KEY = 'app-alimentacao:off-cache';
@@ -171,6 +172,83 @@ export async function lookupBarcode(
   }
   setCached(barcode, result);
   return result;
+}
+
+// Campos pedidos na busca por nome — o suficiente para `mapProduct`.
+const SEARCH_FIELDS = [
+  'code', 'product_name', 'product_name_pt', 'generic_name', 'generic_name_pt',
+  'brands', 'image_url', 'image_front_url', 'image_small_url', 'image_front_small_url',
+  'serving_size', 'ingredients_text', 'ingredients_text_pt', 'allergens', 'nutriments',
+].join(',');
+
+/** Quantos tokens do nome buscado aparecem no nome do produto (0–1). */
+function nameOverlap(query: string, productName: string): number {
+  const q = normalize(query).split(/[^a-z0-9]+/).filter((t) => t.length >= 2);
+  if (q.length === 0) return 0;
+  const p = new Set(normalize(productName).split(/[^a-z0-9]+/).filter(Boolean));
+  return q.filter((t) => p.has(t)).length / q.length;
+}
+
+/**
+ * Busca um produto no Open Food Facts pelo nome (sem código de barras).
+ * Devolve o melhor produto com tabela nutricional, ou null se nada servir.
+ * O casamento por nome é incerto — quem chama deve mostrar para revisão.
+ */
+export async function searchByName(
+  name: string,
+  options: { signal?: AbortSignal; timeoutMs?: number } = {},
+): Promise<OffProduct | null> {
+  const term = name.trim();
+  if (!term) return null;
+
+  const timeout = options.timeoutMs ?? 8000;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeout);
+  if (options.signal) {
+    options.signal.addEventListener('abort', () => controller.abort(), { once: true });
+  }
+
+  const params = new URLSearchParams({
+    search_terms: term,
+    search_simple: '1',
+    action: 'process',
+    json: '1',
+    page_size: '20',
+    fields: SEARCH_FIELDS,
+    lc: 'pt',
+  });
+  const url = `https://world.openfoodfacts.org/cgi/search.pl?${params.toString()}`;
+
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' },
+      signal: controller.signal,
+    });
+  } catch (err) {
+    if (controller.signal.aborted) throw new Error('Tempo esgotado consultando Open Food Facts.');
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+  if (!res.ok) throw new Error(`Open Food Facts: HTTP ${res.status}`);
+  const json = (await res.json()) as { products?: Record<string, unknown>[] };
+  const products = Array.isArray(json.products) ? json.products : [];
+
+  // Só interessam produtos com código e com ao menos um macro.
+  let best: { product: OffProduct; score: number } | null = null;
+  for (const raw of products) {
+    const barcode = typeof raw.code === 'string' ? raw.code : String(raw.code ?? '');
+    if (!barcode) continue;
+    const product = mapProduct(barcode, raw);
+    if (!product.nutrition) continue;
+    const score = nameOverlap(term, product.name || '');
+    if (!best || score > best.score) best = { product, score };
+  }
+
+  // Exige alguma sobreposição de nome para não trazer um produto aleatório.
+  if (!best || best.score < 0.5) return null;
+  return best.product;
 }
 
 export function isValidEan(code: string): boolean {

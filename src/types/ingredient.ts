@@ -42,6 +42,7 @@ export interface Ingredient {
   ceagesp_slug?: string;
   category?: IngredientCategory | null;
   tbca_code?: string;
+  taco_id?: string;
   off_barcode?: string;
 }
 

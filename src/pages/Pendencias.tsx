@@ -2,8 +2,13 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import Icon from '../components/Icon';
+import NutritionPhotoImport from '../components/NutritionPhotoImport';
+import NutritionFillModal from '../components/NutritionFillModal';
+import type { NutritionSource } from '../components/NutritionReview';
 import { upsertUserIngredient } from '../data/userIngredients';
 import { useDataGaps } from '../hooks/useDataGaps';
+import { autoFillNutrition } from '../lib/autoNutrition';
+import { estimateNutritionByName, geminiConfigured, type ExtractedNutrition } from '../lib/gemini';
 import type { Ingredient } from '../types/ingredient';
 
 export default function Pendencias() {
@@ -34,21 +39,7 @@ export default function Pendencias() {
         <div className="space-y-6">
           <ServingGapSection ingredients={gaps.ingredientsNoServing} />
 
-          <GapSection
-            title="Ingredientes sem tabela nutricional"
-            count={gaps.ingredientsNoNutrition.length}
-            hint="Sem os valores por 100 g/ml não dá para calcular nada com este ingrediente."
-            emptyWhenZero
-          >
-            {gaps.ingredientsNoNutrition.map((ing) => (
-              <GapRow
-                key={ing.id}
-                to={`/ingredientes/${ing.id}/editar`}
-                title={ing.brand ? `${ing.brand} — ${ing.name}` : ing.name}
-                subtitle="Adicionar tabela nutricional"
-              />
-            ))}
-          </GapSection>
+          <NutritionGapSection ingredients={gaps.ingredientsNoNutrition} />
 
           <GapSection
             title="Refeições com itens sem quantidade"
@@ -114,6 +105,227 @@ function GapSection({
       <p className="mb-2 text-[11px] text-zinc-400 dark:text-zinc-500">{hint}</p>
       <ul className="space-y-1.5">{children}</ul>
     </section>
+  );
+}
+
+type FillAction = 'auto' | 'ai';
+
+type ActiveModal =
+  | { kind: 'photo'; ingredient: Ingredient }
+  | {
+      kind: 'fill';
+      ingredient: Ingredient;
+      data: ExtractedNutrition;
+      source: NutritionSource;
+      matchName?: string;
+      tacoId?: string;
+      offBarcode?: string;
+    }
+  | null;
+
+/**
+ * Seção "Ingredientes sem tabela nutricional" com preenchimento em cascata:
+ * TACO → Open Food Facts (automático) e, se falhar, foto ou estimativa por IA.
+ */
+function NutritionGapSection({ ingredients }: { ingredients: Ingredient[] }) {
+  const [modal, setModal] = useState<ActiveModal>(null);
+  const [busy, setBusy] = useState<{ id: string; action: FillAction } | null>(null);
+  const [messages, setMessages] = useState<Record<string, string>>({});
+
+  if (ingredients.length === 0) return null;
+
+  const setMsg = (id: string, text: string) =>
+    setMessages((prev) => ({ ...prev, [id]: text }));
+  const clearMsg = (id: string) =>
+    setMessages((prev) => {
+      if (!(id in prev)) return prev;
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+
+  const runAuto = async (ing: Ingredient) => {
+    setBusy({ id: ing.id, action: 'auto' });
+    clearMsg(ing.id);
+    try {
+      const res = await autoFillNutrition(ing);
+      if (res) {
+        setModal({
+          kind: 'fill',
+          ingredient: ing,
+          data: res.data,
+          source: res.source,
+          matchName: res.matchName,
+          tacoId: res.tacoId,
+          offBarcode: res.offBarcode,
+        });
+      } else {
+        setMsg(
+          ing.id,
+          geminiConfigured
+            ? 'Não achei na TACO nem no Open Food Facts. Use a foto ou a estimativa por IA.'
+            : 'Não achei na TACO nem no Open Food Facts. Preencha pela página do ingrediente.',
+        );
+      }
+    } catch (err) {
+      setMsg(ing.id, err instanceof Error ? err.message : 'Falha ao buscar nas bases.');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const runAi = async (ing: Ingredient) => {
+    setBusy({ id: ing.id, action: 'ai' });
+    clearMsg(ing.id);
+    try {
+      const unit = ing.default_unit === 'ml' ? 'ml' : 'g';
+      const data = await estimateNutritionByName(ing.name, ing.brand, unit);
+      if (data.found) {
+        setModal({ kind: 'fill', ingredient: ing, data, source: 'ai' });
+      } else {
+        setMsg(ing.id, 'A IA não reconheceu este item. Tente a foto do rótulo.');
+      }
+    } catch (err) {
+      setMsg(ing.id, err instanceof Error ? err.message : 'Falha na estimativa por IA.');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <section>
+      <div className="mb-1 flex items-center gap-2">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          Ingredientes sem tabela nutricional
+        </h2>
+        <span className="rounded-full bg-zinc-100 px-1.5 text-[11px] font-semibold text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+          {ingredients.length}
+        </span>
+      </div>
+      <p className="mb-2 text-[11px] text-zinc-400 dark:text-zinc-500">
+        Preencha por uma base consolidada (TACO → Open Food Facts) ou, se não achar, por foto do
+        rótulo ou estimativa por IA. Você confere os valores antes de salvar.
+      </p>
+      <ul className="space-y-1.5">
+        {ingredients.map((ing) => (
+          <NutritionGapRow
+            key={ing.id}
+            ingredient={ing}
+            busyAction={busy?.id === ing.id ? busy.action : null}
+            disabled={busy !== null && busy.id !== ing.id}
+            message={messages[ing.id]}
+            onAuto={() => runAuto(ing)}
+            onPhoto={() => setModal({ kind: 'photo', ingredient: ing })}
+            onAi={() => runAi(ing)}
+          />
+        ))}
+      </ul>
+
+      {modal?.kind === 'photo' && (
+        <NutritionPhotoImport
+          ingredient={modal.ingredient}
+          open
+          onClose={() => setModal(null)}
+          onSaved={() => setModal(null)}
+        />
+      )}
+      {modal?.kind === 'fill' && (
+        <NutritionFillModal
+          ingredient={modal.ingredient}
+          data={modal.data}
+          source={modal.source}
+          matchName={modal.matchName}
+          tacoId={modal.tacoId}
+          offBarcode={modal.offBarcode}
+          onClose={() => setModal(null)}
+          onSaved={() => setModal(null)}
+        />
+      )}
+    </section>
+  );
+}
+
+function NutritionGapRow({
+  ingredient,
+  busyAction,
+  disabled,
+  message,
+  onAuto,
+  onPhoto,
+  onAi,
+}: {
+  ingredient: Ingredient;
+  busyAction: FillAction | null;
+  disabled: boolean;
+  message?: string;
+  onAuto: () => void;
+  onPhoto: () => void;
+  onAi: () => void;
+}) {
+  const anyBusy = busyAction !== null;
+  return (
+    <li className="rounded-xl border border-zinc-200 bg-white px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900">
+      <Link
+        to={`/ingredientes/${ingredient.id}`}
+        className="block truncate text-sm font-medium text-zinc-900 hover:text-brand-600 dark:text-zinc-100 dark:hover:text-brand-400"
+      >
+        {ingredient.brand ? `${ingredient.brand} — ${ingredient.name}` : ingredient.name}
+      </Link>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={onAuto}
+          disabled={disabled || anyBusy}
+          className="inline-flex items-center gap-1.5 rounded-full bg-brand-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-600 disabled:opacity-50 dark:bg-brand-600 dark:hover:bg-brand-500"
+        >
+          {busyAction === 'auto' ? (
+            <>
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+              Buscando…
+            </>
+          ) : (
+            <>
+              <Icon name="sparkles" className="h-3.5 w-3.5" />
+              Preencher automaticamente
+            </>
+          )}
+        </button>
+        {geminiConfigured && (
+          <>
+            <button
+              type="button"
+              onClick={onPhoto}
+              disabled={disabled || anyBusy}
+              className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-200 disabled:opacity-50 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+            >
+              <Icon name="upload" className="h-3.5 w-3.5" />
+              Escanear (foto)
+            </button>
+            <button
+              type="button"
+              onClick={onAi}
+              disabled={disabled || anyBusy}
+              className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-200 disabled:opacity-50 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+            >
+              {busyAction === 'ai' ? (
+                <>
+                  <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-zinc-400/40 border-t-zinc-500" />
+                  Estimando…
+                </>
+              ) : (
+                <>
+                  <Icon name="sparkles" className="h-3.5 w-3.5" />
+                  Estimar com IA
+                </>
+              )}
+            </button>
+          </>
+        )}
+      </div>
+      {message && (
+        <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">{message}</p>
+      )}
+    </li>
   );
 }
 
