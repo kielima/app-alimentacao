@@ -15,6 +15,12 @@ export interface RecipeGap {
   missingCount: number;
 }
 
+export interface ServingGap {
+  ingredient: Ingredient;
+  /** Códigos das medidas com que o ingrediente é usado (ex.: "unit", "fatia"). */
+  units: string[];
+}
+
 export interface MealGap {
   meal: Meal;
   missingCount: number;
@@ -22,7 +28,7 @@ export interface MealGap {
 
 export interface DataGaps {
   ingredientsNoNutrition: Ingredient[];
-  ingredientsNoServing: Ingredient[];
+  ingredientsNoServing: ServingGap[];
   recipeGaps: RecipeGap[];
   mealGaps: MealGap[];
   total: number;
@@ -47,27 +53,37 @@ export function collectDataGaps(
   recipes: Recipe[],
   meals: Meal[],
 ): DataGaps {
-  // Quais ingredientes são usados com uma medida que exige porção padrão.
-  const usedWithServingUnit = new Set<string>();
+  // Quais ingredientes são usados com uma medida que exige porção padrão, e
+  // com quais medidas (para dar contexto à estimativa da porção).
+  const usedWithServingUnit = new Map<string, Set<string>>();
+  const addUnit = (id: string, unit: string) => {
+    const set = usedWithServingUnit.get(id) ?? new Set<string>();
+    set.add(unit);
+    usedWithServingUnit.set(id, set);
+  };
   for (const meal of meals) {
     for (const item of meal.items) {
       if (item.kind === 'ingredient' && item.ingredient_id && unitNeedsServing(item.unit)) {
-        usedWithServingUnit.add(item.ingredient_id);
+        addUnit(item.ingredient_id, item.unit as string);
       }
     }
   }
   for (const recipe of recipes) {
     for (const item of [...(recipe.ingredients ?? []), ...(recipe.ingredients_molho ?? [])]) {
       if (item.ingredient_id && unitNeedsServing(item.unit)) {
-        usedWithServingUnit.add(item.ingredient_id);
+        addUnit(item.ingredient_id, item.unit as string);
       }
     }
   }
 
   const ingredientsNoNutrition = ingredients.filter((i) => !i.nutrition_per_100).sort(byName);
-  const ingredientsNoServing = ingredients
+  const ingredientsNoServing: ServingGap[] = ingredients
     .filter((i) => (i.serving_size_g == null || i.serving_size_g <= 0) && usedWithServingUnit.has(i.id))
-    .sort(byName);
+    .sort(byName)
+    .map((ingredient) => ({
+      ingredient,
+      units: [...(usedWithServingUnit.get(ingredient.id) ?? [])],
+    }));
 
   const recipeGaps: RecipeGap[] = [];
   for (const recipe of recipes) {
