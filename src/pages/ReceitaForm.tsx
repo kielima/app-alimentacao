@@ -5,11 +5,12 @@ import Icon from '../components/Icon';
 import { useAllIngredients } from '../data/ingredients';
 import SearchableSelect from '../components/SearchableSelect';
 import TrashIcon from '../components/TrashIcon';
-import { findRecipeById, recipeCategories, allRecipeIds } from '../data/recipes';
+import { findRecipeById, allRecipeIds } from '../data/recipes';
+import { useRecipeCategories } from '../data/recipeCategories';
 import { upsertUserRecipe } from '../data/userRecipes';
 import { uniqueSlug } from '../utils/slug';
 import { compressImageToDataUrl } from '../utils/image';
-import type { Difficulty, Rating, Recipe, RecipeCategoryId, RecipeIngredient } from '../types/recipe';
+import type { Difficulty, Rating, Recipe, RecipeIngredient } from '../types/recipe';
 import type { Ingredient } from '../types/ingredient';
 
 const UNIT_OPTIONS = [
@@ -58,7 +59,7 @@ function draftKeyFor(id: string | undefined) {
 
 interface FormState {
   name: string;
-  category: RecipeCategoryId;
+  category: string;
   prep_time_min: string;
   difficulty: Difficulty | '';
   rating: Rating | 0;
@@ -191,6 +192,7 @@ export default function ReceitaForm() {
     [allIng],
   );
   const ingredientMap = useMemo(() => new Map(allIng.map((i) => [i.id, i])), [allIng]);
+  const categories = useRecipeCategories();
 
   const draftKey = draftKeyFor(id);
 
@@ -377,12 +379,14 @@ export default function ReceitaForm() {
       <Field label="Categoria">
         <select
           value={state.category}
-          onChange={(e) =>
-            setState((s) => ({ ...s, category: e.target.value as RecipeCategoryId }))
-          }
+          onChange={(e) => setState((s) => ({ ...s, category: e.target.value }))}
           className={inputClass}
         >
-          {recipeCategories.map((c) => (
+          {/* Categoria da receita que não existe mais na lista (ex.: apagada) */}
+          {categories.every((c) => c.id !== state.category) && (
+            <option value={state.category}>Sem categoria</option>
+          )}
+          {categories.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
             </option>

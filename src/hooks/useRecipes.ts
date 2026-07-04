@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useAllRecipes } from '../data/recipes';
 import { matches } from '../utils/search';
 import { createUIStore } from '../utils/persistentUIState';
-import type { Recipe, RecipeCategoryId, Rating } from '../types/recipe';
+import type { Recipe, Rating } from '../types/recipe';
 
 export type CompletenessFilter = 'todas' | 'completas' | 'revisao';
 export type RatingFilter = 0 | 3 | 4 | 5;
@@ -11,8 +11,10 @@ interface UseRecipesResult {
   list: Recipe[];
   query: string;
   setQuery: (q: string) => void;
-  category: RecipeCategoryId | 'todas';
-  setCategory: (c: RecipeCategoryId | 'todas') => void;
+  /** IDs das categorias selecionadas. Vazio = todas as categorias. */
+  categories: string[];
+  toggleCategory: (id: string) => void;
+  clearCategories: () => void;
   completeness: CompletenessFilter;
   setCompleteness: (c: CompletenessFilter) => void;
   minRating: RatingFilter;
@@ -24,19 +26,19 @@ interface UseRecipesResult {
 
 const ui = createUIStore({
   query: '',
-  category: 'todas' as RecipeCategoryId | 'todas',
+  categories: [] as string[],
   completeness: 'todas' as CompletenessFilter,
   minRating: 0 as RatingFilter,
   showFilters: false,
 });
 
 export function useRecipes(): UseRecipesResult {
-  const { query, category, completeness, minRating, showFilters } = ui.useStore();
+  const { query, categories, completeness, minRating, showFilters } = ui.useStore();
   const allRecipes = useAllRecipes();
 
   const list = useMemo(() => {
     return allRecipes
-      .filter((r) => category === 'todas' || r.category === category)
+      .filter((r) => categories.length === 0 || categories.includes(r.category))
       .filter((r) => {
         if (completeness === 'completas') return !r.needs_review;
         if (completeness === 'revisao') return r.needs_review === true;
@@ -53,14 +55,19 @@ export function useRecipes(): UseRecipesResult {
         if (rDiff !== 0) return rDiff;
         return a.name.localeCompare(b.name, 'pt-BR');
       });
-  }, [query, category, completeness, minRating, allRecipes]);
+  }, [query, categories, completeness, minRating, allRecipes]);
 
   return {
     list,
     query,
     setQuery: (q) => ui.set('query', q),
-    category,
-    setCategory: (c) => ui.set('category', c),
+    categories,
+    toggleCategory: (id) =>
+      ui.set(
+        'categories',
+        categories.includes(id) ? categories.filter((c) => c !== id) : [...categories, id],
+      ),
+    clearCategories: () => ui.set('categories', []),
     completeness,
     setCompleteness: (c) => ui.set('completeness', c),
     minRating,

@@ -5,14 +5,14 @@ import Icon from '../components/Icon';
 import TrashIcon from '../components/TrashIcon';
 import SearchableSelect from '../components/SearchableSelect';
 import { useAllIngredients, allIngredientIds } from '../data/ingredients';
-import { recipeCategories } from '../data/recipes';
+import { useRecipeCategories } from '../data/recipeCategories';
 import { upsertUserRecipe } from '../data/userRecipes';
 import { upsertUserIngredient } from '../data/userIngredients';
 import { uniqueSlug } from '../utils/slug';
 import { normalize } from '../utils/search';
 import { extractRecipe, extractedToRecipe, type ExtractedRecipe } from '../lib/recipeImport';
 import type { Ingredient, Unit } from '../types/ingredient';
-import type { Recipe, RecipeCategoryId, RecipeIngredient } from '../types/recipe';
+import type { Recipe, RecipeIngredient } from '../types/recipe';
 
 // Mesmas opções de unidade da tela de editar receita (ReceitaForm).
 const UNIT_OPTIONS = [
@@ -326,8 +326,9 @@ function ReviewForm({
   onSave: (recipe: Recipe) => void;
   onDiscard: () => void;
 }) {
+  const categories = useRecipeCategories();
   const [name, setName] = useState(recipe.name);
-  const [category, setCategory] = useState<RecipeCategoryId>(recipe.category);
+  const [category, setCategory] = useState<string>(recipe.category);
   const [prepTime, setPrepTime] = useState(recipe.prep_time_min?.toString() ?? '');
   const [ingredients, setIngredients] = useState<FormIngredient[]>(() =>
     (recipe.ingredients ?? []).map((ri, idx) =>
@@ -461,10 +462,13 @@ function ReviewForm({
         <Field label="Categoria">
           <select
             value={category}
-            onChange={(e) => setCategory(e.target.value as RecipeCategoryId)}
+            onChange={(e) => setCategory(e.target.value)}
             className={inputClass}
           >
-            {recipeCategories.map((c) => (
+            {categories.every((c) => c.id !== category) && (
+              <option value={category}>Sem categoria</option>
+            )}
+            {categories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
               </option>
