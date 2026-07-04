@@ -73,6 +73,10 @@ export function findTacoMatch(name: string, _brand?: string | null): TacoMatch |
   for (const { food, tokens, tokenSet } of INDEX) {
     // O termo principal do ingrediente precisa aparecer no alimento.
     if (!tokenSet.has(primary)) continue;
+    // E o alimento PRINCIPAL da TACO (1º token, ex.: "Frango" em
+    // "Frango, com açafrão") precisa ter sido nomeado no ingrediente. Sem isso,
+    // "Açafrão" casaria com "Frango, com açafrão" só por conter a palavra.
+    if (!queryTokens.includes(tokens[0])) continue;
 
     const matched = queryTokens.filter((t) => tokenSet.has(t)).length;
     const coverage = matched / queryTokens.length;
