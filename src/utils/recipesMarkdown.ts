@@ -2,7 +2,21 @@ import { getAllRecipes } from '../data/recipes';
 import { getRecipeCategories, DEFAULT_RECIPE_CATEGORIES } from '../data/recipeCategories';
 import type { NutritionPer100 } from '../types/ingredient';
 import type { Recipe, RecipeIngredient } from '../types/recipe';
-import { computeNutrition, recipeNutritionPer100g } from './nutrition';
+import { activeIngredient, computeNutrition, recipeNutritionPer100g } from './nutrition';
+
+/** As opções de um ingrediente (principal + alternativas), com a ativa primeiro. */
+function ingredientOptions(item: RecipeIngredient): RecipeIngredient[] {
+  if (!item.substitutes || item.substitutes.length === 0) return [item];
+  const principal: RecipeIngredient = {
+    ...item,
+    substitutes: undefined,
+    active_substitute: undefined,
+  };
+  const all = [principal, ...item.substitutes];
+  const activePos = item.active_substitute != null ? item.active_substitute + 1 : 0;
+  const active = all[activePos] ?? principal;
+  return [active, ...all.filter((o) => o !== active)];
+}
 
 /** Categorias correntes (com fallback para as padrão antes da semeadura). */
 function categoriesForExport() {
@@ -42,7 +56,12 @@ function metaLine(recipe: Recipe): string {
 }
 
 function ingredientLines(items: RecipeIngredient[]): string[] {
-  return items.map((ing) => `- ${ing.raw_text}`);
+  return items.map((ing) => {
+    const [active, ...alternatives] = ingredientOptions(ing);
+    if (alternatives.length === 0) return `- ${active.raw_text}`;
+    const alt = alternatives.map((o) => o.raw_text).join('; ');
+    return `- ${active.raw_text} _(ou: ${alt})_`;
+  });
 }
 
 function stepsLines(steps: string[]): string[] {
@@ -51,7 +70,9 @@ function stepsLines(steps: string[]): string[] {
 
 /** Bloco de nutrição estimada: total da receita + por 100 g quando disponível. */
 function nutritionLines(recipe: Recipe): string[] {
-  const items = [...(recipe.ingredients ?? []), ...(recipe.ingredients_molho ?? [])];
+  const items = [...(recipe.ingredients ?? []), ...(recipe.ingredients_molho ?? [])].map(
+    activeIngredient,
+  );
   if (items.length === 0) return [];
   const total = computeNutrition(items);
   if (total.counted === 0) return [];
