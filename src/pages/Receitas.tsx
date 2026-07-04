@@ -192,7 +192,7 @@ export default function Receitas() {
           Nenhuma receita encontrada com esses filtros.
         </p>
       ) : (
-        <ul className="space-y-2">
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {list.map((r) => (
             <RecipeCard
               key={r.id}
@@ -275,35 +275,43 @@ function RecipeCard({
       <Link
         to={`/receitas/${recipe.id}`}
         {...longPress}
-        className="flex select-none items-start gap-3 rounded-xl border border-zinc-200 bg-white p-3 transition-colors hover:border-brand-500 [-webkit-touch-callout:none] dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-400"
+        className="group flex h-full select-none flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white transition-colors hover:border-brand-500 [-webkit-touch-callout:none] dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-400"
       >
-        {photo && !imgFailed ? (
-          <img
-            src={photo}
-            alt=""
-            onError={() => setImgFailed(true)}
-            className="h-14 w-14 shrink-0 rounded-lg object-cover"
-          />
-        ) : (
-          <div
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800"
-            aria-hidden
-          >
-            <Icon name={cat?.icon ?? 'utensils'} className="h-7 w-7" />
-          </div>
-        )}
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium leading-tight">{recipe.name}</p>
-          <p className="mt-0.5 inline-flex flex-wrap items-center gap-x-1 text-xs text-zinc-500 dark:text-zinc-400">
-            <span>{cat?.name ?? 'Sem categoria'}</span>
+        <div className="relative aspect-[4/3] w-full overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+          {photo && !imgFailed ? (
+            <img
+              src={photo}
+              alt=""
+              loading="lazy"
+              onError={() => setImgFailed(true)}
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center" aria-hidden>
+              <Icon
+                name={cat?.icon ?? 'utensils'}
+                className="h-10 w-10 text-zinc-300 dark:text-zinc-600"
+              />
+            </div>
+          )}
+          {recipe.needs_review && (
+            <span className="absolute right-1.5 top-1.5 rounded-full bg-amber-100/95 px-2 py-0.5 text-[10px] font-medium text-amber-700 shadow-sm backdrop-blur-sm dark:bg-amber-900/70 dark:text-amber-200">
+              revisar
+            </span>
+          )}
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col p-2.5">
+          <p className="line-clamp-2 text-sm font-medium leading-tight">{recipe.name}</p>
+          <p className="mt-1 inline-flex flex-wrap items-center gap-x-1 text-xs text-zinc-500 dark:text-zinc-400">
+            <span className="truncate">{cat?.name ?? 'Sem categoria'}</span>
             {recipe.prep_time_min ? (
               <span className="inline-flex items-center gap-0.5">
                 · <Icon name="clock" className="h-3.5 w-3.5" /> {recipe.prep_time_min}min
               </span>
             ) : null}
           </p>
-          <div className="mt-1 flex items-center gap-1">
-            {recipe.rating && (
+          <div className="mt-auto flex items-center gap-1 pt-1">
+            {recipe.rating ? (
               <span
                 className="inline-flex items-center text-amber-500"
                 aria-label={`${recipe.rating} estrelas`}
@@ -312,12 +320,7 @@ function RecipeCard({
                   <Icon key={i} name="star" className="h-3.5 w-3.5" />
                 ))}
               </span>
-            )}
-            {recipe.needs_review && (
-              <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
-                revisar
-              </span>
-            )}
+            ) : null}
           </div>
         </div>
       </Link>
