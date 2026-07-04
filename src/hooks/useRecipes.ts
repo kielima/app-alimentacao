@@ -14,7 +14,6 @@ interface UseRecipesResult {
   /** IDs das categorias selecionadas. Vazio = todas as categorias. */
   categories: string[];
   toggleCategory: (id: string) => void;
-  clearCategories: () => void;
   completeness: CompletenessFilter;
   setCompleteness: (c: CompletenessFilter) => void;
   minRating: RatingFilter;
@@ -67,7 +66,6 @@ export function useRecipes(): UseRecipesResult {
         'categories',
         categories.includes(id) ? categories.filter((c) => c !== id) : [...categories, id],
       ),
-    clearCategories: () => ui.set('categories', []),
     completeness,
     setCompleteness: (c) => ui.set('completeness', c),
     minRating,
