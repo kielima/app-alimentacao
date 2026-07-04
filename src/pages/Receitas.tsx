@@ -5,7 +5,14 @@ import FilterButton from '../components/FilterButton';
 import CardActionSheet from '../components/CardActionSheet';
 import TrashIcon from '../components/TrashIcon';
 import Icon from '../components/Icon';
-import { recipeCategories, useHiddenSeedRecipes, allRecipeIds } from '../data/recipes';
+import { useHiddenSeedRecipes, allRecipeIds, useAllRecipes } from '../data/recipes';
+import {
+  useRecipeCategories,
+  upsertRecipeCategory,
+  deleteRecipeCategory,
+  CATEGORY_ICON_OPTIONS,
+  type RecipeCategory,
+} from '../data/recipeCategories';
 import { unhideRecipe } from '../data/hiddenRecipes';
 import { upsertUserRecipe, deleteUserRecipe } from '../data/userRecipes';
 import {
@@ -14,14 +21,9 @@ import {
   type RatingFilter,
 } from '../hooks/useRecipes';
 import { useLongPress } from '../hooks/useLongPress';
-import type { Recipe, RecipeCategoryId } from '../types/recipe';
+import type { Recipe } from '../types/recipe';
 import { uniqueSlug } from '../utils/slug';
 import { downloadRecipesMarkdown } from '../utils/recipesMarkdown';
-
-const categoryChips: { value: RecipeCategoryId | 'todas'; label: string; icon: string }[] = [
-  { value: 'todas', label: 'Todas', icon: 'sparkles' },
-  ...recipeCategories.map((c) => ({ value: c.id, label: c.name, icon: c.icon })),
-];
 
 const completenessChips: { value: CompletenessFilter; label: string }[] = [
   { value: 'todas', label: 'Tudo' },
@@ -41,8 +43,9 @@ export default function Receitas() {
     list,
     query,
     setQuery,
-    category,
-    setCategory,
+    categories,
+    toggleCategory,
+    clearCategories,
     completeness,
     setCompleteness,
     minRating,
@@ -52,6 +55,9 @@ export default function Receitas() {
     total,
   } = useRecipes();
 
+  const cats = useRecipeCategories();
+  const [manageCats, setManageCats] = useState(false);
+
   const [actionRecipeId, setActionRecipeId] = useState<string | null>(null);
   const actionRecipe = actionRecipeId
     ? list.find((r) => r.id === actionRecipeId) ?? null
@@ -60,7 +66,8 @@ export default function Receitas() {
   const [exportedCount, setExportedCount] = useState<number | null>(null);
 
   const handleExportMarkdown = () => {
-    const count = downloadRecipesMarkdown();
+    // Exporta conforme o filtro ativo (ex.: só as categorias selecionadas).
+    const count = downloadRecipesMarkdown(list);
     setExportedCount(count);
     setTimeout(() => setExportedCount(null), 4000);
   };
@@ -79,7 +86,8 @@ export default function Receitas() {
     setActionRecipeId(null);
   };
 
-  const hasActiveFilters = category !== 'todas' || completeness !== 'todas' || minRating !== 0;
+  const hasActiveFilters =
+    categories.length > 0 || completeness !== 'todas' || minRating !== 0;
   const isFiltering = hasActiveFilters || !!query;
 
   return (
@@ -95,9 +103,13 @@ export default function Receitas() {
         <button
           type="button"
           onClick={handleExportMarkdown}
-          disabled={total === 0}
-          aria-label="Exportar todas as receitas em Markdown"
-          title="Exportar todas as receitas (Markdown)"
+          disabled={list.length === 0}
+          aria-label="Exportar receitas em Markdown"
+          title={
+            isFiltering
+              ? 'Exportar as receitas filtradas (Markdown)'
+              : 'Exportar todas as receitas (Markdown)'
+          }
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600 hover:border-brand-500 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-brand-400 dark:hover:text-brand-400"
         >
           <Icon name="download" className="h-4 w-4" />
@@ -124,13 +136,40 @@ export default function Receitas() {
 
       {showFilters && (
         <div className="sticky top-0 z-10 -mx-4 mb-3 bg-zinc-50/95 px-4 pb-2 pt-2 backdrop-blur supports-[backdrop-filter]:bg-zinc-50/80 dark:bg-zinc-950/95 dark:supports-[backdrop-filter]:bg-zinc-950/80">
-          <FilterRow label="Categoria">
-            {categoryChips.map((c) => (
-              <Chip key={c.value} active={category === c.value} onClick={() => setCategory(c.value)}>
-                <Icon name={c.icon} className="h-3.5 w-3.5" /> {c.label}
+          <div className="mb-2">
+            <div className="mb-1 flex items-center justify-between">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                Categoria
+              </p>
+              <button
+                type="button"
+                onClick={() => setManageCats((m) => !m)}
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors ${
+                  manageCats
+                    ? 'bg-brand-500 text-white dark:bg-brand-600'
+                    : 'text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-900/30'
+                }`}
+              >
+                <Icon name={manageCats ? 'check' : 'pencil'} className="h-3 w-3" />
+                {manageCats ? 'Concluir' : 'Gerenciar'}
+              </button>
+            </div>
+            <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <Chip active={categories.length === 0} onClick={clearCategories}>
+                <Icon name="sparkles" className="h-3.5 w-3.5" /> Todas
               </Chip>
-            ))}
-          </FilterRow>
+              {cats.map((c) => (
+                <Chip
+                  key={c.id}
+                  active={categories.includes(c.id)}
+                  onClick={() => toggleCategory(c.id)}
+                >
+                  <Icon name={c.icon} className="h-3.5 w-3.5" /> {c.name}
+                </Chip>
+              ))}
+            </div>
+            {manageCats && <CategoryManager cats={cats} />}
+          </div>
           <FilterRow label="Status">
             {completenessChips.map((c) => (
               <Chip
@@ -162,6 +201,7 @@ export default function Receitas() {
             <RecipeCard
               key={r.id}
               recipe={r}
+              category={cats.find((c) => c.id === r.category)}
               onLongPress={() => setActionRecipeId(r.id)}
             />
           ))}
@@ -222,9 +262,16 @@ export default function Receitas() {
   );
 }
 
-function RecipeCard({ recipe, onLongPress }: { recipe: Recipe; onLongPress: () => void }) {
+function RecipeCard({
+  recipe,
+  category: cat,
+  onLongPress,
+}: {
+  recipe: Recipe;
+  category: RecipeCategory | undefined;
+  onLongPress: () => void;
+}) {
   const longPress = useLongPress(onLongPress, { delay: 450 });
-  const cat = recipeCategories.find((c) => c.id === recipe.category);
   const [imgFailed, setImgFailed] = useState(false);
   const photo = recipe.photos?.[0];
   return (
@@ -252,7 +299,7 @@ function RecipeCard({ recipe, onLongPress }: { recipe: Recipe; onLongPress: () =
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium leading-tight">{recipe.name}</p>
           <p className="mt-0.5 inline-flex flex-wrap items-center gap-x-1 text-xs text-zinc-500 dark:text-zinc-400">
-            <span>{cat?.name}</span>
+            <span>{cat?.name ?? 'Sem categoria'}</span>
             {recipe.prep_time_min ? (
               <span className="inline-flex items-center gap-0.5">
                 · <Icon name="clock" className="h-3.5 w-3.5" /> {recipe.prep_time_min}min
@@ -318,6 +365,149 @@ function HiddenRecipesPanel() {
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+function CategoryManager({ cats }: { cats: RecipeCategory[] }) {
+  const recipes = useAllRecipes();
+  const [newName, setNewName] = useState('');
+  const [newIcon, setNewIcon] = useState(CATEGORY_ICON_OPTIONS[0]);
+  // Qual linha está com o seletor de ícone aberto ('__new__' = linha de adição).
+  const [iconPickerFor, setIconPickerFor] = useState<string | null>(null);
+
+  const countIn = (id: string) => recipes.filter((r) => r.category === id).length;
+
+  const addCategory = () => {
+    const name = newName.trim();
+    if (!name) return;
+    const id = uniqueSlug(name, new Set(cats.map((c) => c.id)));
+    upsertRecipeCategory({ id, name, icon: newIcon, order: cats.length });
+    setNewName('');
+    setNewIcon(CATEGORY_ICON_OPTIONS[0]);
+    setIconPickerFor(null);
+  };
+
+  const renameCategory = (cat: RecipeCategory, name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed || trimmed === cat.name) return;
+    upsertRecipeCategory({ ...cat, name: trimmed });
+  };
+
+  const changeIcon = (cat: RecipeCategory, icon: string) => {
+    upsertRecipeCategory({ ...cat, icon });
+    setIconPickerFor(null);
+  };
+
+  const removeCategory = (cat: RecipeCategory) => {
+    const n = countIn(cat.id);
+    const warn =
+      n > 0
+        ? `Apagar a categoria "${cat.name}"? ${n} receita(s) ficarão sem categoria.`
+        : `Apagar a categoria "${cat.name}"?`;
+    if (!confirm(warn)) return;
+    deleteRecipeCategory(cat.id);
+  };
+
+  return (
+    <div className="mt-2 rounded-xl border border-zinc-200 bg-white p-2.5 dark:border-zinc-800 dark:bg-zinc-900">
+      <ul className="space-y-1.5">
+        {cats.map((cat) => (
+          <li key={cat.id}>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIconPickerFor((f) => (f === cat.id ? null : cat.id))}
+                aria-label={`Trocar ícone de ${cat.name}`}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-600 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-brand-900/30 dark:hover:text-brand-400"
+              >
+                <Icon name={cat.icon} className="h-4 w-4" />
+              </button>
+              <input
+                key={`${cat.id}-${cat.name}`}
+                defaultValue={cat.name}
+                onBlur={(e) => renameCategory(cat, e.target.value)}
+                className="h-8 min-w-0 flex-1 rounded-lg border border-zinc-200 bg-white px-2 text-sm focus:border-brand-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
+              />
+              <button
+                type="button"
+                onClick={() => removeCategory(cat)}
+                aria-label={`Apagar categoria ${cat.name}`}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+              >
+                <TrashIcon className="h-4 w-4" />
+              </button>
+            </div>
+            {iconPickerFor === cat.id && (
+              <IconGrid selected={cat.icon} onPick={(icon) => changeIcon(cat, icon)} />
+            )}
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-2 border-t border-zinc-100 pt-2 dark:border-zinc-800">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIconPickerFor((f) => (f === '__new__' ? null : '__new__'))}
+            aria-label="Escolher ícone da nova categoria"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-600 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-brand-900/30 dark:hover:text-brand-400"
+          >
+            <Icon name={newIcon} className="h-4 w-4" />
+          </button>
+          <input
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                addCategory();
+              }
+            }}
+            placeholder="Nova categoria…"
+            className="h-8 min-w-0 flex-1 rounded-lg border border-zinc-200 bg-white px-2 text-sm placeholder:text-zinc-400 focus:border-brand-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:placeholder:text-zinc-500"
+          />
+          <button
+            type="button"
+            onClick={addCategory}
+            disabled={!newName.trim()}
+            className="flex h-8 shrink-0 items-center gap-1 rounded-lg bg-brand-500 px-2.5 text-xs font-medium text-white hover:bg-brand-600 disabled:opacity-40 dark:bg-brand-600 dark:hover:bg-brand-500"
+          >
+            <Icon name="plus" className="h-4 w-4" /> Adicionar
+          </button>
+        </div>
+        {iconPickerFor === '__new__' && (
+          <IconGrid
+            selected={newIcon}
+            onPick={(icon) => {
+              setNewIcon(icon);
+              setIconPickerFor(null);
+            }}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function IconGrid({ selected, onPick }: { selected: string; onPick: (icon: string) => void }) {
+  return (
+    <div className="mt-1.5 flex flex-wrap gap-1 rounded-lg bg-zinc-50 p-1.5 dark:bg-zinc-800/50">
+      {CATEGORY_ICON_OPTIONS.map((icon) => (
+        <button
+          key={icon}
+          type="button"
+          onClick={() => onPick(icon)}
+          aria-label={`Ícone ${icon}`}
+          className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
+            selected === icon
+              ? 'bg-brand-500 text-white dark:bg-brand-600'
+              : 'text-zinc-600 hover:bg-zinc-200 dark:text-zinc-300 dark:hover:bg-zinc-700'
+          }`}
+        >
+          <Icon name={icon} className="h-4 w-4" />
+        </button>
+      ))}
     </div>
   );
 }

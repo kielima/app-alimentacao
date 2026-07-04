@@ -3,7 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import Icon from '../components/Icon';
 import TrashIcon from '../components/TrashIcon';
-import { findRecipeById, findCategory, isSeedRecipe } from '../data/recipes';
+import { findRecipeById, isSeedRecipe } from '../data/recipes';
+import { useRecipeCategories } from '../data/recipeCategories';
 import { findIngredientById } from '../data/ingredients';
 import { useRecipeNutrition } from '../hooks/useRecipeNutrition';
 import { deleteUserRecipe, getUserRecipeById } from '../data/userRecipes';
@@ -22,6 +23,7 @@ export default function ReceitaDetalhe() {
   const navigate = useNavigate();
   const recipe = id ? findRecipeById(id) : undefined;
   const nutrition = useRecipeNutrition(recipe);
+  const categories = useRecipeCategories();
   const [showSkipped, setShowSkipped] = useState(false);
   const pantryItems = usePantryItems();
   const pantryIngredientIds = useMemo(
@@ -113,7 +115,7 @@ export default function ReceitaDetalhe() {
     );
   }
 
-  const category = findCategory(recipe.category);
+  const category = categories.find((c) => c.id === recipe.category);
 
   return (
     <div className="mx-auto max-w-md sm:max-w-2xl lg:max-w-3xl px-4 pt-2 pb-28">

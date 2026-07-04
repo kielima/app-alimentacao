@@ -1,19 +1,17 @@
 import { useMemo } from 'react';
-import type { Recipe, RecipeCategoryDef } from '../types/recipe';
+import type { Recipe } from '../types/recipe';
 import { getUserRecipes, getUserRecipeById, useUserRecipes } from './userRecipes';
 import { getHiddenRecipeIds, useHiddenRecipeIds } from './hiddenRecipes';
 
 // Catálogo migrado para Firestore (users/{uid}/recipes). Sem catálogo base no app.
 export const seedRecipes: Recipe[] = [];
 
-// Lookup table fixa: categorias não são user data.
-// `icon` é o nome de um glifo do componente <Icon /> (não mais emoji).
-export const recipeCategories: RecipeCategoryDef[] = [
-  { id: 'pratos-principais', name: 'Pratos Principais', icon: 'utensils' },
-  { id: 'bebidas', name: 'Bebidas', icon: 'cup-soda' },
-  { id: 'sobremesas-e-lanches', name: 'Sobremesas e Lanches', icon: 'cake' },
-  { id: 'molhos-temperos-acompanhamentos', name: 'Molhos, Temperos e Acompanhamentos', icon: 'soup' },
-];
+// Categorias agora são dados do usuário (editáveis/criáveis) — ver `recipeCategories.ts`.
+export {
+  useRecipeCategories,
+  getRecipeCategories,
+  findRecipeCategory as findCategory,
+} from './recipeCategories';
 
 function applyHidden(list: Recipe[], hidden: Set<string>): Recipe[] {
   return hidden.size === 0 ? list : list.filter((r) => !hidden.has(r.id));
@@ -43,8 +41,4 @@ export function isSeedRecipe(_id: string): boolean {
 
 export function allRecipeIds(): Set<string> {
   return new Set(getUserRecipes().map((r) => r.id));
-}
-
-export function findCategory(id: string): RecipeCategoryDef | undefined {
-  return recipeCategories.find((c) => c.id === id);
 }

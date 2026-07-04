@@ -18,7 +18,8 @@ import {
   deletePantryItem,
   usePantryItems,
 } from '../data/pantry';
-import { useAllRecipes, recipeCategories } from '../data/recipes';
+import { useAllRecipes } from '../data/recipes';
+import { useRecipeCategories } from '../data/recipeCategories';
 import { useAllMeals } from '../data/meals';
 import { getMealSlots } from '../types/meal';
 import { MEAL_TYPES } from '../types/mealPlan';
@@ -67,6 +68,7 @@ export default function IngredienteDetalhe() {
   const shoppingItems = useShoppingItems();
   const pantryItems = usePantryItems();
   const allRecipes = useAllRecipes();
+  const recipeCategories = useRecipeCategories();
   const allMeals = useAllMeals();
 
   const handleDelete = () => {

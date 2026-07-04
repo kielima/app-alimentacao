@@ -1,7 +1,14 @@
-import { getAllRecipes, recipeCategories } from '../data/recipes';
+import { getAllRecipes } from '../data/recipes';
+import { getRecipeCategories, DEFAULT_RECIPE_CATEGORIES } from '../data/recipeCategories';
 import type { NutritionPer100 } from '../types/ingredient';
 import type { Recipe, RecipeIngredient } from '../types/recipe';
 import { computeNutrition, recipeNutritionPer100g } from './nutrition';
+
+/** Categorias correntes (com fallback para as padrão antes da semeadura). */
+function categoriesForExport() {
+  const cats = getRecipeCategories();
+  return cats.length > 0 ? cats : DEFAULT_RECIPE_CATEGORIES;
+}
 
 function fmtNum(value: number | undefined | null, decimals = 1): string {
   if (value == null) return '—';
@@ -13,7 +20,7 @@ function fmtNum(value: number | undefined | null, decimals = 1): string {
 }
 
 function categoryName(id: string): string {
-  return recipeCategories.find((c) => c.id === id)?.name ?? id;
+  return categoriesForExport().find((c) => c.id === id)?.name ?? id;
 }
 
 function difficultyLabel(d: string): string {
@@ -171,7 +178,7 @@ export function buildRecipesMarkdown(recipes: Recipe[] = getAllRecipes()): strin
 
   // Agrupa por categoria na ordem do catálogo; categorias desconhecidas ao fim.
   const OUTRAS = '__outras__';
-  const order: string[] = recipeCategories.map((c) => c.id);
+  const order: string[] = categoriesForExport().map((c) => c.id);
   const groups = new Map<string, Recipe[]>();
   for (const recipe of recipes) {
     const key = order.includes(recipe.category) ? recipe.category : OUTRAS;

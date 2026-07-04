@@ -1,3 +1,6 @@
+/** IDs das categorias padrão. As categorias são editáveis/criáveis pelo usuário,
+ *  então `Recipe.category` é `string`; este union serve apenas de referência
+ *  para as categorias semeadas por padrão. */
 export type RecipeCategoryId =
   | 'pratos-principais'
   | 'bebidas'
@@ -18,7 +21,9 @@ export interface RecipeIngredient {
 export interface Recipe {
   id: string;
   name: string;
-  category: RecipeCategoryId;
+  /** ID da categoria (editável pelo usuário — pode ser um dos padrões ou uma
+   *  categoria criada por ele). */
+  category: string;
   prep_time_min?: number | null;
   difficulty?: Difficulty | null;
   rating?: Rating | null;
@@ -40,9 +45,11 @@ export interface Recipe {
 }
 
 export interface RecipeCategoryDef {
-  id: RecipeCategoryId;
+  id: string;
   name: string;
   icon: string;
+  /** Ordem de exibição (menor primeiro). */
+  order?: number;
 }
 
 export interface RecipesSeed {

@@ -12,7 +12,8 @@ import { upsertUserIngredient } from '../data/userIngredients';
 import { getShoppingItem, upsertShoppingItem, deleteShoppingItem, useShoppingItems } from '../data/shoppingList';
 import { usePantryItems } from '../data/pantry';
 import { useMarkets } from '../data/markets';
-import { useAllRecipes, recipeCategories } from '../data/recipes';
+import { useAllRecipes } from '../data/recipes';
+import { useRecipeCategories } from '../data/recipeCategories';
 import { useAllMeals } from '../data/meals';
 import { getMealSlots } from '../types/meal';
 import { MEAL_TYPES } from '../types/mealPlan';
@@ -79,6 +80,7 @@ export default function ComprasItemForm() {
   const shoppingItems = useShoppingItems();
   const markets = useMarkets();
   const allRecipes = useAllRecipes();
+  const recipeCategories = useRecipeCategories();
   const allMeals = useAllMeals();
   const knownStores = useMemo(() => {
     const fromItems = [...pantryItems, ...shoppingItems]

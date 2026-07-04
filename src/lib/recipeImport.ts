@@ -2,9 +2,10 @@ import { httpsCallable, type FunctionsError } from 'firebase/functions';
 import { functions, firebaseConfigured } from './firebase';
 import { normalize } from '../utils/search';
 import { uniqueSlug } from '../utils/slug';
-import { allRecipeIds, recipeCategories } from '../data/recipes';
+import { allRecipeIds } from '../data/recipes';
+import { getRecipeCategories, DEFAULT_RECIPE_CATEGORIES } from '../data/recipeCategories';
 import type { Ingredient } from '../types/ingredient';
-import type { Recipe, RecipeCategoryId, RecipeIngredient } from '../types/recipe';
+import type { Recipe, RecipeIngredient } from '../types/recipe';
 
 // A importação de receitas por link passa por uma Cloud Function
 // (extractRecipeFromUrl) que guarda as chaves (Gemini/Apify) no servidor —
@@ -24,7 +25,7 @@ export interface ExtractedIngredient {
 export interface ExtractedRecipe {
   found: boolean;
   name: string | null;
-  category: RecipeCategoryId | null;
+  category: string | null;
   prep_time_min: number | null;
   difficulty: 'facil' | 'medio' | 'dificil' | null;
   servings: number | null;
@@ -38,7 +39,13 @@ export interface ExtractedRecipe {
 
 type CallInput = { url?: string; text?: string };
 
-const VALID_CATEGORIES = new Set<string>(recipeCategories.map((c) => c.id));
+/** IDs de categorias válidas no momento (categorias do usuário, com fallback
+ *  para as padrão enquanto ainda não foram semeadas). */
+function validCategoryIds(): Set<string> {
+  const cats = getRecipeCategories();
+  const source = cats.length > 0 ? cats : DEFAULT_RECIPE_CATEGORIES;
+  return new Set(source.map((c) => c.id));
+}
 
 const PLATFORM_LABEL: Record<string, string> = {
   youtube: 'YouTube',
@@ -74,7 +81,7 @@ function friendlyError(err: unknown): string {
 /** Normaliza a saída bruta (defensivo: a função pode devolver campos nulos). */
 function normalizeExtracted(raw: Partial<ExtractedRecipe>): ExtractedRecipe {
   const category =
-    raw.category && VALID_CATEGORIES.has(raw.category) ? (raw.category as RecipeCategoryId) : null;
+    raw.category && validCategoryIds().has(raw.category) ? raw.category : null;
   const ingredients = Array.isArray(raw.ingredients)
     ? raw.ingredients
         .filter((i) => i && typeof i.raw_text === 'string' && i.raw_text.trim())
