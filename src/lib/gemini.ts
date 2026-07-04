@@ -174,3 +174,33 @@ export async function extractNutritionFromImage(file: File): Promise<ExtractedNu
 
   return normalize(raw);
 }
+
+/**
+ * Estima a tabela nutricional a partir do NOME do ingrediente (sem foto), via
+ * Cloud Function `estimateNutritionByName`. Devolve os valores já normalizados
+ * por 100 g/ml. São ESTIMATIVAS da IA — devem ser revisadas antes de salvar.
+ */
+export async function estimateNutritionByName(
+  name: string,
+  brand: string | null | undefined,
+  unit: 'g' | 'ml',
+): Promise<ExtractedNutrition> {
+  if (!functions) {
+    throw new Error('Firebase não configurado.');
+  }
+
+  const callable = httpsCallable<
+    { name: string; brand: string; unit: 'g' | 'ml' },
+    GeminiNutritionRaw
+  >(functions, 'estimateNutritionByName');
+
+  let raw: GeminiNutritionRaw;
+  try {
+    const resp = await callable({ name, brand: brand ?? '', unit });
+    raw = resp.data;
+  } catch (err) {
+    throw new Error(friendlyError(err));
+  }
+
+  return normalize(raw);
+}

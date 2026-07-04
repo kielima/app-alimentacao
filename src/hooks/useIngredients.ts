@@ -8,7 +8,7 @@ export type IngredientFilter = 'todos' | 'marcas' | 'genericos' | 'a-verificar' 
 
 export function ingredientNeedsReview(i: Ingredient): boolean {
   if (!i.nutrition_per_100) return true;
-  return !i.tbca_code && !i.off_barcode;
+  return !i.tbca_code && !i.taco_id && !i.off_barcode;
 }
 
 interface UseIngredientsOptions {

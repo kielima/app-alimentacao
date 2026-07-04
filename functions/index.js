@@ -177,6 +177,139 @@ exports.extractNutrition = onCall(
 );
 
 // ---------------------------------------------------------------------------
+// Estimar a tabela nutricional a partir do NOME do ingrediente (sem foto).
+// Última opção da cascata (TACO → Open Food Facts → manual), acionada pelo
+// usuário. Reaproveita o mesmo schema e o mesmo proxy do Gemini.
+// ---------------------------------------------------------------------------
+
+const ESTIMATE_PROMPT = `Você é um nutricionista que estima a composição nutricional TÍPICA de um alimento a partir do nome dele.
+
+Responda APENAS com o JSON definido pelo schema, com valores por 100 g (ou 100 ml, se for claramente um líquido), marcando basis = "per_100g" (ou "per_100ml").
+
+Regras importantes:
+- Dê valores médios/representativos do alimento no Brasil (base tipo TACO/TBCA). Ex.: para "Abóbora Kabocha crua", use a composição típica dessa abóbora crua.
+- "Valor energético" (calories) em kcal.
+- Sódio em mg. Use ponto como separador decimal e não inclua unidades nos números.
+- Preencha só os nutrientes que você consegue estimar com razoável confiança; deixe null os demais. NÃO invente micronutrientes específicos de marca.
+- Se o nome for genérico demais ou não for um alimento reconhecível, retorne found = false.
+- Estas são ESTIMATIVAS; serão revisadas por uma pessoa antes de salvar.`;
+
+exports.estimateNutritionByName = onCall(
+  {
+    secrets: [GEMINI_API_KEY],
+    timeoutSeconds: 60,
+    memory: '256MiB',
+    maxInstances: 3,
+  },
+  async (request) => {
+    // 1) Exige login e restringe ao dono do app.
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'Faça login para usar este recurso.');
+    }
+    const email = request.auth.token && request.auth.token.email;
+    if (!email || email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+      throw new HttpsError('permission-denied', 'Sem permissão para usar este recurso.');
+    }
+
+    // 2) Valida a entrada.
+    const data = request.data || {};
+    const name = typeof data.name === 'string' ? data.name.trim() : '';
+    const brand = typeof data.brand === 'string' ? data.brand.trim() : '';
+    const unit = data.unit === 'ml' ? 'ml' : 'g';
+    if (!name) {
+      throw new HttpsError('invalid-argument', 'Informe o nome do ingrediente.');
+    }
+
+    // 3) Chama o Gemini (texto) com a chave do servidor.
+    const descriptor = brand ? `${name} (marca: ${brand})` : name;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(
+      GEMINI_API_KEY.value(),
+    )}`;
+    const body = {
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: ESTIMATE_PROMPT },
+            {
+              text: `Alimento: ${descriptor}\nUnidade preferida do app: ${unit === 'ml' ? '100 ml' : '100 g'}`,
+            },
+          ],
+        },
+      ],
+      generationConfig: {
+        temperature: 0,
+        responseMimeType: 'application/json',
+        responseSchema: RESPONSE_SCHEMA,
+      },
+    };
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 45000);
+    let res;
+    try {
+      res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+    } catch (err) {
+      logger.error('Falha de rede ao chamar o Gemini (estimativa)', err);
+      throw new HttpsError('unavailable', 'Falha ao consultar o Gemini. Tente novamente.');
+    } finally {
+      clearTimeout(timer);
+    }
+
+    if (!res.ok) {
+      let detail = '';
+      try {
+        const errJson = await res.json();
+        detail = errJson && errJson.error && errJson.error.message ? errJson.error.message : '';
+      } catch (_) {
+        // sem corpo legível
+      }
+      logger.error('Gemini retornou erro (estimativa)', { status: res.status, detail });
+      if (res.status === 429) {
+        throw new HttpsError(
+          'resource-exhausted',
+          'Limite de uso do Gemini atingido. Tente mais tarde.',
+        );
+      }
+      if (res.status === 400 || res.status === 403) {
+        throw new HttpsError('failed-precondition', 'Chave do Gemini inválida ou sem permissão.');
+      }
+      throw new HttpsError('internal', `Gemini: HTTP ${res.status}`);
+    }
+
+    const json = await res.json();
+    if (json.promptFeedback && json.promptFeedback.blockReason) {
+      throw new HttpsError('invalid-argument', 'O Gemini bloqueou a solicitação.');
+    }
+
+    const parts =
+      json.candidates &&
+      json.candidates[0] &&
+      json.candidates[0].content &&
+      json.candidates[0].content.parts;
+    const text = Array.isArray(parts) ? parts.map((p) => p.text || '').join('') : '';
+    if (!text.trim()) {
+      throw new HttpsError('internal', 'O Gemini não retornou dados. Tente novamente.');
+    }
+
+    let raw;
+    try {
+      raw = JSON.parse(text);
+    } catch (_) {
+      throw new HttpsError('internal', 'Resposta do Gemini em formato inesperado.');
+    }
+
+    // 4) Devolve o objeto bruto; o cliente normaliza para 100 g/ml.
+    return raw;
+  },
+);
+
+// ---------------------------------------------------------------------------
 // Importar receita de um link (TikTok / Instagram / YouTube / página web).
 // Mesma ideia do extractNutrition: a chave fica no servidor e a saída é forçada
 // por JSON Schema. YouTube e páginas web não precisam de terceiros; TikTok e

@@ -262,6 +262,7 @@ export default function IngredienteDetalhe() {
         {(!ingredient.nutrition_per_100 ||
           (ingredient.needs_review &&
             !ingredient.tbca_code &&
+            !ingredient.taco_id &&
             !ingredient.off_barcode)) && (
           <p className="mt-2 inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-1 text-xs text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
             <Icon name="alert-triangle" className="h-4 w-4" />
@@ -380,8 +381,23 @@ export default function IngredienteDetalhe() {
           </div>
         )}
 
-        {(ingredient.tbca_code || ingredient.off_barcode) && (
+        {(ingredient.tbca_code || ingredient.taco_id || ingredient.off_barcode) && (
           <div className="mt-4 space-y-2 border-t border-zinc-200 pt-3 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+            {ingredient.taco_id && (
+              <p>
+                <Icon name="utensils" className="mr-1 inline-block h-4 w-4 align-text-bottom" />
+                Composição nutricional da{' '}
+                <a
+                  href="https://www.nepa.unicamp.br/taco/tabela.php"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-brand-600 underline hover:no-underline dark:text-brand-400"
+                >
+                  TACO — Tabela Brasileira de Composição de Alimentos
+                </a>{' '}
+                (4ª ed., NEPA/UNICAMP).
+              </p>
+            )}
             {ingredient.tbca_code && (
               <p>
                 <Icon name="utensils" className="mr-1 inline-block h-4 w-4 align-text-bottom" />
