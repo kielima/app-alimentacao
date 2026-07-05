@@ -40,6 +40,7 @@ interface FormState {
   quantity: string;
   unit: string;
   expiry_date: string;
+  no_expiry: boolean;
   notes: string;
 }
 
@@ -50,6 +51,7 @@ function itemToForm(item: PantryItem | undefined): FormState {
       quantity: '',
       unit: '',
       expiry_date: '',
+      no_expiry: false,
       notes: '',
     };
   }
@@ -58,6 +60,7 @@ function itemToForm(item: PantryItem | undefined): FormState {
     quantity: item.quantity?.toString() ?? '',
     unit: item.unit ?? '',
     expiry_date: item.expiry_date ?? '',
+    no_expiry: item.no_expiry ?? false,
     notes: item.notes ?? '',
   };
 }
@@ -186,7 +189,8 @@ export default function DispensaForm() {
       raw_text: display,
       quantity: state.quantity ? Number(state.quantity) : null,
       unit: state.unit || null,
-      expiry_date: state.expiry_date || null,
+      expiry_date: state.no_expiry ? null : state.expiry_date || null,
+      no_expiry: state.no_expiry,
       store: storeValue,
       added_at: original?.added_at ?? new Date().toISOString(),
       notes: state.notes.trim() || undefined,
@@ -308,8 +312,24 @@ export default function DispensaForm() {
           type="date"
           value={state.expiry_date}
           onChange={(e) => setState((s) => ({ ...s, expiry_date: e.target.value }))}
-          className={inputClass}
+          disabled={state.no_expiry}
+          className={`${inputClass} disabled:opacity-50`}
         />
+        <label className="mt-2 flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
+          <input
+            type="checkbox"
+            checked={state.no_expiry}
+            onChange={(e) =>
+              setState((s) => ({
+                ...s,
+                no_expiry: e.target.checked,
+                expiry_date: e.target.checked ? '' : s.expiry_date,
+              }))
+            }
+            className="h-4 w-4 rounded accent-brand-500"
+          />
+          Sem validade
+        </label>
       </Field>
 
       <Field label="Mercado / loja (opcional)">

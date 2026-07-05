@@ -108,9 +108,9 @@ export function collectDataGaps(
   }
   mealGaps.sort((a, b) => byName(a.meal, b.meal));
 
-  // Itens de comida na dispensa sem data de validade.
+  // Itens de comida na dispensa sem data de validade (e não marcados como "sem validade").
   const pantryNoExpiry = pantry
-    .filter((p) => p.kind !== 'household' && !p.expiry_date)
+    .filter((p) => p.kind !== 'household' && !p.expiry_date && !p.no_expiry)
     .sort((a, b) => a.raw_text.localeCompare(b.raw_text, 'pt-BR'));
 
   const total =

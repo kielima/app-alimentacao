@@ -7,6 +7,8 @@ export interface PantryItem {
   quantity: number | null;
   unit: string | null;
   expiry_date: string | null;
+  /** Marcado explicitamente como um item que não vence (ex.: sal, produtos de limpeza). */
+  no_expiry?: boolean;
   store: string | null;
   added_at: string;
   notes?: string;
