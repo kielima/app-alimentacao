@@ -13,8 +13,11 @@ import { deleteUserRecipe, getUserRecipeById, upsertUserRecipe, useUserRecipes }
 import { hideRecipe } from '../data/hiddenRecipes';
 import { upsertShoppingItem } from '../data/shoppingList';
 import { usePantryItems } from '../data/pantry';
-import { recipeCategoryIds, type Recipe, type RecipeIngredient } from '../types/recipe';
+import { useAllMeals } from '../data/meals';
+import { getMealSlots } from '../types/meal';
+import type { MealItemRef } from '../types/meal';
 import { MEAL_TYPES } from '../types/mealPlan';
+import { recipeCategoryIds, type Recipe, type RecipeIngredient } from '../types/recipe';
 
 export default function ReceitaDetalhe() {
   const { id } = useParams<{ id: string }>();
@@ -33,6 +36,14 @@ export default function ReceitaDetalhe() {
     () => new Set(pantryItems.filter((p) => p.ingredient_id).map((p) => p.ingredient_id as string)),
     [pantryItems],
   );
+  const allMeals = useAllMeals();
+  const mealsUsingRecipe = useMemo(() => {
+    if (!recipe) return [];
+    const refMatches = (ref: MealItemRef) => ref.kind === 'recipe' && ref.recipe_id === recipe.id;
+    return allMeals
+      .filter((m) => m.items.some((it) => refMatches(it) || it.substitutes?.some(refMatches)))
+      .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+  }, [allMeals, recipe]);
 
   const isUserOverlay = id ? !!getUserRecipeById(id) : false;
   const isSeed = id ? isSeedRecipe(id) : false;
@@ -288,6 +299,29 @@ export default function ReceitaDetalhe() {
         totalLabel="da receita inteira"
         totalWeightG={totalWeightG}
       />
+
+      {mealsUsingRecipe.length > 0 && (
+        <Section title={`Refeições com esta receita (${mealsUsingRecipe.length})`}>
+          <ul className="space-y-1.5">
+            {mealsUsingRecipe.map((m) => {
+              const firstSlot = getMealSlots(m)[0];
+              const slotDef = firstSlot ? MEAL_TYPES.find((t) => t.value === firstSlot) : undefined;
+              return (
+                <li key={m.id}>
+                  <Link
+                    to={`/refeicoes/${m.id}`}
+                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  >
+                    <Icon name={slotDef?.icon ?? 'utensils'} className="h-5 w-5 shrink-0" />
+                    <span className="min-w-0 flex-1 truncate">{m.name}</span>
+                    <span className="text-zinc-400 dark:text-zinc-500">›</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </Section>
+      )}
 
       {(recipe.ingredients?.length ?? 0) === 0 &&
         (recipe.ingredients_molho?.length ?? 0) === 0 &&
