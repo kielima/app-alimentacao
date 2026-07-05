@@ -25,6 +25,9 @@ export interface RecipeIngredient {
    *  ingrediente principal (este próprio item). Afeta nutrição, dispensa e
    *  lista de compras. */
   active_substitute?: number | null;
+  /** Ingrediente dispensável — a receita funciona sem ele (ex.: guarnição,
+   *  finalização). Ausente/false = obrigatório. */
+  is_optional?: boolean;
 }
 
 export interface Recipe {

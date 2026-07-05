@@ -470,6 +470,11 @@ function IngredientList({
           const inner = (
             <span className="flex w-full items-center gap-2 text-sm">
               <span className="text-zinc-900 dark:text-zinc-100">{item.raw_text}</span>
+              {item.is_optional && (
+                <span className="shrink-0 text-xs italic text-zinc-400 dark:text-zinc-500">
+                  (opcional)
+                </span>
+              )}
               {ing && (
                 <span className="shrink-0 text-xs text-brand-600 dark:text-brand-400">›</span>
               )}
@@ -495,6 +500,11 @@ function IngredientList({
         // Ingrediente com alternativas: escolha "um OU outro".
         return (
           <li key={i} className="rounded-lg border border-zinc-200 dark:border-zinc-800">
+            {item.is_optional && (
+              <p className="px-2 pt-1.5 text-xs italic text-zinc-400 dark:text-zinc-500">
+                (opcional)
+              </p>
+            )}
             <ul>
               {options.map((opt, oi) => {
                 const ing = opt.ingredient_id ? findIngredientById(opt.ingredient_id) : undefined;
