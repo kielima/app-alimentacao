@@ -412,6 +412,7 @@ function collectCandidates(
 
   for (const ing of ingredients) {
     if (!availability.has(ing.id)) continue;
+    if (ing.no_suggest) continue; // marcado "não recomendar"
     // Não sugere gordura quase pura (óleos/temperos) como item isolado: muito
     // calórica e sem proteína — só faz sentido dentro de receitas.
     const n = ing.nutrition_per_100;
@@ -439,6 +440,7 @@ function collectCandidates(
   }
 
   for (const recipe of recipes) {
+    if (recipe.no_suggest) continue; // marcado "não recomendar"
     const consumed = new Set<string>();
     const makeable = refSatisfiable(
       { kind: 'recipe', recipe_id: recipe.id, quantity: null, unit: null },

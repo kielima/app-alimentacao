@@ -49,6 +49,9 @@ export interface Ingredient {
   /** Horários em que este ingrediente pode entrar na montagem automática do
    *  plano. Vazio/ausente = serve qualquer horário. */
   meal_types?: MealType[] | null;
+  /** `true` = não recomendar nas sugestões do plano (ainda pode ser usado
+   *  manualmente e dentro de refeições). */
+  no_suggest?: boolean;
   tbca_code?: string;
   taco_id?: string;
   off_barcode?: string;

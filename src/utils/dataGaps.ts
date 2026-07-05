@@ -39,7 +39,16 @@ export interface DataGaps {
   mealGaps: MealGap[];
   /** Itens de comida na dispensa sem data de validade. */
   pantryNoExpiry: PantryItem[];
+  /** Receitas sem horário marcado (e não excluídas das sugestões). */
+  recipesNoSlots: Recipe[];
+  /** Ingredientes sem horário marcado (e não excluídos das sugestões). */
+  ingredientsNoSlots: Ingredient[];
   total: number;
+}
+
+/** Sem nenhum horário (`meal_types`) marcado. */
+function hasNoSlots(item: { meal_types?: unknown }): boolean {
+  return !Array.isArray(item.meal_types) || item.meal_types.length === 0;
 }
 
 /** A medida precisa da porção padrão (g) para virar gramas? */
@@ -119,13 +128,23 @@ export function collectDataGaps(
     .filter((p) => p.kind !== 'household' && !p.expiry_date && !p.no_expiry)
     .sort((a, b) => a.raw_text.localeCompare(b.raw_text, 'pt-BR'));
 
+  // Receitas/ingredientes sem horário marcado (e não excluídos das sugestões).
+  const recipesNoSlots = recipes
+    .filter((r) => hasNoSlots(r) && !r.no_suggest)
+    .sort(byName);
+  const ingredientsNoSlots = ingredients
+    .filter((i) => hasNoSlots(i) && !i.no_suggest)
+    .sort(byName);
+
   const total =
     ingredientsNoNutrition.length +
     ingredientsNoSource.length +
     ingredientsNoServing.length +
     recipeGaps.length +
     mealGaps.length +
-    pantryNoExpiry.length;
+    pantryNoExpiry.length +
+    recipesNoSlots.length +
+    ingredientsNoSlots.length;
 
   return {
     ingredientsNoNutrition,
@@ -134,6 +153,8 @@ export function collectDataGaps(
     recipeGaps,
     mealGaps,
     pantryNoExpiry,
+    recipesNoSlots,
+    ingredientsNoSlots,
     total,
   };
 }
