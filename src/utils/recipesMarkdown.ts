@@ -58,9 +58,10 @@ function metaLine(recipe: Recipe): string {
 function ingredientLines(items: RecipeIngredient[]): string[] {
   return items.map((ing) => {
     const [active, ...alternatives] = ingredientOptions(ing);
-    if (alternatives.length === 0) return `- ${active.raw_text}`;
+    const optionalSuffix = ing.is_optional ? ' _(opcional)_' : '';
+    if (alternatives.length === 0) return `- ${active.raw_text}${optionalSuffix}`;
     const alt = alternatives.map((o) => o.raw_text).join('; ');
-    return `- ${active.raw_text} _(ou: ${alt})_`;
+    return `- ${active.raw_text} _(ou: ${alt})_${optionalSuffix}`;
   });
 }
 

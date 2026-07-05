@@ -56,6 +56,8 @@ interface FormIngredient {
   substitutes: FormSubstitute[];
   /** Índice em `substitutes` da alternativa ativa; null = usar o principal. */
   active_substitute: number | null;
+  /** Ingrediente dispensável — a receita funciona sem ele. */
+  is_optional: boolean;
 }
 
 type IngredientSection = 'main' | 'molho';
@@ -94,7 +96,15 @@ interface FormState {
 }
 
 function emptyIngredient(): FormIngredient {
-  return { raw_text: '', ingredient_id: '', quantity: '', unit: '', substitutes: [], active_substitute: null };
+  return {
+    raw_text: '',
+    ingredient_id: '',
+    quantity: '',
+    unit: '',
+    substitutes: [],
+    active_substitute: null,
+    is_optional: false,
+  };
 }
 
 function emptySubstitute(): FormSubstitute {
@@ -113,6 +123,7 @@ function recipeIngredientToForm(i: RecipeIngredient): FormIngredient {
       unit: s.unit ?? '',
     })),
     active_substitute: i.active_substitute ?? null,
+    is_optional: i.is_optional ?? false,
   };
 }
 
@@ -196,10 +207,12 @@ function formIngredientsToRecipe(
         const pos = built.findIndex((x) => x.origIdx === i.active_substitute);
         if (pos >= 0) active = pos;
       }
-      const extra =
-        substitutes.length > 0
+      const extra = {
+        ...(substitutes.length > 0
           ? { substitutes, ...(active != null ? { active_substitute: active } : {}) }
-          : {};
+          : {}),
+        ...(i.is_optional ? { is_optional: true } : {}),
+      };
 
       if (!ing) {
         return { raw_text: i.raw_text.trim(), ingredient_id: null, quantity: qty, unit, ...extra };
@@ -805,6 +818,16 @@ function IngredientRow({
           ))}
         </select>
       </div>
+
+      <label className="mt-2 flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-300">
+        <input
+          type="checkbox"
+          checked={ing.is_optional}
+          onChange={(e) => onUpdate({ is_optional: e.target.checked })}
+          className="h-3.5 w-3.5 rounded border-zinc-300 text-brand-600 focus:ring-brand-500 dark:border-zinc-600"
+        />
+        Ingrediente opcional
+      </label>
 
       {/* Alternativas (substituições equivalentes: ex. leite em pó OU whey) */}
       {hasSubs && (
