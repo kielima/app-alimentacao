@@ -1,7 +1,7 @@
 import { getAllRecipes } from '../data/recipes';
 import { getRecipeCategories, DEFAULT_RECIPE_CATEGORIES } from '../data/recipeCategories';
 import type { NutritionPer100 } from '../types/ingredient';
-import type { Recipe, RecipeIngredient } from '../types/recipe';
+import { primaryCategoryId, recipeCategoryIds, type Recipe, type RecipeIngredient } from '../types/recipe';
 import { activeIngredient, computeNutrition, recipeNutritionPer100g } from './nutrition';
 
 /** As opções de um ingrediente (principal + alternativas), com a ativa primeiro. */
@@ -126,6 +126,13 @@ function recipeSection(recipe: Recipe): string {
     lines.push('');
   }
 
+  // Categorias extras além da principal (que já vira o título do grupo).
+  const cats = recipeCategoryIds(recipe);
+  if (cats.length > 1) {
+    lines.push(`_Categorias: ${cats.map(categoryName).join(', ')}_`);
+    lines.push('');
+  }
+
   if (recipe.needs_review) {
     lines.push('> ⚠️ Em revisão — ingredientes e modo de preparo ainda não totalmente estruturados.');
     lines.push('');
@@ -202,7 +209,8 @@ export function buildRecipesMarkdown(recipes: Recipe[] = getAllRecipes()): strin
   const order: string[] = categoriesForExport().map((c) => c.id);
   const groups = new Map<string, Recipe[]>();
   for (const recipe of recipes) {
-    const key = order.includes(recipe.category) ? recipe.category : OUTRAS;
+    const primary = primaryCategoryId(recipe);
+    const key = order.includes(primary) ? primary : OUTRAS;
     const bucket = groups.get(key) ?? [];
     bucket.push(recipe);
     groups.set(key, bucket);

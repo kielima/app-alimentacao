@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useAllRecipes } from '../data/recipes';
 import { matches } from '../utils/search';
 import { createUIStore } from '../utils/persistentUIState';
-import type { Recipe, Rating } from '../types/recipe';
+import { recipeCategoryIds, type Recipe, type Rating } from '../types/recipe';
 
 export type CompletenessFilter = 'todas' | 'completas' | 'revisao';
 export type RatingFilter = 0 | 3 | 4 | 5;
@@ -37,7 +37,11 @@ export function useRecipes(): UseRecipesResult {
 
   const list = useMemo(() => {
     return allRecipes
-      .filter((r) => categories.length === 0 || categories.includes(r.category))
+      .filter(
+        (r) =>
+          categories.length === 0 ||
+          recipeCategoryIds(r).some((id) => categories.includes(id)),
+      )
       .filter((r) => {
         if (completeness === 'completas') return !r.needs_review;
         if (completeness === 'revisao') return r.needs_review === true;

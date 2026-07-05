@@ -28,9 +28,13 @@ export interface RecipeIngredient {
 export interface Recipe {
   id: string;
   name: string;
-  /** ID da categoria (editável pelo usuário — pode ser um dos padrões ou uma
-   *  categoria criada por ele). */
+  /** ID da categoria principal (editável pelo usuário — pode ser um dos padrões
+   *  ou uma categoria criada por ele). Mantido por compatibilidade; espelha o
+   *  primeiro item de `categories`. Prefira `recipeCategoryIds`/`primaryCategoryId`. */
   category: string;
+  /** IDs de todas as categorias da receita. Uma receita pode pertencer a mais de
+   *  uma categoria. Quando ausente/vazio, cai no campo legado `category`. */
+  categories?: string[];
   prep_time_min?: number | null;
   difficulty?: Difficulty | null;
   rating?: Rating | null;
@@ -49,6 +53,18 @@ export interface Recipe {
   source_url?: string;
   /** Plataforma de origem: 'youtube' | 'tiktok' | 'instagram' | 'web' | 'text'. */
   source_platform?: string;
+}
+
+/** IDs das categorias de uma receita, normalizados. Usa `categories` quando
+ *  presente e não-vazio; caso contrário cai no campo legado `category`. */
+export function recipeCategoryIds(r: Pick<Recipe, 'category' | 'categories'>): string[] {
+  if (r.categories && r.categories.length > 0) return r.categories;
+  return r.category ? [r.category] : [];
+}
+
+/** Categoria principal (primeira) — usada onde só cabe uma (agrupamento, ícone). */
+export function primaryCategoryId(r: Pick<Recipe, 'category' | 'categories'>): string {
+  return recipeCategoryIds(r)[0] ?? '';
 }
 
 export interface RecipeCategoryDef {
