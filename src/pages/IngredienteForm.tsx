@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import HeaderSlot from '../components/HeaderSlot';
 import SearchableSelect from '../components/SearchableSelect';
 import Icon from '../components/Icon';
+import NutritionFillActions from '../components/NutritionFillActions';
 import { uniqueSlug } from '../utils/slug';
 import { upsertUserIngredient } from '../data/userIngredients';
 import { allIngredientIds, findIngredientById, useAllIngredients } from '../data/ingredients';
@@ -86,6 +87,19 @@ export default function IngredienteForm() {
       ),
     ];
   }, [allIngs]);
+
+  // Ingrediente "ao vivo": mescla o salvo com o que está sendo editado no
+  // formulário, para que buscas por nome/IA usem o que o usuário vê na tela.
+  const liveIngredient = useMemo<Ingredient | null>(() => {
+    if (!existing) return null;
+    return {
+      ...existing,
+      name: name.trim() || existing.name,
+      brand: brand.trim() || null,
+      default_unit: unit,
+      category: category || null,
+    };
+  }, [existing, name, brand, unit, category]);
 
   if (editing && !existing) {
     return (
@@ -228,6 +242,32 @@ export default function IngredienteForm() {
           }}
         />
       </Field>
+
+      {editing && liveIngredient && (
+        <section className="mb-4">
+          <div className="mb-2 flex items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              Tabela nutricional
+            </span>
+            {liveIngredient.nutrition_per_100 ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                <Icon name="check" className="h-3 w-3" />
+                Preenchida
+              </span>
+            ) : (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                Sem dados
+              </span>
+            )}
+          </div>
+          <p className="mb-2 text-[11px] text-zinc-400 dark:text-zinc-500">
+            {liveIngredient.nutrition_per_100
+              ? 'Revise ou substitua os valores por uma base consolidada (TACO → Open Food Facts), foto do rótulo ou estimativa por IA. Você confere antes de salvar.'
+              : 'Preencha por uma base consolidada (TACO → Open Food Facts), foto do rótulo ou estimativa por IA. Você confere os valores antes de salvar.'}
+          </p>
+          <NutritionFillActions ingredient={liveIngredient} />
+        </section>
+      )}
 
       {markets.length > 0 && (
         <section className="mb-4">
