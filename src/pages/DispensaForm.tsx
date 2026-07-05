@@ -307,15 +307,11 @@ export default function DispensaForm() {
         </Field>
       </div>
 
-      <Field label="Data de validade">
-        <input
-          type="date"
-          value={state.expiry_date}
-          onChange={(e) => setState((s) => ({ ...s, expiry_date: e.target.value }))}
-          disabled={state.no_expiry}
-          className={`${inputClass} disabled:opacity-50`}
-        />
-        <label className="mt-2 flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
+      <div className="mb-3">
+        <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          Data de validade
+        </span>
+        <label className="mb-2 flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
           <input
             type="checkbox"
             checked={state.no_expiry}
@@ -330,7 +326,15 @@ export default function DispensaForm() {
           />
           Sem validade
         </label>
-      </Field>
+        {!state.no_expiry && (
+          <input
+            type="date"
+            value={state.expiry_date}
+            onChange={(e) => setState((s) => ({ ...s, expiry_date: e.target.value }))}
+            className={inputClass}
+          />
+        )}
+      </div>
 
       <Field label="Mercado / loja (opcional)">
         <select
