@@ -31,11 +31,10 @@ import { computePlanItemsNutrition, type NutritionBreakdown } from '../utils/nut
 import { useUserProfile } from '../data/userProfile';
 import { dayTargets, type PlanDayTargets } from '../utils/profileTargets';
 import { optimizeDayPlan, type OptimizeResult } from '../utils/planOptimizer';
-import { buildAutoDayPlan, type AutoPlanResult } from '../utils/autoPlan';
+import { buildAutoDayPlan, pantryAvailability, type AutoPlanResult } from '../utils/autoPlan';
 import OptimizePlanModal from '../components/OptimizePlanModal';
 import AutoPlanModal from '../components/AutoPlanModal';
 import { usePantryItems } from '../data/pantry';
-import { daysUntil } from '../utils/expiry';
 import { getMealSlots, type Meal } from '../types/meal';
 import type { Recipe } from '../types/recipe';
 import type { Ingredient } from '../types/ingredient';
@@ -142,22 +141,14 @@ export default function Plano() {
   const [optimizeResult, setOptimizeResult] = useState<OptimizeResult | null>(null);
   const [autoResult, setAutoResult] = useState<AutoPlanResult | null>(null);
 
-  // Menor validade (em dias) por ingrediente da dispensa comestível — chaves = o
-  // que está disponível. Mesmo padrão de casamento por ingredient_id da tela de
-  // receita; alimenta a montagem automática do plano a partir da dispensa.
+  // Disponibilidade da dispensa para montar o plano: casa por ingredient_id
+  // (como a tela de receita) e aplica a validade — itens vencidos não contam.
+  // `available` alimenta a montagem/priorização; `expiredOnly` é só informativo.
   const pantryItems = usePantryItems();
-  const pantryExpiryById = useMemo(() => {
-    const map = new Map<string, number | null>();
-    for (const item of pantryItems) {
-      if (item.kind === 'household' || !item.ingredient_id) continue;
-      const d = daysUntil(item.expiry_date);
-      const prev = map.get(item.ingredient_id);
-      // Guarda a menor validade (mais urgente); trata "sem data" como menos urgente.
-      if (!map.has(item.ingredient_id)) map.set(item.ingredient_id, d);
-      else if (d !== null && (prev == null || d < prev)) map.set(item.ingredient_id, d);
-    }
-    return map;
-  }, [pantryItems]);
+  const { available: pantryExpiryById, expiredOnly: expiredIgnoredCount } = useMemo(
+    () => pantryAvailability(pantryItems),
+    [pantryItems],
+  );
 
   const dayPlan = useMemo(() => {
     const found = plans.find((p) => p.day_of_week === day && p.plan_type === planType);
@@ -362,6 +353,7 @@ export default function Plano() {
           result={autoResult}
           dayLabel={dayLabel}
           planType={planType}
+          expiredIgnoredCount={expiredIgnoredCount}
           onApply={handleApplyAuto}
           onClose={() => setAutoResult(null)}
         />

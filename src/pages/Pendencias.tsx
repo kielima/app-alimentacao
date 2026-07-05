@@ -33,8 +33,8 @@ export default function Pendencias() {
       </HeaderSlot>
 
       <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
-        Itens cujos dados faltam para o cálculo nutricional do plano funcionar. Preencha a porção
-        padrão aqui mesmo; para tabela nutricional e quantidades, toque para abrir o item.
+        Itens cujos dados faltam para o plano funcionar bem. Preencha a porção padrão aqui mesmo;
+        para tabela nutricional, quantidades e validade, toque para abrir o item.
       </p>
 
       {gaps.total === 0 ? (
@@ -76,6 +76,22 @@ export default function Pendencias() {
                 to={`/receitas/${recipe.id}/editar`}
                 title={recipe.name}
                 subtitle={`${missingCount} ${missingCount === 1 ? 'item sem quantidade' : 'itens sem quantidade'}`}
+              />
+            ))}
+          </GapSection>
+
+          <GapSection
+            title="Itens da dispensa sem validade"
+            count={gaps.pantryNoExpiry.length}
+            hint="Sem data de validade, não entram no controle de vencimento nem na priorização da montagem automática do plano."
+            emptyWhenZero
+          >
+            {gaps.pantryNoExpiry.map((item) => (
+              <GapRow
+                key={item.id}
+                to={`/dispensa/${item.id}/editar`}
+                title={item.raw_text}
+                subtitle="sem data de validade"
               />
             ))}
           </GapSection>

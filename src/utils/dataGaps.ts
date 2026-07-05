@@ -1,13 +1,16 @@
 import type { Ingredient } from '../types/ingredient';
 import type { Meal } from '../types/meal';
 import type { Recipe } from '../types/recipe';
+import type { PantryItem } from '../types/pantry';
 
 /**
- * Detecta dados faltantes que impedem o cálculo nutricional:
+ * Detecta dados faltantes que atrapalham o plano:
  *  - ingredientes sem tabela nutricional (`nutrition_per_100`);
  *  - ingredientes sem porção padrão (`serving_size_g`) quando são usados com
  *    uma medida que precisa dela (unidade, fatia, xícara, colher…);
- *  - itens de refeições/receitas sem quantidade.
+ *  - itens de refeições/receitas sem quantidade;
+ *  - itens de comida na dispensa sem data de validade (não entram no controle de
+ *    vencimento nem na priorização da montagem automática do plano).
  */
 
 export interface RecipeGap {
@@ -31,6 +34,8 @@ export interface DataGaps {
   ingredientsNoServing: ServingGap[];
   recipeGaps: RecipeGap[];
   mealGaps: MealGap[];
+  /** Itens de comida na dispensa sem data de validade. */
+  pantryNoExpiry: PantryItem[];
   total: number;
 }
 
@@ -52,6 +57,7 @@ export function collectDataGaps(
   ingredients: Ingredient[],
   recipes: Recipe[],
   meals: Meal[],
+  pantry: PantryItem[],
 ): DataGaps {
   // Quais ingredientes são usados com uma medida que exige porção padrão, e
   // com quais medidas (para dar contexto à estimativa da porção).
@@ -102,11 +108,24 @@ export function collectDataGaps(
   }
   mealGaps.sort((a, b) => byName(a.meal, b.meal));
 
+  // Itens de comida na dispensa sem data de validade.
+  const pantryNoExpiry = pantry
+    .filter((p) => p.kind !== 'household' && !p.expiry_date)
+    .sort((a, b) => a.raw_text.localeCompare(b.raw_text, 'pt-BR'));
+
   const total =
     ingredientsNoNutrition.length +
     ingredientsNoServing.length +
     recipeGaps.length +
-    mealGaps.length;
+    mealGaps.length +
+    pantryNoExpiry.length;
 
-  return { ingredientsNoNutrition, ingredientsNoServing, recipeGaps, mealGaps, total };
+  return {
+    ingredientsNoNutrition,
+    ingredientsNoServing,
+    recipeGaps,
+    mealGaps,
+    pantryNoExpiry,
+    total,
+  };
 }
