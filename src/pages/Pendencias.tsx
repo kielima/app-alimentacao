@@ -48,6 +48,12 @@ export default function Pendencias() {
 
           <NutritionGapSection ingredients={gaps.ingredientsNoNutrition} />
 
+          <NutritionGapSection
+            ingredients={gaps.ingredientsNoSource}
+            title="Ingredientes com tabela mas sem fonte"
+            hint="Têm valores nutricionais, mas sem origem registada. Preencha por uma base (TBCA → TACO → Open Food Facts), foto do rótulo ou estimativa por IA para registar a fonte. Você confere os valores antes de salvar."
+          />
+
           <GapSection
             title="Refeições com itens sem quantidade"
             count={gaps.mealGaps.length}
@@ -148,10 +154,19 @@ type ActiveModal =
   | null;
 
 /**
- * Seção "Ingredientes sem tabela nutricional" com preenchimento em cascata:
+ * Seção de ingredientes a preencher/rever a tabela nutricional, em cascata:
  * TBCA → TACO → Open Food Facts (automático) e, se falhar, foto ou estimativa por IA.
+ * Reutilizada para "sem tabela" e para "com tabela mas sem fonte" (via title/hint).
  */
-function NutritionGapSection({ ingredients }: { ingredients: Ingredient[] }) {
+function NutritionGapSection({
+  ingredients,
+  title = 'Ingredientes sem tabela nutricional',
+  hint = 'Preencha por uma base consolidada (TBCA → TACO → Open Food Facts) ou, se não achar, por foto do rótulo ou estimativa por IA. Você confere os valores antes de salvar.',
+}: {
+  ingredients: Ingredient[];
+  title?: string;
+  hint?: string;
+}) {
   const [modal, setModal] = useState<ActiveModal>(null);
   const [busy, setBusy] = useState<{ id: string; action: FillAction } | null>(null);
   const [messages, setMessages] = useState<Record<string, string>>({});
@@ -221,16 +236,13 @@ function NutritionGapSection({ ingredients }: { ingredients: Ingredient[] }) {
     <section>
       <div className="mb-1 flex items-center gap-2">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-          Ingredientes sem tabela nutricional
+          {title}
         </h2>
         <span className="rounded-full bg-zinc-100 px-1.5 text-[11px] font-semibold text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
           {ingredients.length}
         </span>
       </div>
-      <p className="mb-2 text-[11px] text-zinc-400 dark:text-zinc-500">
-        Preencha por uma base consolidada (TBCA → TACO → Open Food Facts) ou, se não achar, por foto do
-        rótulo ou estimativa por IA. Você confere os valores antes de salvar.
-      </p>
+      <p className="mb-2 text-[11px] text-zinc-400 dark:text-zinc-500">{hint}</p>
       <ul className="space-y-1.5">
         {ingredients.map((ing) => (
           <NutritionGapRow

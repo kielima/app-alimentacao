@@ -2,10 +2,10 @@ import { useState } from 'react';
 import Icon from './Icon';
 import type { ExtractedNutrition } from '../lib/gemini';
 import { upsertUserIngredient } from '../data/userIngredients';
-import type { Ingredient, NutritionPer100 } from '../types/ingredient';
+import type { Ingredient, NutritionPer100, NutritionSource } from '../types/ingredient';
 
-/** De onde vieram os valores que estão em revisão. */
-export type NutritionSource = 'photo' | 'taco' | 'tbca' | 'off' | 'ai';
+/** De onde vieram os valores que estão em revisão (re-exportado do modelo). */
+export type { NutritionSource };
 
 interface Props {
   ingredient: Ingredient;
@@ -172,6 +172,7 @@ export default function NutritionReview({
       nutrition_per_100: nutrition,
       extras_per_100: Object.keys(extrasOut).length ? extrasOut : undefined,
       needs_review: false,
+      nutrition_source: source,
     };
     if (source === 'taco' && tacoId) payload.taco_id = tacoId;
     if (source === 'tbca' && tbcaCode) payload.tbca_code = tbcaCode;
