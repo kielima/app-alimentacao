@@ -1,4 +1,4 @@
-export type ExpiryStatus = 'fresh' | 'soon' | 'expired' | 'no-date';
+export type ExpiryStatus = 'fresh' | 'soon' | 'expired' | 'no-expiry' | 'no-date';
 
 const SOON_DAYS = 3;
 
@@ -15,7 +15,11 @@ export function daysUntil(expiryDate: string | null | undefined): number | null 
   return Math.floor((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-export function expiryStatus(expiryDate: string | null | undefined): ExpiryStatus {
+export function expiryStatus(
+  expiryDate: string | null | undefined,
+  noExpiry?: boolean,
+): ExpiryStatus {
+  if (noExpiry) return 'no-expiry';
   const days = daysUntil(expiryDate);
   if (days === null) return 'no-date';
   if (days < 0) return 'expired';
@@ -49,6 +53,7 @@ export function statusColor(status: ExpiryStatus): string {
     case 'soon':
       return 'text-amber-600 dark:text-amber-400';
     case 'fresh':
+    case 'no-expiry':
       return 'text-emerald-600 dark:text-emerald-400';
     case 'no-date':
       return 'text-zinc-500 dark:text-zinc-400';
@@ -63,6 +68,7 @@ export function statusIcon(status: ExpiryStatus): string | null {
     case 'soon':
       return 'alert-triangle';
     case 'fresh':
+    case 'no-expiry':
       return 'check-circle';
     case 'no-date':
       return null;
@@ -77,6 +83,8 @@ export function statusLabel(status: ExpiryStatus): string {
       return 'Vencendo';
     case 'fresh':
       return 'Disponível';
+    case 'no-expiry':
+      return 'Sem validade';
     case 'no-date':
       return 'Sem data';
   }
