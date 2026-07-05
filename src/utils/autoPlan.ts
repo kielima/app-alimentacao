@@ -1,11 +1,52 @@
 import { findRecipeById } from '../data/recipes';
 import { emptyDayPlan, newPlanMealItem } from '../data/mealPlan';
+import { daysUntil } from './expiry';
 import { getMealSlots, type Meal, type MealItem, type MealItemRef } from '../types/meal';
 import type { RecipeIngredient } from '../types/recipe';
+import type { PantryItem } from '../types/pantry';
 import type { DayOfWeek, DayPlan, MealType, PlanType } from '../types/mealPlan';
 
 /** Dias para uma validade contar como "vencendo" (espelha SOON_DAYS de expiry.ts). */
 const SOON_DAYS = 3;
+
+export interface PantryAvailability {
+  /** ingredient_id → menor validade (dias) entre os itens NÃO vencidos; null =
+   *  só há itens sem data. As chaves são o conjunto disponível para montar. */
+  available: Map<string, number | null>;
+  /** Nº de ingredientes que só têm itens vencidos (ficaram de fora). */
+  expiredOnly: number;
+}
+
+/**
+ * Deriva a disponibilidade da dispensa para a montagem do plano, aplicando a
+ * validade: um item **vencido** (validade < hoje) não conta como disponível.
+ * Itens sem data e futuros contam. Guarda a menor validade não vencida por
+ * ingrediente para alimentar a priorização por vencimento de `buildAutoDayPlan`.
+ *
+ * Só considera comida (`kind !== 'household'`) com `ingredient_id`, seguindo o
+ * casamento por id usado no resto do app.
+ */
+export function pantryAvailability(items: PantryItem[]): PantryAvailability {
+  const available = new Map<string, number | null>();
+  // Ingredientes vistos (para saber quais só têm itens vencidos).
+  const seen = new Set<string>();
+  for (const item of items) {
+    if (item.kind === 'household' || !item.ingredient_id) continue;
+    seen.add(item.ingredient_id);
+    const d = daysUntil(item.expiry_date);
+    if (d !== null && d < 0) continue; // vencido → não conta como disponível
+    const id = item.ingredient_id;
+    if (!available.has(id)) available.set(id, d);
+    else {
+      const prev = available.get(id) ?? null;
+      // Guarda a menor validade (mais urgente); "sem data" é menos urgente.
+      if (d !== null && (prev == null || d < prev)) available.set(id, d);
+    }
+  }
+  let expiredOnly = 0;
+  for (const id of seen) if (!available.has(id)) expiredOnly++;
+  return { available, expiredOnly };
+}
 
 /**
  * Monta o plano do dia automaticamente a partir da dispensa: para cada horário,

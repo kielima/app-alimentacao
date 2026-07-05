@@ -17,12 +17,15 @@ export default function AutoPlanModal({
   result,
   dayLabel,
   planType,
+  expiredIgnoredCount = 0,
   onApply,
   onClose,
 }: {
   result: AutoPlanResult;
   dayLabel: string;
   planType: PlanType;
+  /** Ingredientes desconsiderados por só terem itens vencidos na dispensa. */
+  expiredIgnoredCount?: number;
   onApply: () => void;
   onClose: () => void;
 }) {
@@ -57,6 +60,19 @@ export default function AutoPlanModal({
             <Icon name="x" className="h-5 w-5" />
           </button>
         </div>
+
+        {expiredIgnoredCount > 0 && (
+          <div className="mb-3 flex gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-200">
+            <Icon name="alert-triangle" className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>
+              {expiredIgnoredCount}{' '}
+              {expiredIgnoredCount === 1
+                ? 'ingrediente vencido foi desconsiderado'
+                : 'ingredientes vencidos foram desconsiderados'}{' '}
+              da dispensa.
+            </span>
+          </div>
+        )}
 
         {nothingToPlan ? (
           <div className="rounded-xl border border-dashed border-zinc-300 p-6 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
