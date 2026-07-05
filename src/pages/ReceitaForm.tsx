@@ -83,6 +83,7 @@ interface FormState {
   name: string;
   categories: string[];
   meal_types: MealType[];
+  no_suggest: boolean;
   prep_time_min: string;
   difficulty: Difficulty | '';
   rating: Rating | 0;
@@ -133,6 +134,7 @@ function recipeToForm(r: Recipe | undefined, initialName = ''): FormState {
       name: initialName,
       categories: ['pratos-principais'],
       meal_types: [],
+      no_suggest: false,
       prep_time_min: '',
       difficulty: '',
       rating: 0,
@@ -149,6 +151,7 @@ function recipeToForm(r: Recipe | undefined, initialName = ''): FormState {
     name: r.name,
     categories: recipeCategoryIds(r),
     meal_types: r.meal_types ?? [],
+    no_suggest: r.no_suggest ?? false,
     prep_time_min: r.prep_time_min?.toString() ?? '',
     difficulty: r.difficulty ?? '',
     rating: r.rating ?? 0,
@@ -246,6 +249,7 @@ function formToRecipe(
     // `category` (legado) espelha a categoria principal para compatibilidade.
     category: state.categories[0] ?? '',
     meal_types: state.meal_types.length ? state.meal_types : null,
+    no_suggest: state.no_suggest,
     prep_time_min: state.prep_time_min ? Number(state.prep_time_min) : null,
     difficulty: state.difficulty || null,
     rating: state.rating || null,
@@ -481,6 +485,15 @@ export default function ReceitaForm() {
         <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
           Horários em que esta receita pode entrar na montagem automática do plano.
         </p>
+        <label className="mt-2 flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
+          <input
+            type="checkbox"
+            checked={state.no_suggest}
+            onChange={(e) => setState((s) => ({ ...s, no_suggest: e.target.checked }))}
+            className="h-4 w-4 rounded accent-brand-500"
+          />
+          Não recomendar nas sugestões do plano
+        </label>
       </Field>
 
       <div className="grid grid-cols-2 gap-3">

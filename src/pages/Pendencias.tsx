@@ -6,6 +6,7 @@ import NutritionPhotoImport from '../components/NutritionPhotoImport';
 import NutritionFillModal from '../components/NutritionFillModal';
 import type { NutritionSource } from '../components/NutritionReview';
 import { upsertUserIngredient } from '../data/userIngredients';
+import { upsertUserRecipe } from '../data/userRecipes';
 import { useDataGaps } from '../hooks/useDataGaps';
 import { autoFillNutrition } from '../lib/autoNutrition';
 import {
@@ -88,6 +89,38 @@ export default function Pendencias() {
           </GapSection>
 
           <PantryNoExpirySection items={gaps.pantryNoExpiry} />
+
+          <GapSection
+            title="Receitas sem horário"
+            count={gaps.recipesNoSlots.length}
+            hint="Sem horário marcado, entram em qualquer horário na montagem automática. Marque os horários (toque para abrir) ou use 'Não recomendar'."
+            emptyWhenZero
+          >
+            {gaps.recipesNoSlots.map((r) => (
+              <SlotGapRow
+                key={r.id}
+                to={`/receitas/${r.id}/editar`}
+                title={r.name}
+                onExclude={() => upsertUserRecipe({ ...r, no_suggest: true })}
+              />
+            ))}
+          </GapSection>
+
+          <GapSection
+            title="Ingredientes sem horário"
+            count={gaps.ingredientsNoSlots.length}
+            hint="Sem horário marcado, entram em qualquer horário na montagem automática. Marque os horários (toque para abrir) ou use 'Não recomendar'."
+            emptyWhenZero
+          >
+            {gaps.ingredientsNoSlots.map((i) => (
+              <SlotGapRow
+                key={i.id}
+                to={`/ingredientes/${i.id}/editar`}
+                title={i.brand ? `${i.brand} — ${i.name}` : i.name}
+                onExclude={() => upsertUserIngredient({ ...i, no_suggest: true })}
+              />
+            ))}
+          </GapSection>
         </div>
       )}
     </div>
@@ -417,6 +450,38 @@ function GapRow({ to, title, subtitle }: { to: string; title: string; subtitle: 
         </span>
         <Icon name="chevron-right" className="h-4 w-4 shrink-0 text-zinc-400" />
       </Link>
+    </li>
+  );
+}
+
+/** Linha "sem horário": link para editar + botão "Não recomendar". */
+function SlotGapRow({
+  to,
+  title,
+  onExclude,
+}: {
+  to: string;
+  title: string;
+  onExclude: () => void;
+}) {
+  return (
+    <li className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900">
+      <Link
+        to={to}
+        className="min-w-0 flex-1 hover:text-brand-600 dark:hover:text-brand-400"
+      >
+        <span className="block truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+          {title}
+        </span>
+        <span className="block text-xs text-zinc-500 dark:text-zinc-400">sem horário marcado</span>
+      </Link>
+      <button
+        type="button"
+        onClick={onExclude}
+        className="shrink-0 rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+      >
+        Não recomendar
+      </button>
     </li>
   );
 }

@@ -37,6 +37,7 @@ export default function IngredienteForm() {
   const [unit, setUnit] = useState<Unit>(existing?.default_unit ?? 'g');
   const [category, setCategory] = useState<IngredientCategory | ''>(existing?.category ?? '');
   const [mealTypes, setMealTypes] = useState<MealType[]>(existing?.meal_types ?? []);
+  const [noSuggest, setNoSuggest] = useState(existing?.no_suggest ?? false);
   const [contributeOff, setContributeOff] = useState(Boolean(scannedBarcode));
   const [error, setError] = useState<string | null>(null);
 
@@ -102,8 +103,9 @@ export default function IngredienteForm() {
       default_unit: unit,
       category: category || null,
       meal_types: mealTypes.length ? mealTypes : null,
+      no_suggest: noSuggest || undefined,
     };
-  }, [existing, name, brand, unit, category, mealTypes]);
+  }, [existing, name, brand, unit, category, mealTypes, noSuggest]);
 
   if (editing && !existing) {
     return (
@@ -132,6 +134,7 @@ export default function IngredienteForm() {
       default_unit: unit,
       category: category || null,
       meal_types: mealTypes.length ? mealTypes : null,
+      no_suggest: noSuggest,
       nutrition_per_100: existing?.nutrition_per_100 ?? null,
     };
     if (!editing && scannedBarcode) {
@@ -253,6 +256,15 @@ export default function IngredienteForm() {
         <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
           Horários em que este ingrediente pode entrar na montagem automática do plano.
         </p>
+        <label className="mt-2 flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
+          <input
+            type="checkbox"
+            checked={noSuggest}
+            onChange={(e) => setNoSuggest(e.target.checked)}
+            className="h-4 w-4 rounded accent-brand-500"
+          />
+          Não recomendar nas sugestões do plano
+        </label>
       </Field>
 
       {editing && liveIngredient && (

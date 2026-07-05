@@ -43,6 +43,9 @@ export interface Recipe {
   /** Horários em que esta receita pode entrar na montagem automática do plano.
    *  Vazio/ausente = serve qualquer horário. */
   meal_types?: MealType[] | null;
+  /** `true` = não recomendar nas sugestões do plano (ainda pode ser usada
+   *  manualmente e dentro de refeições). */
+  no_suggest?: boolean;
   prep_time_min?: number | null;
   difficulty?: Difficulty | null;
   rating?: Rating | null;
