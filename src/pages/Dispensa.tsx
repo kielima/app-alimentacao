@@ -22,6 +22,7 @@ const filterChips: { value: PantryFilter; label: string; icon: string | null }[]
   { value: 'expired', label: 'Vencidos', icon: 'x-circle' },
   { value: 'soon', label: 'Vencendo', icon: 'alert-triangle' },
   { value: 'fresh', label: 'Disponíveis', icon: 'check-circle' },
+  { value: 'no-expiry', label: 'Sem validade', icon: 'check-circle' },
   { value: 'no-date', label: 'Sem data', icon: null },
 ];
 
@@ -251,7 +252,7 @@ interface PantryCardProps {
 
 function PantryCard({ item, onOpen, onSendToList, onLongPress }: PantryCardProps) {
   const longPress = useLongPress(onLongPress, { delay: 450 });
-  const status = expiryStatus(item.expiry_date);
+  const status = expiryStatus(item.expiry_date, item.no_expiry);
   const subtitle =
     item.quantity && item.unit
       ? `${item.quantity} ${unitLabel(item.unit)}`

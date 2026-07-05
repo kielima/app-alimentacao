@@ -16,7 +16,8 @@ const STATUS_ORDER: Record<ExpiryStatus, number> = {
   expired: 0,
   soon: 1,
   fresh: 2,
-  'no-date': 3,
+  'no-expiry': 3,
+  'no-date': 4,
 };
 
 interface UsePantryResult {
@@ -46,9 +47,15 @@ export function usePantry(): UsePantryResult {
   const { query, filter, kindFilter, showFilters } = ui.useStore();
 
   const countsByStatus = useMemo(() => {
-    const c: Record<ExpiryStatus, number> = { expired: 0, soon: 0, fresh: 0, 'no-date': 0 };
+    const c: Record<ExpiryStatus, number> = {
+      expired: 0,
+      soon: 0,
+      fresh: 0,
+      'no-expiry': 0,
+      'no-date': 0,
+    };
     for (const item of items) {
-      c[expiryStatus(item.expiry_date)]++;
+      c[expiryStatus(item.expiry_date, item.no_expiry)]++;
     }
     return c;
   }, [items]);
@@ -66,11 +73,13 @@ export function usePantry(): UsePantryResult {
   const list = useMemo(() => {
     return items
       .filter((i) => (kindFilter === 'all' ? true : pantryKind(i) === kindFilter))
-      .filter((i) => (filter === 'todos' ? true : expiryStatus(i.expiry_date) === filter))
+      .filter((i) =>
+        filter === 'todos' ? true : expiryStatus(i.expiry_date, i.no_expiry) === filter,
+      )
       .filter((i) => matches(i.raw_text, query))
       .sort((a, b) => {
-        const sa = STATUS_ORDER[expiryStatus(a.expiry_date)];
-        const sb = STATUS_ORDER[expiryStatus(b.expiry_date)];
+        const sa = STATUS_ORDER[expiryStatus(a.expiry_date, a.no_expiry)];
+        const sb = STATUS_ORDER[expiryStatus(b.expiry_date, b.no_expiry)];
         if (sa !== sb) return sa - sb;
         // Within same status: sort by expiry date ascending (closest first)
         if (a.expiry_date && b.expiry_date) {
