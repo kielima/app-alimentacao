@@ -31,7 +31,13 @@ import { computePlanItemsNutrition, type NutritionBreakdown } from '../utils/nut
 import { useUserProfile } from '../data/userProfile';
 import { dayTargets, type PlanDayTargets } from '../utils/profileTargets';
 import { optimizeDayPlan, type OptimizeResult } from '../utils/planOptimizer';
-import { buildAutoDayPlan, pantryAvailability, type AutoPlanResult } from '../utils/autoPlan';
+import {
+  buildAutoDayPlan,
+  pantryAvailability,
+  suggestGapFillers,
+  type AutoPlanResult,
+  type GapFillResult,
+} from '../utils/autoPlan';
 import OptimizePlanModal from '../components/OptimizePlanModal';
 import AutoPlanModal from '../components/AutoPlanModal';
 import { usePantryItems } from '../data/pantry';
@@ -141,6 +147,7 @@ export default function Plano() {
   const dayTarget = useMemo(() => dayTargets(profile, planType), [profile, planType]);
   const [optimizeResult, setOptimizeResult] = useState<OptimizeResult | null>(null);
   const [autoResult, setAutoResult] = useState<AutoPlanResult | null>(null);
+  const [autoGapFill, setAutoGapFill] = useState<GapFillResult | null>(null);
 
   // Disponibilidade da dispensa para montar o plano: casa por ingredient_id
   // (como a tela de receita) e aplica a validade — itens vencidos não contam.
@@ -199,12 +206,51 @@ export default function Plano() {
   };
 
   const handleAutoPlan = () => {
-    setAutoResult(buildAutoDayPlan(day, planType, allMeals, pantryExpiryById));
+    const result = buildAutoDayPlan(day, planType, allMeals, pantryExpiryById);
+    setAutoResult(result);
+    setAutoGapFill(
+      suggestGapFillers(
+        result.dayPlan,
+        allMeals,
+        allRecipes,
+        allIngredients,
+        pantryExpiryById,
+        dayTarget,
+      ),
+    );
   };
 
-  const handleApplyAuto = () => {
-    if (autoResult) upsertMealPlan(autoResult.dayPlan);
+  const closeAuto = () => {
     setAutoResult(null);
+    setAutoGapFill(null);
+  };
+
+  const handleApplyAuto = (selectedIds: string[]) => {
+    if (autoResult) {
+      const extras = (autoGapFill?.suggestions ?? [])
+        .filter((s) => selectedIds.includes(s.id))
+        .map((s) => ({
+          ...newPlanMealItem(s.kind),
+          recipe_id: s.kind === 'recipe' ? s.id : undefined,
+          ingredient_id: s.kind === 'ingredient' ? s.id : undefined,
+          quantity: s.quantity,
+          unit: s.unit,
+        }));
+      let next = autoResult.dayPlan;
+      if (extras.length > 0) {
+        // Anexa as sugestões escolhidas à ceia (presente nas duas variantes);
+        // fallback: último horário. Reposicionável no modo edição.
+        const meals = next.meals;
+        let idx = meals.findIndex((m) => m.meal_type === 'ceia');
+        if (idx < 0) idx = meals.length - 1;
+        next = {
+          ...next,
+          meals: meals.map((m, i) => (i === idx ? { ...m, items: [...m.items, ...extras] } : m)),
+        };
+      }
+      upsertMealPlan(next);
+    }
+    closeAuto();
   };
 
   const handleApplyOptimize = () => {
@@ -352,11 +398,12 @@ export default function Plano() {
       {autoResult && (
         <AutoPlanModal
           result={autoResult}
+          gapFill={autoGapFill ?? undefined}
           dayLabel={dayLabel}
           planType={planType}
           expiredIgnoredCount={expiredIgnoredCount}
           onApply={handleApplyAuto}
-          onClose={() => setAutoResult(null)}
+          onClose={closeAuto}
         />
       )}
     </div>
