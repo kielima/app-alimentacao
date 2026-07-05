@@ -21,7 +21,7 @@ import {
   type RatingFilter,
 } from '../hooks/useRecipes';
 import { useLongPress } from '../hooks/useLongPress';
-import type { Recipe } from '../types/recipe';
+import { recipeCategoryIds, type Recipe } from '../types/recipe';
 import { uniqueSlug } from '../utils/slug';
 import { downloadRecipesMarkdown } from '../utils/recipesMarkdown';
 
@@ -197,7 +197,9 @@ export default function Receitas() {
             <RecipeCard
               key={r.id}
               recipe={r}
-              category={cats.find((c) => c.id === r.category)}
+              categories={recipeCategoryIds(r)
+                .map((id) => cats.find((c) => c.id === id))
+                .filter((c): c is RecipeCategory => c !== undefined)}
               onLongPress={() => setActionRecipeId(r.id)}
             />
           ))}
@@ -260,16 +262,19 @@ export default function Receitas() {
 
 function RecipeCard({
   recipe,
-  category: cat,
+  categories,
   onLongPress,
 }: {
   recipe: Recipe;
-  category: RecipeCategory | undefined;
+  categories: RecipeCategory[];
   onLongPress: () => void;
 }) {
   const longPress = useLongPress(onLongPress, { delay: 450 });
   const [imgFailed, setImgFailed] = useState(false);
   const photo = recipe.photos?.[0];
+  const cat = categories[0];
+  const categoryLabel =
+    categories.length > 0 ? categories.map((c) => c.name).join(' · ') : 'Sem categoria';
   return (
     <li>
       <Link
@@ -303,7 +308,7 @@ function RecipeCard({
         <div className="flex min-w-0 flex-1 flex-col p-2.5">
           <p className="line-clamp-2 text-sm font-medium leading-tight">{recipe.name}</p>
           <p className="mt-1 inline-flex flex-wrap items-center gap-x-1 text-xs text-zinc-500 dark:text-zinc-400">
-            <span className="truncate">{cat?.name ?? 'Sem categoria'}</span>
+            <span className="truncate">{categoryLabel}</span>
             {recipe.prep_time_min ? (
               <span className="inline-flex items-center gap-0.5">
                 · <Icon name="clock" className="h-3.5 w-3.5" /> {recipe.prep_time_min}min
@@ -375,7 +380,8 @@ function CategoryManager({ cats }: { cats: RecipeCategory[] }) {
   // Qual linha está com o seletor de ícone aberto ('__new__' = linha de adição).
   const [iconPickerFor, setIconPickerFor] = useState<string | null>(null);
 
-  const countIn = (id: string) => recipes.filter((r) => r.category === id).length;
+  const countIn = (id: string) =>
+    recipes.filter((r) => recipeCategoryIds(r).includes(id)).length;
 
   const addCategory = () => {
     const name = newName.trim();

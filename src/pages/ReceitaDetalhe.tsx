@@ -12,7 +12,7 @@ import { deleteUserRecipe, getUserRecipeById, upsertUserRecipe, useUserRecipes }
 import { hideRecipe } from '../data/hiddenRecipes';
 import { upsertShoppingItem } from '../data/shoppingList';
 import { usePantryItems } from '../data/pantry';
-import type { Recipe, RecipeIngredient } from '../types/recipe';
+import { recipeCategoryIds, type Recipe, type RecipeIngredient } from '../types/recipe';
 
 function fmt(value: number | undefined, digits = 0): string {
   if (value === undefined) return '—';
@@ -135,7 +135,10 @@ export default function ReceitaDetalhe() {
     );
   }
 
-  const category = categories.find((c) => c.id === recipe.category);
+  const recipeCats = recipeCategoryIds(recipe)
+    .map((id) => categories.find((c) => c.id === id))
+    .filter((c): c is (typeof categories)[number] => c !== undefined);
+  const category = recipeCats[0];
 
   return (
     <div className="mx-auto max-w-6xl px-4 pt-2 pb-28">
@@ -171,11 +174,11 @@ export default function ReceitaDetalhe() {
       <RecipePhoto photo={recipe.photos?.[0]} icon={category?.icon ?? 'utensils'} />
 
       <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
-        {category && (
-          <span className="inline-flex items-center gap-1">
-            <Icon name={category.icon} className="h-3.5 w-3.5" /> {category.name}
+        {recipeCats.map((c) => (
+          <span key={c.id} className="inline-flex items-center gap-1">
+            <Icon name={c.icon} className="h-3.5 w-3.5" /> {c.name}
           </span>
-        )}
+        ))}
         {recipe.prep_time_min && (
           <span className="inline-flex items-center gap-1">
             <Icon name="clock" className="h-3.5 w-3.5" /> {recipe.prep_time_min} min

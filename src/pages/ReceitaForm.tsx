@@ -10,7 +10,14 @@ import { useRecipeCategories } from '../data/recipeCategories';
 import { upsertUserRecipe } from '../data/userRecipes';
 import { uniqueSlug } from '../utils/slug';
 import { compressImageToDataUrl } from '../utils/image';
-import type { Difficulty, Rating, Recipe, RecipeIngredient } from '../types/recipe';
+import CategoryChips from '../components/CategoryChips';
+import {
+  recipeCategoryIds,
+  type Difficulty,
+  type Rating,
+  type Recipe,
+  type RecipeIngredient,
+} from '../types/recipe';
 import type { Ingredient } from '../types/ingredient';
 
 const UNIT_OPTIONS = [
@@ -70,7 +77,7 @@ function draftKeyFor(id: string | undefined) {
 
 interface FormState {
   name: string;
-  category: string;
+  categories: string[];
   prep_time_min: string;
   difficulty: Difficulty | '';
   rating: Rating | 0;
@@ -110,7 +117,7 @@ function recipeToForm(r: Recipe | undefined, initialName = ''): FormState {
   if (!r) {
     return {
       name: initialName,
-      category: 'pratos-principais',
+      categories: ['pratos-principais'],
       prep_time_min: '',
       difficulty: '',
       rating: 0,
@@ -125,7 +132,7 @@ function recipeToForm(r: Recipe | undefined, initialName = ''): FormState {
   }
   return {
     name: r.name,
-    category: r.category,
+    categories: recipeCategoryIds(r),
     prep_time_min: r.prep_time_min?.toString() ?? '',
     difficulty: r.difficulty ?? '',
     rating: r.rating ?? 0,
@@ -217,7 +224,9 @@ function formToRecipe(
     ...original,
     id: original?.id ?? '',
     name: state.name.trim(),
-    category: state.category,
+    categories: state.categories,
+    // `category` (legado) espelha a categoria principal para compatibilidade.
+    category: state.categories[0] ?? '',
     prep_time_min: state.prep_time_min ? Number(state.prep_time_min) : null,
     difficulty: state.difficulty || null,
     rating: state.rating || null,
@@ -430,22 +439,19 @@ export default function ReceitaForm() {
         />
       </Field>
 
-      <Field label="Categoria">
-        <select
-          value={state.category}
-          onChange={(e) => setState((s) => ({ ...s, category: e.target.value }))}
-          className={inputClass}
-        >
-          {/* Categoria da receita que não existe mais na lista (ex.: apagada) */}
-          {categories.every((c) => c.id !== state.category) && (
-            <option value={state.category}>Sem categoria</option>
-          )}
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+      <Field label="Categorias">
+        <CategoryChips
+          categories={categories}
+          selected={state.categories}
+          onToggle={(id) =>
+            setState((s) => ({
+              ...s,
+              categories: s.categories.includes(id)
+                ? s.categories.filter((c) => c !== id)
+                : [...s.categories, id],
+            }))
+          }
+        />
       </Field>
 
       <div className="grid grid-cols-2 gap-3">

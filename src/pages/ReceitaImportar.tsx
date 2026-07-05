@@ -4,6 +4,7 @@ import HeaderSlot from '../components/HeaderSlot';
 import Icon from '../components/Icon';
 import TrashIcon from '../components/TrashIcon';
 import SearchableSelect from '../components/SearchableSelect';
+import CategoryChips from '../components/CategoryChips';
 import { useAllIngredients, allIngredientIds } from '../data/ingredients';
 import { useRecipeCategories } from '../data/recipeCategories';
 import { upsertUserRecipe } from '../data/userRecipes';
@@ -12,7 +13,7 @@ import { uniqueSlug } from '../utils/slug';
 import { normalize } from '../utils/search';
 import { extractRecipe, extractedToRecipe, type ExtractedRecipe } from '../lib/recipeImport';
 import type { Ingredient, Unit } from '../types/ingredient';
-import type { Recipe, RecipeIngredient } from '../types/recipe';
+import { recipeCategoryIds, type Recipe, type RecipeIngredient } from '../types/recipe';
 
 // Mesmas opções de unidade da tela de editar receita (ReceitaForm).
 const UNIT_OPTIONS = [
@@ -328,7 +329,7 @@ function ReviewForm({
 }) {
   const categories = useRecipeCategories();
   const [name, setName] = useState(recipe.name);
-  const [category, setCategory] = useState<string>(recipe.category);
+  const [categoryIds, setCategoryIds] = useState<string[]>(() => recipeCategoryIds(recipe));
   const [prepTime, setPrepTime] = useState(recipe.prep_time_min?.toString() ?? '');
   const [ingredients, setIngredients] = useState<FormIngredient[]>(() =>
     (recipe.ingredients ?? []).map((ri, idx) =>
@@ -429,7 +430,8 @@ function ReviewForm({
     onSave({
       ...recipe,
       name: name.trim() || 'Receita importada',
-      category,
+      categories: categoryIds,
+      category: categoryIds[0] ?? '',
       prep_time_min: prepTime ? Number(prepTime) : null,
       ingredients: cleanedIngredients,
       steps: cleanedSteps,
@@ -458,35 +460,29 @@ function ReviewForm({
         />
       </Field>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Categoria">
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className={inputClass}
-          >
-            {categories.every((c) => c.id !== category) && (
-              <option value={category}>Sem categoria</option>
-            )}
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Tempo (min)">
-          <input
-            type="number"
-            min={0}
-            inputMode="numeric"
-            value={prepTime}
-            onChange={(e) => setPrepTime(e.target.value)}
-            placeholder="—"
-            className={inputClass}
-          />
-        </Field>
-      </div>
+      <Field label="Categorias">
+        <CategoryChips
+          categories={categories}
+          selected={categoryIds}
+          onToggle={(id) =>
+            setCategoryIds((ids) =>
+              ids.includes(id) ? ids.filter((c) => c !== id) : [...ids, id],
+            )
+          }
+        />
+      </Field>
+
+      <Field label="Tempo (min)">
+        <input
+          type="number"
+          min={0}
+          inputMode="numeric"
+          value={prepTime}
+          onChange={(e) => setPrepTime(e.target.value)}
+          placeholder="—"
+          className={inputClass}
+        />
+      </Field>
 
       <section className="mt-6 mb-4">
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">

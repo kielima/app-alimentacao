@@ -217,10 +217,12 @@ export function extractedToRecipe(
         : null;
   const notes = [data.notes, attribution].filter(Boolean).join('\n\n') || undefined;
 
+  const category = data.category ?? 'pratos-principais';
   return {
     id,
     name,
-    category: data.category ?? 'pratos-principais',
+    category,
+    categories: [category],
     prep_time_min: data.prep_time_min,
     difficulty: data.difficulty,
     rating: null,
