@@ -89,7 +89,7 @@ export default function IngredienteForm() {
 
   if (editing && !existing) {
     return (
-      <div className="mx-auto max-w-md sm:max-w-2xl lg:max-w-3xl px-4 pt-12 text-center">
+      <div className="mx-auto max-w-6xl px-4 pt-12 text-center">
         <p className="mb-4 text-zinc-500 dark:text-zinc-400">Ingrediente não encontrado.</p>
         <Link to="/ingredientes" className="text-brand-600 underline dark:text-brand-400">
           Voltar à lista
@@ -148,7 +148,7 @@ export default function IngredienteForm() {
   };
 
   return (
-    <form id="ingrediente-form" onSubmit={handleSubmit} className="mx-auto max-w-md sm:max-w-2xl lg:max-w-3xl px-4 pt-2 pb-28">
+    <form id="ingrediente-form" onSubmit={handleSubmit} className="mx-auto max-w-6xl px-4 pt-2 pb-28">
       <HeaderSlot>
         <h1 className="min-w-0 flex-1 truncate text-lg font-semibold">
           {editing ? 'Editar ingrediente' : 'Novo ingrediente'}

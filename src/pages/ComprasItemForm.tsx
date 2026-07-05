@@ -158,7 +158,7 @@ export default function ComprasItemForm() {
 
   if (id !== undefined && !original) {
     return (
-      <div className="mx-auto max-w-md sm:max-w-2xl lg:max-w-3xl px-4 pt-12 text-center">
+      <div className="mx-auto max-w-6xl px-4 pt-12 text-center">
         <p className="mb-4 text-zinc-500 dark:text-zinc-400">Item não encontrado.</p>
         <Link to="/compras" className="text-brand-600 underline dark:text-brand-400">
           Voltar
@@ -245,7 +245,7 @@ export default function ComprasItemForm() {
       : storeSelect;
 
   return (
-    <form id="compras-form" onSubmit={handleSubmit} className="mx-auto max-w-md sm:max-w-2xl lg:max-w-3xl px-4 pt-2 pb-28">
+    <form id="compras-form" onSubmit={handleSubmit} className="mx-auto max-w-6xl px-4 pt-2 pb-28">
       <HeaderSlot>
         <h1 className="min-w-0 flex-1 truncate text-lg font-semibold">Editar item</h1>
         {original && (

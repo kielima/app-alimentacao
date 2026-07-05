@@ -80,7 +80,7 @@ export default function Refeicoes() {
   }, [meals, query, slot]);
 
   return (
-    <div className="mx-auto max-w-md sm:max-w-2xl lg:max-w-3xl px-4 pt-2 pb-28">
+    <div className="mx-auto max-w-6xl px-4 pt-2 pb-28">
       <HeaderSlot>
         <input
           type="search"
