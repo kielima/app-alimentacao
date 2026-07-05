@@ -22,7 +22,7 @@ export default function Pendencias() {
   const gaps = useDataGaps();
 
   return (
-    <div className="mx-auto max-w-md sm:max-w-2xl lg:max-w-3xl px-4 pt-2 pb-28">
+    <div className="mx-auto max-w-6xl px-4 pt-2 pb-28">
       <HeaderSlot>
         <h1 className="min-w-0 flex-1 truncate text-lg font-semibold">Dados a completar</h1>
         {gaps.total > 0 && (

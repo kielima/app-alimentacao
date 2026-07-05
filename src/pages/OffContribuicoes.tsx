@@ -32,7 +32,7 @@ export default function OffContribuicoes() {
   const pendingCount = sorted.filter((d) => !d.submitted_at).length;
 
   return (
-    <div className="mx-auto max-w-md sm:max-w-2xl lg:max-w-3xl px-4 pt-3 pb-8">
+    <div className="mx-auto max-w-6xl px-4 pt-3 pb-8">
       <div className="mb-4 flex items-center gap-3">
         <Link
           to="/ingredientes"

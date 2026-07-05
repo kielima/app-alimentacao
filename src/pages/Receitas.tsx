@@ -90,7 +90,7 @@ export default function Receitas() {
   const isFiltering = hasActiveFilters || !!query;
 
   return (
-    <div className="mx-auto max-w-md sm:max-w-2xl lg:max-w-3xl px-4 pt-2 pb-28">
+    <div className="mx-auto max-w-6xl px-4 pt-2 pb-28">
       <HeaderSlot>
         <input
           type="search"
@@ -192,7 +192,7 @@ export default function Receitas() {
           Nenhuma receita encontrada com esses filtros.
         </p>
       ) : (
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
           {list.map((r) => (
             <RecipeCard
               key={r.id}
