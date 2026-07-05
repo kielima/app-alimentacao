@@ -1,10 +1,14 @@
 import { findRecipeById } from '../data/recipes';
 import { emptyDayPlan, newPlanMealItem } from '../data/mealPlan';
 import { daysUntil } from './expiry';
+import { computePlanItemsNutrition } from './nutrition';
+import { KCAL_TOLERANCE, type PlanDayTargets } from './profileTargets';
+import type { Macros } from './planOptimizer';
 import { getMealSlots, type Meal, type MealItem, type MealItemRef } from '../types/meal';
-import type { RecipeIngredient } from '../types/recipe';
+import type { Recipe, RecipeIngredient } from '../types/recipe';
+import type { Ingredient } from '../types/ingredient';
 import type { PantryItem } from '../types/pantry';
-import type { DayOfWeek, DayPlan, MealType, PlanType } from '../types/mealPlan';
+import type { DayOfWeek, DayPlan, MealType, PlanMealItem, PlanType } from '../types/mealPlan';
 
 /** Dias para uma validade contar como "vencendo" (espelha SOON_DAYS de expiry.ts). */
 const SOON_DAYS = 3;
@@ -229,4 +233,192 @@ export function buildAutoDayPlan(
     makeableCount: scored.length,
     filledCount: slots.filter((s) => s.meal !== null).length,
   };
+}
+
+// ── Sugestões para bater a meta ─────────────────────────────────────────────
+
+/** Uma receita ou ingrediente da dispensa sugerido para fechar a lacuna. */
+export interface GapSuggestion {
+  /** recipe_id ou ingredient_id (também é a chave de seleção no modal). */
+  id: string;
+  kind: 'recipe' | 'ingredient';
+  label: string;
+  /** Porção padrão sugerida (afinável depois no plano/otimizador). */
+  quantity: number;
+  unit: string;
+  /** Macros nesta porção. */
+  macros: Macros;
+  /** Menor validade (dias) entre os itens da dispensa que a sugestão consome. */
+  earliestDays: number | null;
+  /** Quantos desses itens estão vencendo (≤ SOON_DAYS). */
+  expiringConsumed: number;
+}
+
+export interface GapFillResult {
+  current: Macros;
+  /** Proteína (g) ainda faltando para o mínimo (≥ 0). */
+  proteinGap: number;
+  /** Calorias ainda faltando para a meta, além da tolerância (≥ 0). */
+  calorieGap: number;
+  suggestions: GapSuggestion[];
+}
+
+const numOr0 = (v: number | null | undefined): number =>
+  typeof v === 'number' && Number.isFinite(v) ? v : 0;
+
+/** Macros de um único item de plano (receita/ingrediente) numa dada porção. */
+function planItemMacros(item: PlanMealItem): { macros: Macros; counted: number } {
+  const bd = computePlanItemsNutrition([item], []);
+  return {
+    macros: {
+      calories: numOr0(bd.totals.calories),
+      protein: numOr0(bd.totals.protein),
+      carbs: numOr0(bd.totals.carbs),
+      fat: numOr0(bd.totals.fat),
+    },
+    counted: bd.counted,
+  };
+}
+
+/** Porção padrão sugerida para um ingrediente: 1 unidade (medidas contáveis) ou
+ *  100 g/ml. */
+function defaultIngredientPortion(ing: Ingredient): { quantity: number; unit: string } {
+  return ing.default_unit === 'unit'
+    ? { quantity: 1, unit: 'unit' }
+    : { quantity: 100, unit: ing.default_unit };
+}
+
+/** Menor validade (dias) e nº de itens vencendo entre um conjunto de ingredientes
+ *  da dispensa consumidos. */
+function expiryOf(
+  ids: Iterable<string>,
+  availability: Map<string, number | null>,
+): { earliest: number | null; expiring: number } {
+  let earliest: number | null = null;
+  let expiring = 0;
+  for (const id of ids) {
+    const d = availability.get(id);
+    if (d == null) continue;
+    if (earliest === null || d < earliest) earliest = d;
+    if (d <= SOON_DAYS) expiring++;
+  }
+  return { earliest, expiring };
+}
+
+/**
+ * Sugere receitas e ingredientes **da dispensa** que ajudam a fechar a lacuna do
+ * dia em relação à meta (proteína mínima e calorias). Não escreve nada — a página
+ * anexa as sugestões escolhidas ao plano.
+ *
+ * Prioriza proteína quando ela está abaixo do mínimo; depois, completar calorias.
+ * Ignora itens já presentes no plano e itens sem dados nutricionais utilizáveis.
+ */
+export function suggestGapFillers(
+  dayPlan: DayPlan,
+  meals: Meal[],
+  recipes: Recipe[],
+  ingredients: Ingredient[],
+  availability: Map<string, number | null>,
+  target: PlanDayTargets,
+  max = 6,
+): GapFillResult {
+  const items = dayPlan.meals.flatMap((m) => m.items);
+  const bd = computePlanItemsNutrition(items, meals);
+  const current: Macros = {
+    calories: numOr0(bd.totals.calories),
+    protein: numOr0(bd.totals.protein),
+    carbs: numOr0(bd.totals.carbs),
+    fat: numOr0(bd.totals.fat),
+  };
+
+  const proteinGap = Math.max(0, target.proteinMin - current.protein);
+  const rawCal = target.calories - current.calories;
+  const calorieGap = rawCal > KCAL_TOLERANCE ? rawCal : 0;
+
+  if (proteinGap <= 0 && calorieGap <= 0) {
+    return { current, proteinGap: 0, calorieGap: 0, suggestions: [] };
+  }
+
+  const pantry = new Set(availability.keys());
+  // Itens já no plano não devem ser sugeridos de novo.
+  const usedRecipeIds = new Set<string>();
+  const usedIngredientIds = new Set<string>();
+  for (const it of items) {
+    if (it.kind === 'recipe' && it.recipe_id) usedRecipeIds.add(it.recipe_id);
+    if (it.kind === 'ingredient' && it.ingredient_id) usedIngredientIds.add(it.ingredient_id);
+  }
+
+  const suggestions: GapSuggestion[] = [];
+
+  // Ingredientes disponíveis na dispensa (respeitando validade via `availability`).
+  for (const ing of ingredients) {
+    if (usedIngredientIds.has(ing.id) || !availability.has(ing.id)) continue;
+    const { quantity, unit } = defaultIngredientPortion(ing);
+    const { macros, counted } = planItemMacros({
+      id: `sug-${ing.id}`,
+      kind: 'ingredient',
+      ingredient_id: ing.id,
+      quantity,
+      unit,
+    });
+    if (counted === 0) continue; // sem dados nutricionais / unidade não conversível
+    const { earliest, expiring } = expiryOf([ing.id], availability);
+    suggestions.push({
+      id: ing.id,
+      kind: 'ingredient',
+      label: ing.brand ? `${ing.brand} — ${ing.name}` : ing.name,
+      quantity,
+      unit,
+      macros,
+      earliestDays: earliest,
+      expiringConsumed: expiring,
+    });
+  }
+
+  // Receitas montáveis com a dispensa (porção padrão de 100 g).
+  for (const recipe of recipes) {
+    if (usedRecipeIds.has(recipe.id)) continue;
+    const consumed = new Set<string>();
+    const makeable = refSatisfiable(
+      { kind: 'recipe', recipe_id: recipe.id, quantity: null, unit: null },
+      pantry,
+      consumed,
+    );
+    if (!makeable) continue;
+    const { macros, counted } = planItemMacros({
+      id: `sug-${recipe.id}`,
+      kind: 'recipe',
+      recipe_id: recipe.id,
+      quantity: 100,
+      unit: 'g',
+    });
+    if (counted === 0) continue;
+    const { earliest, expiring } = expiryOf(consumed, availability);
+    suggestions.push({
+      id: recipe.id,
+      kind: 'recipe',
+      label: recipe.name,
+      quantity: 100,
+      unit: 'g',
+      macros,
+      earliestDays: earliest,
+      expiringConsumed: expiring,
+    });
+  }
+
+  // Ranqueamento: proteína primeiro quando falta; depois, caloria mais próxima da
+  // lacuna. Validade (mais urgente) e nome como desempates estáveis.
+  const earliestKey = (s: GapSuggestion) => s.earliestDays ?? Number.POSITIVE_INFINITY;
+  suggestions.sort((a, b) => {
+    if (proteinGap > 0 && b.macros.protein !== a.macros.protein) {
+      return b.macros.protein - a.macros.protein;
+    }
+    const da = Math.abs(a.macros.calories - calorieGap);
+    const db = Math.abs(b.macros.calories - calorieGap);
+    if (da !== db) return da - db;
+    if (earliestKey(a) !== earliestKey(b)) return earliestKey(a) - earliestKey(b);
+    return a.label.localeCompare(b.label, 'pt-BR');
+  });
+
+  return { current, proteinGap, calorieGap, suggestions: suggestions.slice(0, max) };
 }

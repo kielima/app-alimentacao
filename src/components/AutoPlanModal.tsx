@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import Icon from './Icon';
 import { MEAL_TYPES, type PlanType } from '../types/mealPlan';
-import type { AutoPlanResult } from '../utils/autoPlan';
+import { unitLabel } from '../utils/units';
+import type { AutoPlanResult, GapFillResult, GapSuggestion } from '../utils/autoPlan';
 
 const slotMeta = (value: string) => MEAL_TYPES.find((m) => m.value === value);
 
@@ -13,8 +15,16 @@ function expiryHint(days: number | null): string | null {
   return `vence em ${days} dias`;
 }
 
+const round = (v: number) => Math.round(v);
+
+/** "100 g", "1 unidade"… para a porção sugerida. */
+function portionLabel(quantity: number, unit: string): string {
+  return `${quantity.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} ${unitLabel(unit)}`;
+}
+
 export default function AutoPlanModal({
   result,
+  gapFill,
   dayLabel,
   planType,
   expiredIgnoredCount = 0,
@@ -22,16 +32,30 @@ export default function AutoPlanModal({
   onClose,
 }: {
   result: AutoPlanResult;
+  /** Sugestões de receitas/ingredientes da dispensa para bater a meta. */
+  gapFill?: GapFillResult;
   dayLabel: string;
   planType: PlanType;
   /** Ingredientes desconsiderados por só terem itens vencidos na dispensa. */
   expiredIgnoredCount?: number;
-  onApply: () => void;
+  onApply: (selectedSuggestionIds: string[]) => void;
   onClose: () => void;
 }) {
   const { slots, makeableCount, filledCount } = result;
   const emptySlots = slots.length - filledCount;
   const nothingToPlan = makeableCount === 0;
+
+  const suggestions = gapFill?.suggestions ?? [];
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const toggle = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const canApply = filledCount > 0 || selected.size > 0;
 
   return (
     <div
@@ -127,15 +151,21 @@ export default function AutoPlanModal({
                 );
               })}
             </ul>
-
-            <div className="mt-3 flex gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-200">
-              <Icon name="alert-triangle" className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>
-                Isto <strong>substitui</strong> tudo o que já está neste dia. Depois você pode
-                ajustar as quantidades para a meta.
-              </span>
-            </div>
           </>
+        )}
+
+        {gapFill && suggestions.length > 0 && (
+          <GapSuggestions gap={gapFill} selected={selected} onToggle={toggle} />
+        )}
+
+        {(filledCount > 0 || suggestions.length > 0) && (
+          <div className="mt-3 flex gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-200">
+            <Icon name="alert-triangle" className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>
+              Isto <strong>substitui</strong> tudo o que já está neste dia. Depois você pode
+              ajustar as quantidades para a meta.
+            </span>
+          </div>
         )}
 
         <div className="mt-4 flex justify-end gap-2">
@@ -148,14 +178,97 @@ export default function AutoPlanModal({
           </button>
           <button
             type="button"
-            onClick={onApply}
-            disabled={filledCount === 0}
+            onClick={() => onApply([...selected])}
+            disabled={!canApply}
             className="rounded-full bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50 dark:bg-brand-600 dark:hover:bg-brand-500"
           >
-            Aplicar (substitui o dia)
+            {selected.size > 0
+              ? `Aplicar (+${selected.size} ${selected.size === 1 ? 'sugestão' : 'sugestões'})`
+              : 'Aplicar (substitui o dia)'}
           </button>
         </div>
       </div>
     </div>
+  );
+}
+
+function gapSummary(proteinGap: number, calorieGap: number): string {
+  const parts: string[] = [];
+  if (proteinGap > 0) parts.push(`${round(proteinGap)} g de proteína`);
+  if (calorieGap > 0) parts.push(`${round(calorieGap)} kcal`);
+  return parts.join(' e ');
+}
+
+function GapSuggestions({
+  gap,
+  selected,
+  onToggle,
+}: {
+  gap: GapFillResult;
+  selected: Set<string>;
+  onToggle: (id: string) => void;
+}) {
+  return (
+    <section className="mt-4">
+      <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        Sugestões para bater a meta
+      </h3>
+      <p className="mb-2 text-[11px] text-zinc-400 dark:text-zinc-500">
+        Faltam {gapSummary(gap.proteinGap, gap.calorieGap)}. Marque o que quer incluir — entra na
+        ceia e você pode reposicionar depois.
+      </p>
+      <ul className="space-y-1.5">
+        {gap.suggestions.map((s) => (
+          <SuggestionRow
+            key={s.id}
+            suggestion={s}
+            checked={selected.has(s.id)}
+            onToggle={() => onToggle(s.id)}
+          />
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function SuggestionRow({
+  suggestion,
+  checked,
+  onToggle,
+}: {
+  suggestion: GapSuggestion;
+  checked: boolean;
+  onToggle: () => void;
+}) {
+  const { kind, label, quantity, unit, macros, expiringConsumed, earliestDays } = suggestion;
+  const hint = expiringConsumed > 0 ? expiryHint(earliestDays) : null;
+  return (
+    <li>
+      <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={onToggle}
+          className="h-4 w-4 shrink-0 accent-brand-500"
+        />
+        <Icon
+          name={kind === 'recipe' ? 'chef-hat' : 'carrot'}
+          className="h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-500"
+        />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate font-medium">{label}</span>
+          <span className="block text-[11px] text-zinc-400 dark:text-zinc-500">
+            {portionLabel(quantity, unit)} · +{round(macros.protein)} g prot · +
+            {round(macros.calories)} kcal
+          </span>
+        </span>
+        {hint && (
+          <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+            <Icon name="alert-triangle" className="h-3 w-3" />
+            {hint}
+          </span>
+        )}
+      </label>
+    </li>
   );
 }
