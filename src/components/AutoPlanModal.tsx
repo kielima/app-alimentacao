@@ -219,6 +219,11 @@ function SlotRow({
       </div>
       {hasFill && (
         <ul className="space-y-1 px-2 pb-2">
+          {slot.meal && (
+            <li className="px-1 pt-1 text-[11px] text-zinc-400 dark:text-zinc-500">
+              + complementar:
+            </li>
+          )}
           {slot.fillItems.map((f) => (
             <FillRow
               key={f.key}
