@@ -15,6 +15,12 @@ import { uniqueSlug } from '../utils/slug';
 import NutritionTable from '../components/NutritionTable';
 import TrashIcon from '../components/TrashIcon';
 import Icon from '../components/Icon';
+import { useAllRecipes } from '../data/recipes';
+import { useRecipeCategories } from '../data/recipeCategories';
+import { useAllMeals } from '../data/meals';
+import { getMealSlots } from '../types/meal';
+import type { MealItemRef } from '../types/meal';
+import { MEAL_TYPES } from '../types/mealPlan';
 import type { PantryItem } from '../types/pantry';
 import type { Unit } from '../types/ingredient';
 
@@ -78,6 +84,9 @@ export default function DispensaForm() {
   const pantryItems = usePantryItems();
   const shoppingItems = useShoppingItems();
   const markets = useMarkets();
+  const allRecipes = useAllRecipes();
+  const recipeCategories = useRecipeCategories();
+  const allMeals = useAllMeals();
   const knownStores = useMemo(() => {
     const fromItems = [...pantryItems, ...shoppingItems]
       .map((i) => i.store)
@@ -125,6 +134,35 @@ export default function DispensaForm() {
       setStoreSelect('__outro__');
     }
   }, [knownStores]); // intentionally only runs when knownStores changes (first load)
+
+  const ing = useMemo(
+    () => (mode === 'food' && state.ingredient_id ? findIngredientById(state.ingredient_id) : undefined),
+    [mode, state.ingredient_id],
+  );
+
+  const recipesUsingIngredient = useMemo(() => {
+    if (!ing) return [];
+    return allRecipes
+      .filter((r) => {
+        const inMain = r.ingredients?.some((i) => i.ingredient_id === ing.id);
+        const inMolho = r.ingredients_molho?.some((i) => i.ingredient_id === ing.id);
+        return inMain || inMolho;
+      })
+      .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+  }, [allRecipes, ing]);
+
+  const mealsUsingIngredient = useMemo(() => {
+    if (!ing) return [];
+    const recipeIds = new Set(recipesUsingIngredient.map((r) => r.id));
+    const refMatches = (ref: MealItemRef) =>
+      (ref.kind === 'ingredient' && ref.ingredient_id === ing.id) ||
+      (ref.kind === 'recipe' && !!ref.recipe_id && recipeIds.has(ref.recipe_id));
+    return allMeals
+      .filter((m) =>
+        m.items.some((it) => refMatches(it) || it.substitutes?.some(refMatches)),
+      )
+      .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+  }, [allMeals, ing, recipesUsingIngredient]);
 
   if (editing && !original) {
     return (
@@ -376,17 +414,65 @@ export default function DispensaForm() {
         />
       </Field>
 
-      {mode === 'food' && state.ingredient_id && (() => {
-        const ing = findIngredientById(state.ingredient_id);
-        return ing ? (
-          <section className="mt-2 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-              Tabela Nutricional
-            </h2>
-            <NutritionTable ingredient={ing} />
-          </section>
-        ) : null;
-      })()}
+      {ing && (
+        <section className="mt-2 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            Tabela Nutricional
+          </h2>
+          <NutritionTable ingredient={ing} />
+        </section>
+      )}
+
+      {recipesUsingIngredient.length > 0 && (
+        <section className="mt-2 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            Receitas com este ingrediente ({recipesUsingIngredient.length})
+          </h2>
+          <ul className="space-y-1.5">
+            {recipesUsingIngredient.map((r) => {
+              const cat = recipeCategories.find((c) => c.id === r.category);
+              return (
+                <li key={r.id}>
+                  <Link
+                    to={`/receitas/${r.id}`}
+                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  >
+                    <Icon name={cat?.icon ?? 'utensils'} className="h-5 w-5 shrink-0" />
+                    <span className="min-w-0 flex-1 truncate">{r.name}</span>
+                    <span className="text-zinc-400 dark:text-zinc-500">›</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
+      {mealsUsingIngredient.length > 0 && (
+        <section className="mt-2 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            Refeições com este ingrediente ({mealsUsingIngredient.length})
+          </h2>
+          <ul className="space-y-1.5">
+            {mealsUsingIngredient.map((m) => {
+              const firstSlot = getMealSlots(m)[0];
+              const slotDef = firstSlot ? MEAL_TYPES.find((t) => t.value === firstSlot) : undefined;
+              return (
+                <li key={m.id}>
+                  <Link
+                    to={`/refeicoes/${m.id}`}
+                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  >
+                    <Icon name={slotDef?.icon ?? 'utensils'} className="h-5 w-5 shrink-0" />
+                    <span className="min-w-0 flex-1 truncate">{m.name}</span>
+                    <span className="text-zinc-400 dark:text-zinc-500">›</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       <Link
         to="/dispensa"
