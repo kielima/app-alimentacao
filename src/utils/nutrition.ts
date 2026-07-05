@@ -121,17 +121,37 @@ export function computeNutrition(items: NutritionItem[]): NutritionBreakdown {
 }
 
 /**
+ * Peso total (g) implícito pelas quantidades/porções dos ingredientes de uma
+ * receita (inclui `ingredients` + `ingredients_molho`). Usado tanto para achar
+ * a nutrição por 100g da receita quanto para exibir o peso na tela da receita.
+ */
+export function recipeTotalWeightG(recipe: Recipe): number {
+  const all = [...(recipe.ingredients ?? []), ...(recipe.ingredients_molho ?? [])];
+  let totalWeight = 0;
+  for (const raw of all) {
+    const ing = activeIngredient(raw);
+    if (!ing.ingredient_id || ing.quantity == null || !ing.unit) continue;
+    const ingredient = findIngredientById(ing.ingredient_id);
+    const base = quantityToGrams(ing.quantity, ing.unit, ingredient?.serving_size_g);
+    if (base === null) continue;
+    totalWeight += base;
+  }
+  return totalWeight;
+}
+
+/**
  * Calcula nutrição da receita por 100g, a partir dos ingredientes vinculados
- * que tenham unidade g/ml e dados nutricionais. Retorna null se não der
- * para computar.
+ * (principais + molho) que tenham unidade g/ml (ou porção padrão definida) e
+ * dados nutricionais. Retorna null se não der para computar.
  */
 export function recipeNutritionPer100g(
   recipe: Recipe,
 ): Partial<Record<keyof NutritionPer100, number>> | null {
-  if (!recipe.ingredients || recipe.ingredients.length === 0) return null;
+  const all = [...(recipe.ingredients ?? []), ...(recipe.ingredients_molho ?? [])];
+  if (all.length === 0) return null;
   const totals: Partial<Record<keyof NutritionPer100, number>> = {};
   let totalWeight = 0;
-  for (const raw of recipe.ingredients) {
+  for (const raw of all) {
     const ing = activeIngredient(raw);
     if (!ing.ingredient_id || ing.quantity == null || !ing.unit) continue;
     const ingredient = findIngredientById(ing.ingredient_id);
