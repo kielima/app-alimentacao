@@ -21,6 +21,7 @@ import { useAllRecipes } from '../data/recipes';
 import { useRecipeCategories } from '../data/recipeCategories';
 import { useAllMeals } from '../data/meals';
 import { getMealSlots } from '../types/meal';
+import type { MealItemRef } from '../types/meal';
 import { MEAL_TYPES } from '../types/mealPlan';
 import { ingredientNutritionSource, type NutritionPer100 } from '../types/ingredient';
 
@@ -152,13 +153,12 @@ export default function IngredienteDetalhe() {
   const mealsUsingIngredient = useMemo(() => {
     if (!ingredient) return [];
     const recipeIds = new Set(recipesUsingIngredient.map((r) => r.id));
+    const refMatches = (ref: MealItemRef) =>
+      (ref.kind === 'ingredient' && ref.ingredient_id === ingredient.id) ||
+      (ref.kind === 'recipe' && !!ref.recipe_id && recipeIds.has(ref.recipe_id));
     return allMeals
       .filter((m) =>
-        m.items.some(
-          (it) =>
-            (it.kind === 'ingredient' && it.ingredient_id === ingredient.id) ||
-            (it.kind === 'recipe' && it.recipe_id && recipeIds.has(it.recipe_id)),
-        ),
+        m.items.some((it) => refMatches(it) || it.substitutes?.some(refMatches)),
       )
       .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
   }, [allMeals, ingredient, recipesUsingIngredient]);
