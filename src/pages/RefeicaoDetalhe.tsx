@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useMemo } from 'react';
 import HeaderSlot from '../components/HeaderSlot';
 import Icon from '../components/Icon';
+import NutritionEstimate from '../components/NutritionEstimate';
 import { findIngredientById } from '../data/ingredients';
 import { findRecipeById } from '../data/recipes';
 import { upsertUserMeal, useUserMeals } from '../data/userMeals';
@@ -139,6 +140,8 @@ export default function RefeicaoDetalhe() {
           )}
         </div>
       )}
+
+      <NutritionEstimate nutrition={nutrition} totalLabel="da refeição" itemNoun="item(ns)" />
 
       <section className="mb-4">
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">

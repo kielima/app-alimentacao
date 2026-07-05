@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import Icon from '../components/Icon';
+import NutritionEstimate from '../components/NutritionEstimate';
 import TrashIcon from '../components/TrashIcon';
 import { isSeedRecipe } from '../data/recipes';
 import { useRecipeCategories } from '../data/recipeCategories';
@@ -14,11 +15,6 @@ import { upsertShoppingItem } from '../data/shoppingList';
 import { usePantryItems } from '../data/pantry';
 import { recipeCategoryIds, type Recipe, type RecipeIngredient } from '../types/recipe';
 
-function fmt(value: number | undefined, digits = 0): string {
-  if (value === undefined) return '—';
-  return value.toLocaleString('pt-BR', { maximumFractionDigits: digits });
-}
-
 export default function ReceitaDetalhe() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -30,7 +26,6 @@ export default function ReceitaDetalhe() {
   );
   const nutrition = useRecipeNutrition(recipe);
   const categories = useRecipeCategories();
-  const [showSkipped, setShowSkipped] = useState(false);
   const pantryItems = usePantryItems();
   const pantryIngredientIds = useMemo(
     () => new Set(pantryItems.filter((p) => p.ingredient_id).map((p) => p.ingredient_id as string)),
@@ -277,60 +272,7 @@ export default function ReceitaDetalhe() {
         </Section>
       )}
 
-      {nutrition && nutrition.counted > 0 && (
-        <Section title="Nutrição (estimada)">
-          <table className="w-full text-sm">
-            <tbody>
-              {[
-                { key: 'calories', label: 'Calorias', unit: 'kcal' },
-                { key: 'protein', label: 'Proteínas', unit: 'g' },
-                { key: 'carbs', label: 'Carboidratos', unit: 'g' },
-                { key: 'fat', label: 'Gorduras', unit: 'g' },
-                { key: 'fiber', label: 'Fibras', unit: 'g' },
-                { key: 'sodium', label: 'Sódio', unit: 'mg' },
-              ].map(({ key, label, unit }) => (
-                <tr
-                  key={key}
-                  className="border-b border-zinc-100 last:border-0 dark:border-zinc-800/60"
-                >
-                  <td className="py-1.5 text-zinc-600 dark:text-zinc-300">{label}</td>
-                  <td className="py-1.5 text-right font-medium">
-                    {fmt(nutrition.totals[key as keyof typeof nutrition.totals], 1)} {unit}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <p className="mt-3 text-[11px] text-zinc-500 dark:text-zinc-400">
-            Total da receita inteira somando {nutrition.counted} ingrediente(s) com dados.
-            {nutrition.skipped > 0 && (
-              <>
-                {' '}
-                <button
-                  type="button"
-                  onClick={() => setShowSkipped((s) => !s)}
-                  className="inline-flex items-center gap-1 text-brand-600 hover:underline dark:text-brand-400"
-                >
-                  <Icon
-                    name={showSkipped ? 'chevron-down' : 'chevron-right'}
-                    className="h-3.5 w-3.5"
-                  />{' '}
-                  {nutrition.skipped} ignorado(s)
-                </button>
-              </>
-            )}
-          </p>
-          {showSkipped && nutrition.skipped > 0 && (
-            <ul className="mt-2 space-y-1 text-[11px] text-zinc-500 dark:text-zinc-400">
-              {nutrition.skippedReasons.map((s, i) => (
-                <li key={i}>
-                  <span className="text-zinc-700 dark:text-zinc-300">{s.raw}</span> — {s.reason}
-                </li>
-              ))}
-            </ul>
-          )}
-        </Section>
-      )}
+      <NutritionEstimate nutrition={nutrition} totalLabel="da receita inteira" />
 
       {(recipe.ingredients?.length ?? 0) === 0 &&
         (recipe.ingredients_molho?.length ?? 0) === 0 &&
