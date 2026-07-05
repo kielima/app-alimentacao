@@ -1,10 +1,15 @@
 import { createFirestoreDocStore } from '../utils/createFirestoreDocStore';
 import type { DayOfWeek, PlanType } from '../types/mealPlan';
 
-// Leitura (somente) da escolha de treino por dia que o app de Ritual guarda em
-// `users/{uid}/dados/tiposTreino` (mesmo projeto/uid). Serve para o plano de
-// comida acompanhar automaticamente o dia: TREINO → training_day (pré/pós-treino);
-// FOLGA/sem treino → rest_day (lanche da tarde).
+// Leitura E ESCRITA da escolha de treino por dia, guardada em
+// `users/{uid}/dados/tiposTreino` (mesmo projeto/uid do app de Ritual). Serve
+// para o plano de comida acompanhar automaticamente o dia: TREINO → training_day
+// (pré/pós-treino); FOLGA/sem treino → rest_day (lanche da tarde).
+//
+// A sincronização é BIDIRECIONAL: o ritual escreve aqui ao escolher o treino do
+// dia, e este app também escreve de volta ao alternar Treino/Descanso (ver
+// `setPlanTypeForDay`). O ritual escuta este doc na nuvem e, ao virar 'folga',
+// limpa os blocos de academia/natação e reescalona o despertador.
 
 export type TipoTreino = 'natacao' | 'academia' | 'folga';
 export type DiaSemana = 'dom' | 'seg' | 'ter' | 'qua' | 'qui' | 'sex' | 'sab';
@@ -37,8 +42,8 @@ const store = createFirestoreDocStore<TiposTreino>({
       return null;
     }
   },
-  // Somente leitura aqui — o ritual é quem escreve. merge() existe só para
-  // satisfazer a API do store.
+  // Envelope `{ json }` idêntico ao que o ritual grava (espelharNuvem), para que
+  // os dois apps leiam/escrevam exatamente o mesmo doc.
   merge: (value) => ({ json: JSON.stringify(value) }),
 });
 
@@ -59,4 +64,23 @@ export function planTypeForDay(
   const dia = diaSemanaDoDayOfWeek(day);
   const tipo = tipos?.[dia] ?? TIPO_TREINO_PADRAO[dia];
   return tipo && tipo !== 'folga' ? 'training_day' : 'rest_day';
+}
+
+// Escreve de volta a escolha de treino/descanso do dia no doc compartilhado
+// `users/{uid}/dados/tiposTreino`, para o ritual reagir (limpar execução no dia
+// de descanso e reescalonar o despertador).
+//
+// DESCANSO → 'folga'. TREINO → como o mapa não guarda se o dia era academia ou
+// natação, restauramos o PADRÃO daquele dia da semana (TIPO_TREINO_PADRAO);
+// domingo, que não tem padrão, cai em 'academia'. O usuário refina o tipo/horário
+// exatos no app de ritual depois, se quiser.
+export function setPlanTypeForDay(
+  day: DayOfWeek,
+  plan: PlanType,
+  tipos: TiposTreino | null,
+): void {
+  const dia = diaSemanaDoDayOfWeek(day);
+  const next: TiposTreino = { ...(tipos ?? {}) };
+  next[dia] = plan === 'rest_day' ? 'folga' : TIPO_TREINO_PADRAO[dia] ?? 'academia';
+  store.set(next);
 }

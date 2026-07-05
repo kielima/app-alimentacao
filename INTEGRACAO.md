@@ -16,6 +16,15 @@ os próprios dados em `users/{uid}/...` e enxerga os do outro, sem backend novo.
    ritual usa: `users/{uid}/dados/aguaIngerida` e `users/{uid}/dados/metaAgua`
    (formato envelope `{ json }`), via `src/data/hydration.ts`. Um copo registrado
    aqui aparece na barra de água do ritual ao vivo, e vice-versa.
+3. **Treino/descanso bidirecional** — A escolha de treino por dia mora em
+   `users/{uid}/dados/tiposTreino` (mapa `dia → 'academia'|'natacao'|'folga'`, onde
+   `folga` = descanso), escrita pelo ritual. Este app já **lia** esse dado para variar
+   o plano automaticamente (treino → `training_day` com pré/pós-treino; folga →
+   `rest_day` com lanche da tarde) e agora **também escreve de volta**: o botão
+   Treino/Descanso do cabeçalho do Plano grava a escolha via `setPlanTypeForDay`
+   (`src/data/treino.ts`). Ao marcar **descanso**, o dia vira `folga` e o ritual
+   limpa a execução de academia/natação daquele dia (e reescalona os alarmes);
+   ao marcar **treino**, restaura o treino padrão do dia da semana.
 
 ## Passos para ativar (uma vez)
 
