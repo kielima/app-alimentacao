@@ -14,6 +14,9 @@ export function getCategoryLabel(value: string): string {
   return preset?.label ?? value;
 }
 
+/** De onde vieram os valores da tabela nutricional de um ingrediente. */
+export type NutritionSource = 'photo' | 'taco' | 'tbca' | 'off' | 'ai';
+
 export interface NutritionPer100 {
   calories: number;
   protein: number;
@@ -44,6 +47,22 @@ export interface Ingredient {
   tbca_code?: string;
   taco_id?: string;
   off_barcode?: string;
+  /** Origem registada da tabela nutricional (foto/IA além de TACO/TBCA/OFF). */
+  nutrition_source?: NutritionSource;
+}
+
+/**
+ * Resolve a fonte da tabela nutricional. Prefere o campo explícito
+ * `nutrition_source`; para dados antigos sem ele, infere de TACO/TBCA/OFF pelo
+ * respetivo id. Devolve null quando há tabela sem origem conhecida (ex.: foto/IA
+ * gravada antes deste campo existir) — esses casos vão para "Dados a completar".
+ */
+export function ingredientNutritionSource(i: Ingredient): NutritionSource | null {
+  if (i.nutrition_source) return i.nutrition_source;
+  if (i.tbca_code) return 'tbca';
+  if (i.taco_id) return 'taco';
+  if (i.off_barcode) return 'off';
+  return null;
 }
 
 export interface IngredientsSeed {

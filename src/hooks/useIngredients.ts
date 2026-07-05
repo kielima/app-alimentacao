@@ -2,13 +2,13 @@ import { useMemo } from 'react';
 import { useAllIngredients } from '../data/ingredients';
 import { matches } from '../utils/search';
 import { createUIStore } from '../utils/persistentUIState';
-import type { Ingredient } from '../types/ingredient';
+import { ingredientNutritionSource, type Ingredient } from '../types/ingredient';
 
 export type IngredientFilter = 'todos' | 'marcas' | 'genericos' | 'a-verificar' | 'revisar';
 
 export function ingredientNeedsReview(i: Ingredient): boolean {
   if (!i.nutrition_per_100) return true;
-  return !i.tbca_code && !i.taco_id && !i.off_barcode;
+  return ingredientNutritionSource(i) == null;
 }
 
 interface UseIngredientsOptions {

@@ -22,7 +22,7 @@ import { useRecipeCategories } from '../data/recipeCategories';
 import { useAllMeals } from '../data/meals';
 import { getMealSlots } from '../types/meal';
 import { MEAL_TYPES } from '../types/mealPlan';
-import type { NutritionPer100 } from '../types/ingredient';
+import { ingredientNutritionSource, type NutritionPer100 } from '../types/ingredient';
 
 const macroLabels: { key: keyof NutritionPer100; label: string; unit: string }[] = [
   { key: 'calories', label: 'Calorias', unit: 'kcal' },
@@ -191,6 +191,7 @@ export default function IngredienteDetalhe() {
   }
 
   const unitSuffix = ingredient.default_unit === 'ml' ? 'ml' : 'g';
+  const nutritionSource = ingredientNutritionSource(ingredient);
 
   return (
     <div className="mx-auto max-w-6xl px-4 pt-2 pb-6">
@@ -257,11 +258,7 @@ export default function IngredienteDetalhe() {
             {unitSuffix} ({ingredient.serving_description})
           </p>
         )}
-        {(!ingredient.nutrition_per_100 ||
-          (ingredient.needs_review &&
-            !ingredient.tbca_code &&
-            !ingredient.taco_id &&
-            !ingredient.off_barcode)) && (
+        {(!ingredient.nutrition_per_100 || (ingredient.needs_review && !nutritionSource)) && (
           <p className="mt-2 inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-1 text-xs text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
             <Icon name="alert-triangle" className="h-4 w-4" />
             Valores nutricionais ainda em revisão
@@ -368,9 +365,9 @@ export default function IngredienteDetalhe() {
           </div>
         )}
 
-        {(ingredient.tbca_code || ingredient.taco_id || ingredient.off_barcode) && (
+        {nutritionSource && (
           <div className="mt-4 space-y-2 border-t border-zinc-200 pt-3 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-            {ingredient.taco_id && (
+            {nutritionSource === 'taco' && (
               <p>
                 <Icon name="utensils" className="mr-1 inline-block h-4 w-4 align-text-bottom" />
                 Composição nutricional da{' '}
@@ -385,7 +382,7 @@ export default function IngredienteDetalhe() {
                 (4ª ed., NEPA/UNICAMP).
               </p>
             )}
-            {ingredient.tbca_code && (
+            {nutritionSource === 'tbca' && (
               <p>
                 <Icon name="utensils" className="mr-1 inline-block h-4 w-4 align-text-bottom" />
                 Composição nutricional baseada na{' '}
@@ -397,10 +394,10 @@ export default function IngredienteDetalhe() {
                 >
                   TBCA — Tabela Brasileira de Composição de Alimentos
                 </a>{' '}
-                (USP/FoRC), código <code className="font-mono">{ingredient.tbca_code}</code>.
+                (USP/FoRC){ingredient.tbca_code ? <>, código <code className="font-mono">{ingredient.tbca_code}</code></> : null}.
               </p>
             )}
-            {ingredient.off_barcode && (
+            {nutritionSource === 'off' && ingredient.off_barcode && (
               <p>
                 <Icon name="tag" className="mr-1 inline-block h-4 w-4 align-text-bottom" />
                 Dados do rótulo via{' '}
@@ -413,6 +410,19 @@ export default function IngredienteDetalhe() {
                   Open Food Facts
                 </a>
                 .
+              </p>
+            )}
+            {nutritionSource === 'photo' && (
+              <p>
+                <Icon name="upload" className="mr-1 inline-block h-4 w-4 align-text-bottom" />
+                Valores lidos do rótulo por foto (leitura automática por IA) — confira se estiverem
+                errados.
+              </p>
+            )}
+            {nutritionSource === 'ai' && (
+              <p>
+                <Icon name="sparkles" className="mr-1 inline-block h-4 w-4 align-text-bottom" />
+                Estimativa gerada por IA — valores aproximados, confira antes de usar.
               </p>
             )}
           </div>

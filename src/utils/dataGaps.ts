@@ -1,4 +1,4 @@
-import type { Ingredient } from '../types/ingredient';
+import { ingredientNutritionSource, type Ingredient } from '../types/ingredient';
 import type { Meal } from '../types/meal';
 import type { Recipe } from '../types/recipe';
 import type { PantryItem } from '../types/pantry';
@@ -6,6 +6,7 @@ import type { PantryItem } from '../types/pantry';
 /**
  * Detecta dados faltantes que atrapalham o plano:
  *  - ingredientes sem tabela nutricional (`nutrition_per_100`);
+ *  - ingredientes com tabela mas sem fonte registada (foto/IA/base);
  *  - ingredientes sem porção padrão (`serving_size_g`) quando são usados com
  *    uma medida que precisa dela (unidade, fatia, xícara, colher…);
  *  - itens de refeições/receitas sem quantidade;
@@ -31,6 +32,8 @@ export interface MealGap {
 
 export interface DataGaps {
   ingredientsNoNutrition: Ingredient[];
+  /** Têm tabela nutricional mas sem fonte registada (nem foto/IA/base). */
+  ingredientsNoSource: Ingredient[];
   ingredientsNoServing: ServingGap[];
   recipeGaps: RecipeGap[];
   mealGaps: MealGap[];
@@ -83,6 +86,9 @@ export function collectDataGaps(
   }
 
   const ingredientsNoNutrition = ingredients.filter((i) => !i.nutrition_per_100).sort(byName);
+  const ingredientsNoSource = ingredients
+    .filter((i) => i.nutrition_per_100 && ingredientNutritionSource(i) == null)
+    .sort(byName);
   const ingredientsNoServing: ServingGap[] = ingredients
     .filter((i) => (i.serving_size_g == null || i.serving_size_g <= 0) && usedWithServingUnit.has(i.id))
     .sort(byName)
@@ -115,6 +121,7 @@ export function collectDataGaps(
 
   const total =
     ingredientsNoNutrition.length +
+    ingredientsNoSource.length +
     ingredientsNoServing.length +
     recipeGaps.length +
     mealGaps.length +
@@ -122,6 +129,7 @@ export function collectDataGaps(
 
   return {
     ingredientsNoNutrition,
+    ingredientsNoSource,
     ingredientsNoServing,
     recipeGaps,
     mealGaps,
