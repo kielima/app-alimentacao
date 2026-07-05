@@ -192,7 +192,7 @@ export default function Receitas() {
           Nenhuma receita encontrada com esses filtros.
         </p>
       ) : (
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+        <ul className="grid grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))] gap-3">
           {list.map((r) => (
             <RecipeCard
               key={r.id}
