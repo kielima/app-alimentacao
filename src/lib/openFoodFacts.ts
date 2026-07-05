@@ -181,12 +181,43 @@ const SEARCH_FIELDS = [
   'serving_size', 'ingredients_text', 'ingredients_text_pt', 'allergens', 'nutriments',
 ].join(',');
 
-/** Quantos tokens do nome buscado aparecem no nome do produto (0–1). */
-function nameOverlap(query: string, productName: string): number {
-  const q = normalize(query).split(/[^a-z0-9]+/).filter((t) => t.length >= 2);
-  if (q.length === 0) return 0;
-  const p = new Set(normalize(productName).split(/[^a-z0-9]+/).filter(Boolean));
-  return q.filter((t) => p.has(t)).length / q.length;
+/** Tokens de conteúdo de um texto (sem acento, mín. 2 caracteres). */
+function nameTokens(s: string): string[] {
+  return normalize(s)
+    .split(/[^a-z0-9]+/)
+    .filter((t) => t.length >= 2);
+}
+
+/**
+ * Pontua a relevância de um produto para o termo buscado. Usa três sinais:
+ *  - nome idêntico ao termo (ex.: produto "Catupiry");
+ *  - marca igual ao termo (ex.: requeijão da marca "Catupiry");
+ *  - "foco": quanto do NOME do produto é o termo — nomes de pratos compostos
+ *    ("Pizza de Lombo com Catupiry") têm foco baixo e são despriorizados.
+ */
+function scoreProduct(
+  queryTokens: string[],
+  product: OffProduct,
+): { score: number; accept: boolean } {
+  const nt = nameTokens(product.name || '');
+  const nameSet = new Set(nt);
+  const brandSet = new Set(nameTokens(product.brands || ''));
+  const matched = queryTokens.filter((t) => nameSet.has(t)).length;
+  const coverage = queryTokens.length ? matched / queryTokens.length : 0;
+  const focus = nt.length ? matched / nt.length : 0;
+  const brandMatch = queryTokens.some((t) => brandSet.has(t));
+  const exactName = nt.length > 0 && nt.join(' ') === queryTokens.join(' ');
+
+  // O termo precisa aparecer no nome OU na marca do produto.
+  if (matched === 0 && !brandMatch) return { score: 0, accept: false };
+
+  const score =
+    (exactName ? 100 : 0) + (brandMatch ? 10 : 0) + focus * 5 + coverage * 2;
+  // Aceita só quando é claramente o ingrediente: nome idêntico, marca igual, ou
+  // o termo domina o nome do produto. Caso contrário (ex.: pizza que só cita
+  // "catupiry"), deixa o chamador cair para foto/IA.
+  const accept = exactName || brandMatch || focus >= 0.5;
+  return { score, accept };
 }
 
 /**
@@ -236,18 +267,19 @@ export async function searchByName(
   const products = Array.isArray(json.products) ? json.products : [];
 
   // Só interessam produtos com código e com ao menos um macro.
-  let best: { product: OffProduct; score: number } | null = null;
+  const queryTokens = nameTokens(term);
+  let best: { product: OffProduct; score: number; accept: boolean } | null = null;
   for (const raw of products) {
     const barcode = typeof raw.code === 'string' ? raw.code : String(raw.code ?? '');
     if (!barcode) continue;
     const product = mapProduct(barcode, raw);
     if (!product.nutrition) continue;
-    const score = nameOverlap(term, product.name || '');
-    if (!best || score > best.score) best = { product, score };
+    const { score, accept } = scoreProduct(queryTokens, product);
+    if (!best || score > best.score) best = { product, score, accept };
   }
 
-  // Exige alguma sobreposição de nome para não trazer um produto aleatório.
-  if (!best || best.score < 0.5) return null;
+  // Só devolve quando o melhor candidato é realmente o ingrediente buscado.
+  if (!best || !best.accept) return null;
   return best.product;
 }
 
