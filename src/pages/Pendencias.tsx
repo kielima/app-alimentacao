@@ -273,7 +273,7 @@ function NutritionGapRow({
   return (
     <li className="rounded-xl border border-zinc-200 bg-white px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900">
       <Link
-        to={`/ingredientes/${ingredient.id}/editar`}
+        to={`/ingredientes/${ingredient.id}`}
         className="block truncate text-sm font-medium text-zinc-900 hover:text-brand-600 dark:text-zinc-100 dark:hover:text-brand-400"
       >
         {ingredient.brand ? `${ingredient.brand} — ${ingredient.name}` : ingredient.name}
@@ -424,7 +424,7 @@ function ServingRow({ gap }: { gap: ServingGap }) {
     <li className="rounded-xl border border-zinc-200 bg-white px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900">
       <div className="mb-2 flex items-center gap-2">
         <Link
-          to={`/ingredientes/${ingredient.id}/editar`}
+          to={`/ingredientes/${ingredient.id}`}
           className="min-w-0 flex-1 truncate text-sm font-medium text-zinc-900 hover:text-brand-600 dark:text-zinc-100 dark:hover:text-brand-400"
         >
           {ingredient.brand ? `${ingredient.brand} — ${ingredient.name}` : ingredient.name}
