@@ -8,7 +8,7 @@ import { isSeedRecipe } from '../data/recipes';
 import { useRecipeCategories } from '../data/recipeCategories';
 import { findIngredientById } from '../data/ingredients';
 import { useRecipeNutrition } from '../hooks/useRecipeNutrition';
-import { activeIngredient } from '../utils/nutrition';
+import { activeIngredient, recipeTotalWeightG } from '../utils/nutrition';
 import { deleteUserRecipe, getUserRecipeById, upsertUserRecipe, useUserRecipes } from '../data/userRecipes';
 import { hideRecipe } from '../data/hiddenRecipes';
 import { upsertShoppingItem } from '../data/shoppingList';
@@ -26,6 +26,7 @@ export default function ReceitaDetalhe() {
     [userRecipes, id],
   );
   const nutrition = useRecipeNutrition(recipe);
+  const totalWeightG = useMemo(() => (recipe ? recipeTotalWeightG(recipe) : 0), [recipe]);
   const categories = useRecipeCategories();
   const pantryItems = usePantryItems();
   const pantryIngredientIds = useMemo(
@@ -282,7 +283,11 @@ export default function ReceitaDetalhe() {
         </Section>
       )}
 
-      <NutritionEstimate nutrition={nutrition} totalLabel="da receita inteira" />
+      <NutritionEstimate
+        nutrition={nutrition}
+        totalLabel="da receita inteira"
+        totalWeightG={totalWeightG}
+      />
 
       {(recipe.ingredients?.length ?? 0) === 0 &&
         (recipe.ingredients_molho?.length ?? 0) === 0 &&

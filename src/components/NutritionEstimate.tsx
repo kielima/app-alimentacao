@@ -25,10 +25,14 @@ export default function NutritionEstimate({
   nutrition,
   totalLabel,
   itemNoun = 'ingrediente(s)',
+  totalWeightG,
 }: {
   nutrition: NutritionBreakdown | null;
   totalLabel: string;
   itemNoun?: string;
+  /** Peso total (g) implícito pelos itens somados — base usada para escalar
+   *  a nutrição por 100g (ex.: em outras telas, por gramas usadas). */
+  totalWeightG?: number | null;
 }) {
   const [showSkipped, setShowSkipped] = useState(false);
 
@@ -52,7 +56,10 @@ export default function NutritionEstimate({
         </tbody>
       </table>
       <p className="mt-3 text-[11px] text-zinc-500 dark:text-zinc-400">
-        Total {totalLabel} somando {nutrition.counted} {itemNoun} com dados.
+        Total {totalLabel} somando {nutrition.counted} {itemNoun} com dados
+        {totalWeightG != null && totalWeightG > 0
+          ? ` (peso total: ${fmt(totalWeightG, 0)}g).`
+          : '.'}
         {nutrition.skipped > 0 && (
           <>
             {' '}
