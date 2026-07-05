@@ -1,7 +1,7 @@
 import { findIngredientById } from '../data/ingredients';
 import { findRecipeById } from '../data/recipes';
 import { getUserMeals } from '../data/userMeals';
-import { getMealSlots, type Meal, type MealItem } from '../types/meal';
+import { activeMealRef, getMealSlots, type Meal, type MealItem, type MealItemRef } from '../types/meal';
 import type { NutritionPer100 } from '../types/ingredient';
 import { MEAL_TYPES } from '../types/mealPlan';
 import { computeMealItemsNutrition } from './nutrition';
@@ -19,9 +19,9 @@ function fmtNum(value: number | undefined, decimals = 1): string {
   });
 }
 
-function fmtQuantity(item: Pick<MealItem, 'quantity' | 'unit'>): string {
-  if (item.quantity == null) return '—';
-  return `${fmtNum(item.quantity, 2)}${item.unit ? ` ${item.unit}` : ''}`;
+function fmtQuantity(ref: Pick<MealItemRef, 'quantity' | 'unit'>): string {
+  if (ref.quantity == null) return '—';
+  return `${fmtNum(ref.quantity, 2)}${ref.unit ? ` ${ref.unit}` : ''}`;
 }
 
 /** Linha de macros principais a partir de um total de nutrição. */
@@ -34,21 +34,43 @@ function macroLine(totals: Partial<Record<keyof NutritionPer100, number>>): stri
   );
 }
 
-function itemName(item: MealItem): string {
-  if (item.kind === 'recipe' && item.recipe_id) {
-    const recipe = findRecipeById(item.recipe_id);
+function refName(ref: MealItemRef): string {
+  if (ref.kind === 'recipe' && ref.recipe_id) {
+    const recipe = findRecipeById(ref.recipe_id);
     return recipe ? recipe.name : 'Receita não encontrada';
   }
-  if (item.kind === 'ingredient' && item.ingredient_id) {
-    const ing = findIngredientById(item.ingredient_id);
+  if (ref.kind === 'ingredient' && ref.ingredient_id) {
+    const ing = findIngredientById(ref.ingredient_id);
     if (!ing) return 'Ingrediente não encontrado';
     return ing.brand ? `${ing.brand} — ${ing.name}` : ing.name;
   }
   return 'Item sem vínculo';
 }
 
+/** Referências das alternativas não ativas do item, na ordem principal→subs. */
+function inactiveRefs(item: MealItem): MealItemRef[] {
+  if (!item.substitutes || item.substitutes.length === 0) return [];
+  const principal: MealItemRef = {
+    kind: item.kind,
+    recipe_id: item.recipe_id,
+    ingredient_id: item.ingredient_id,
+    quantity: item.quantity,
+    unit: item.unit,
+  };
+  const all = [principal, ...item.substitutes];
+  const activePos = item.active_substitute != null ? item.active_substitute + 1 : 0;
+  return all.filter((_, i) => i !== activePos);
+}
+
+/** Nome do item, com as alternativas (não ativas) anotadas: "X _(ou: Y; Z)_". */
+function itemName(item: MealItem): string {
+  const base = refName(activeMealRef(item));
+  const others = inactiveRefs(item).map(refName);
+  return others.length > 0 ? `${base} _(ou: ${others.join('; ')})_` : base;
+}
+
 function itemKindLabel(item: MealItem): string {
-  return item.kind === 'recipe' ? 'Receita' : 'Ingrediente';
+  return activeMealRef(item).kind === 'recipe' ? 'Receita' : 'Ingrediente';
 }
 
 /** Expande os ingredientes de uma receita como sub-itens de composição. */
@@ -94,22 +116,27 @@ function mealSection(meal: Meal, index: number): string {
       const itemNutri = computeMealItemsNutrition([item]);
       const nutriCell = itemNutri.counted > 0 ? macroLine(itemNutri.totals) : '_sem dados_';
       lines.push(
-        `| ${i + 1} | ${itemName(item)} | ${itemKindLabel(item)} | ${fmtQuantity(item)} | ${nutriCell} |`,
+        `| ${i + 1} | ${itemName(item)} | ${itemKindLabel(item)} | ${fmtQuantity(activeMealRef(item))} | ${nutriCell} |`,
       );
     });
     lines.push('');
 
-    // Detalhamento dos ingredientes de cada receita usada na refeição.
-    const recipeItems = meal.items.filter(
-      (it): it is MealItem & { recipe_id: string } =>
-        it.kind === 'recipe' && !!it.recipe_id && recipeIngredientLines(it.recipe_id).length > 0,
-    );
+    // Detalhamento dos ingredientes de cada receita em uso na refeição
+    // (segue a opção ativa quando o item tem alternativas).
+    const recipeItems = meal.items
+      .map((it) => activeMealRef(it))
+      .filter(
+        (ref): ref is MealItemRef & { recipe_id: string } =>
+          ref.kind === 'recipe' &&
+          !!ref.recipe_id &&
+          recipeIngredientLines(ref.recipe_id).length > 0,
+      );
     if (recipeItems.length > 0) {
       lines.push('#### Ingredientes das receitas');
       lines.push('');
-      for (const item of recipeItems) {
-        lines.push(`- **${itemName(item)}**`);
-        lines.push(...recipeIngredientLines(item.recipe_id));
+      for (const ref of recipeItems) {
+        lines.push(`- **${refName(ref)}**`);
+        lines.push(...recipeIngredientLines(ref.recipe_id));
       }
       lines.push('');
     }

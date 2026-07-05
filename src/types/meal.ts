@@ -2,13 +2,35 @@ import type { MealType } from './mealPlan';
 
 export type MealItemKind = 'recipe' | 'ingredient';
 
-export interface MealItem {
-  id: string;
+/** Referência a uma receita ou ingrediente com quantidade/unidade. Base
+ *  compartilhada entre o item principal de uma refeição e suas alternativas. */
+export interface MealItemRef {
   kind: MealItemKind;
   recipe_id?: string;
   ingredient_id?: string;
   quantity: number | null;
   unit: string | null;
+}
+
+export interface MealItem extends MealItemRef {
+  id: string;
+  /** Alternativas equivalentes a este item (ex.: iogurte grego OU whey). Cada
+   *  uma tem seu próprio tipo/vínculo/quantidade/unidade. */
+  substitutes?: MealItemRef[];
+  /** Índice em `substitutes` da alternativa em uso. Ausente/null = usar o item
+   *  principal (este próprio item). Afeta a nutrição. */
+  active_substitute?: number | null;
+}
+
+/** Resolve a opção "em uso" de um item de refeição com alternativas. Se
+ *  `active_substitute` aponta para uma alternativa válida, retorna-a; caso
+ *  contrário retorna o próprio item principal. É por meio dela que a nutrição
+ *  segue a escolha do usuário. */
+export function activeMealRef(item: MealItem): MealItemRef {
+  const subs = item.substitutes;
+  const idx = item.active_substitute;
+  if (subs && idx != null && idx >= 0 && idx < subs.length) return subs[idx];
+  return item;
 }
 
 export interface Meal {
