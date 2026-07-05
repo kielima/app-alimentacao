@@ -34,9 +34,7 @@ import { optimizeDayPlan, type OptimizeResult } from '../utils/planOptimizer';
 import {
   buildAutoDayPlan,
   pantryAvailability,
-  suggestGapFillers,
   type AutoPlanResult,
-  type GapFillResult,
 } from '../utils/autoPlan';
 import OptimizePlanModal from '../components/OptimizePlanModal';
 import AutoPlanModal from '../components/AutoPlanModal';
@@ -147,7 +145,6 @@ export default function Plano() {
   const dayTarget = useMemo(() => dayTargets(profile, planType), [profile, planType]);
   const [optimizeResult, setOptimizeResult] = useState<OptimizeResult | null>(null);
   const [autoResult, setAutoResult] = useState<AutoPlanResult | null>(null);
-  const [autoGapFill, setAutoGapFill] = useState<GapFillResult | null>(null);
 
   // Disponibilidade da dispensa para montar o plano: casa por ingredient_id
   // (como a tela de receita) e aplica a validade — itens vencidos não contam.
@@ -206,11 +203,10 @@ export default function Plano() {
   };
 
   const handleAutoPlan = () => {
-    const result = buildAutoDayPlan(day, planType, allMeals, pantryExpiryById);
-    setAutoResult(result);
-    setAutoGapFill(
-      suggestGapFillers(
-        result.dayPlan,
+    setAutoResult(
+      buildAutoDayPlan(
+        day,
+        planType,
         allMeals,
         allRecipes,
         allIngredients,
@@ -220,35 +216,38 @@ export default function Plano() {
     );
   };
 
-  const closeAuto = () => {
-    setAutoResult(null);
-    setAutoGapFill(null);
-  };
+  const closeAuto = () => setAutoResult(null);
 
-  const handleApplyAuto = (selectedIds: string[]) => {
+  const handleApplyAuto = (selectedFillKeys: string[]) => {
     if (autoResult) {
-      const extras = (autoGapFill?.suggestions ?? [])
-        .filter((s) => selectedIds.includes(s.id))
-        .map((s) => ({
-          ...newPlanMealItem(s.kind),
-          recipe_id: s.kind === 'recipe' ? s.id : undefined,
-          ingredient_id: s.kind === 'ingredient' ? s.id : undefined,
-          quantity: s.quantity,
-          unit: s.unit,
-        }));
-      let next = autoResult.dayPlan;
-      if (extras.length > 0) {
-        // Anexa as sugestões escolhidas à ceia (presente nas duas variantes);
-        // fallback: último horário. Reposicionável no modo edição.
-        const meals = next.meals;
-        let idx = meals.findIndex((m) => m.meal_type === 'ceia');
-        if (idx < 0) idx = meals.length - 1;
-        next = {
-          ...next,
-          meals: meals.map((m, i) => (i === idx ? { ...m, items: [...m.items, ...extras] } : m)),
-        };
-      }
-      upsertMealPlan(next);
+      const selected = new Set(selectedFillKeys);
+      // Insere os itens escolhidos nos respectivos horários (fillItems carregam
+      // um PlanMealItem de id estável), depois equilibra as quantidades reusando
+      // o otimizador (mesma mecânica do "Ajustar quantidades").
+      const withFills = {
+        ...autoResult.dayPlan,
+        meals: autoResult.dayPlan.meals.map((m) => {
+          const slot = autoResult.slots.find((s) => s.mealType === m.meal_type);
+          const extras =
+            slot?.fillItems.filter((f) => selected.has(f.key)).map((f) => f.planItem) ?? [];
+          return extras.length > 0 ? { ...m, items: [...m.items, ...extras] } : m;
+        }),
+      };
+      const optimized = optimizeDayPlan(withFills.meals, allMeals, dayTarget);
+      const newQty = new Map(optimized.changed.map((i) => [i.itemId, i.suggestedQuantity]));
+      const balanced =
+        newQty.size > 0
+          ? {
+              ...withFills,
+              meals: withFills.meals.map((m) => ({
+                ...m,
+                items: m.items.map((it) =>
+                  newQty.has(it.id) ? { ...it, quantity: newQty.get(it.id) ?? it.quantity } : it,
+                ),
+              })),
+            }
+          : withFills;
+      upsertMealPlan(balanced);
     }
     closeAuto();
   };
@@ -398,7 +397,6 @@ export default function Plano() {
       {autoResult && (
         <AutoPlanModal
           result={autoResult}
-          gapFill={autoGapFill ?? undefined}
           dayLabel={dayLabel}
           planType={planType}
           expiredIgnoredCount={expiredIgnoredCount}

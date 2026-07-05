@@ -4,6 +4,8 @@ import HeaderSlot from '../components/HeaderSlot';
 import SearchableSelect from '../components/SearchableSelect';
 import Icon from '../components/Icon';
 import NutritionFillActions from '../components/NutritionFillActions';
+import MealTypeChips from '../components/MealTypeChips';
+import { type MealType } from '../types/mealPlan';
 import { uniqueSlug } from '../utils/slug';
 import { upsertUserIngredient } from '../data/userIngredients';
 import { allIngredientIds, findIngredientById, useAllIngredients } from '../data/ingredients';
@@ -34,6 +36,7 @@ export default function IngredienteForm() {
   const [brand, setBrand] = useState(existing?.brand ?? '');
   const [unit, setUnit] = useState<Unit>(existing?.default_unit ?? 'g');
   const [category, setCategory] = useState<IngredientCategory | ''>(existing?.category ?? '');
+  const [mealTypes, setMealTypes] = useState<MealType[]>(existing?.meal_types ?? []);
   const [contributeOff, setContributeOff] = useState(Boolean(scannedBarcode));
   const [error, setError] = useState<string | null>(null);
 
@@ -98,8 +101,9 @@ export default function IngredienteForm() {
       brand: brand.trim() || null,
       default_unit: unit,
       category: category || null,
+      meal_types: mealTypes.length ? mealTypes : null,
     };
-  }, [existing, name, brand, unit, category]);
+  }, [existing, name, brand, unit, category, mealTypes]);
 
   if (editing && !existing) {
     return (
@@ -127,6 +131,7 @@ export default function IngredienteForm() {
       brand: brand.trim() || null,
       default_unit: unit,
       category: category || null,
+      meal_types: mealTypes.length ? mealTypes : null,
       nutrition_per_100: existing?.nutrition_per_100 ?? null,
     };
     if (!editing && scannedBarcode) {
@@ -241,6 +246,13 @@ export default function IngredienteForm() {
             if (trimmed) setCategory(trimmed);
           }}
         />
+      </Field>
+
+      <Field label="Slots (opcional)">
+        <MealTypeChips value={mealTypes} onChange={setMealTypes} />
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          Horários em que este ingrediente pode entrar na montagem automática do plano.
+        </p>
       </Field>
 
       {editing && liveIngredient && (

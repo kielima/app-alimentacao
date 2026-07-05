@@ -1,3 +1,5 @@
+import type { MealType } from './mealPlan';
+
 export type Unit = 'g' | 'ml' | 'unit';
 
 export type IngredientCategory = string;
@@ -44,6 +46,9 @@ export interface Ingredient {
   notes?: string;
   ceagesp_slug?: string;
   category?: IngredientCategory | null;
+  /** Horários em que este ingrediente pode entrar na montagem automática do
+   *  plano. Vazio/ausente = serve qualquer horário. */
+  meal_types?: MealType[] | null;
   tbca_code?: string;
   taco_id?: string;
   off_barcode?: string;

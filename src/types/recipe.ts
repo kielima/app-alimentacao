@@ -1,3 +1,5 @@
+import type { MealType } from './mealPlan';
+
 /** IDs das categorias padrão. As categorias são editáveis/criáveis pelo usuário,
  *  então `Recipe.category` é `string`; este union serve apenas de referência
  *  para as categorias semeadas por padrão. */
@@ -35,6 +37,9 @@ export interface Recipe {
   /** IDs de todas as categorias da receita. Uma receita pode pertencer a mais de
    *  uma categoria. Quando ausente/vazio, cai no campo legado `category`. */
   categories?: string[];
+  /** Horários em que esta receita pode entrar na montagem automática do plano.
+   *  Vazio/ausente = serve qualquer horário. */
+  meal_types?: MealType[] | null;
   prep_time_min?: number | null;
   difficulty?: Difficulty | null;
   rating?: Rating | null;

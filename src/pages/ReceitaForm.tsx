@@ -11,6 +11,8 @@ import { upsertUserRecipe } from '../data/userRecipes';
 import { uniqueSlug } from '../utils/slug';
 import { compressImageToDataUrl } from '../utils/image';
 import CategoryChips from '../components/CategoryChips';
+import MealTypeChips from '../components/MealTypeChips';
+import { type MealType } from '../types/mealPlan';
 import {
   recipeCategoryIds,
   type Difficulty,
@@ -78,6 +80,7 @@ function draftKeyFor(id: string | undefined) {
 interface FormState {
   name: string;
   categories: string[];
+  meal_types: MealType[];
   prep_time_min: string;
   difficulty: Difficulty | '';
   rating: Rating | 0;
@@ -118,6 +121,7 @@ function recipeToForm(r: Recipe | undefined, initialName = ''): FormState {
     return {
       name: initialName,
       categories: ['pratos-principais'],
+      meal_types: [],
       prep_time_min: '',
       difficulty: '',
       rating: 0,
@@ -133,6 +137,7 @@ function recipeToForm(r: Recipe | undefined, initialName = ''): FormState {
   return {
     name: r.name,
     categories: recipeCategoryIds(r),
+    meal_types: r.meal_types ?? [],
     prep_time_min: r.prep_time_min?.toString() ?? '',
     difficulty: r.difficulty ?? '',
     rating: r.rating ?? 0,
@@ -227,6 +232,7 @@ function formToRecipe(
     categories: state.categories,
     // `category` (legado) espelha a categoria principal para compatibilidade.
     category: state.categories[0] ?? '',
+    meal_types: state.meal_types.length ? state.meal_types : null,
     prep_time_min: state.prep_time_min ? Number(state.prep_time_min) : null,
     difficulty: state.difficulty || null,
     rating: state.rating || null,
@@ -452,6 +458,16 @@ export default function ReceitaForm() {
             }))
           }
         />
+      </Field>
+
+      <Field label="Slots (opcional)">
+        <MealTypeChips
+          value={state.meal_types}
+          onChange={(meal_types) => setState((s) => ({ ...s, meal_types }))}
+        />
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          Horários em que esta receita pode entrar na montagem automática do plano.
+        </p>
       </Field>
 
       <div className="grid grid-cols-2 gap-3">

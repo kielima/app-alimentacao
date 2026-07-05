@@ -264,6 +264,19 @@ export default function IngredienteDetalhe() {
             Valores nutricionais ainda em revisão
           </p>
         )}
+        {(ingredient.meal_types ?? []).length > 0 && (
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
+            {(ingredient.meal_types ?? []).map((mt) => {
+              const meta = MEAL_TYPES.find((m) => m.value === mt);
+              if (!meta) return null;
+              return (
+                <span key={mt} className="inline-flex items-center gap-1">
+                  <Icon name={meta.icon} className="h-3.5 w-3.5" /> {meta.label}
+                </span>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <section className="mb-4 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
