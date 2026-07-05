@@ -15,6 +15,7 @@ import {
   type ExtractedNutrition,
 } from '../lib/gemini';
 import type { Ingredient } from '../types/ingredient';
+import type { PantryItem } from '../types/pantry';
 import type { ServingGap } from '../utils/dataGaps';
 import { unitLabel } from '../utils/units';
 
@@ -86,21 +87,7 @@ export default function Pendencias() {
             ))}
           </GapSection>
 
-          <GapSection
-            title="Itens da dispensa sem validade"
-            count={gaps.pantryNoExpiry.length}
-            hint="Sem data de validade, não entram no controle de vencimento nem na priorização da montagem automática do plano."
-            emptyWhenZero
-          >
-            {gaps.pantryNoExpiry.map((item) => (
-              <GapRow
-                key={item.id}
-                to={`/dispensa/${item.id}/editar`}
-                title={item.raw_text}
-                subtitle="sem data de validade"
-              />
-            ))}
-          </GapSection>
+          <PantryNoExpirySection items={gaps.pantryNoExpiry} />
         </div>
       )}
     </div>
@@ -134,6 +121,54 @@ function GapSection({
       <p className="mb-2 text-[11px] text-zinc-400 dark:text-zinc-500">{hint}</p>
       <ul className="space-y-1.5">{children}</ul>
     </section>
+  );
+}
+
+function PantryNoExpirySection({ items }: { items: PantryItem[] }) {
+  if (items.length === 0) return null;
+  return (
+    <section>
+      <div className="mb-1 flex items-center gap-2">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          Itens da dispensa sem validade
+        </h2>
+        <span className="rounded-full bg-zinc-100 px-1.5 text-[11px] font-semibold text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+          {items.length}
+        </span>
+      </div>
+      <p className="mb-2 text-[11px] text-zinc-400 dark:text-zinc-500">
+        Sem data de validade, não entram no controle de vencimento nem na priorização da montagem
+        automática do plano.
+      </p>
+      <ul className="grid grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))] gap-3">
+        {items.map((item) => (
+          <PantryGapCard key={item.id} item={item} />
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function PantryGapCard({ item }: { item: PantryItem }) {
+  return (
+    <li>
+      <Link
+        to={`/dispensa/${item.id}/editar`}
+        className="group flex h-full select-none flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white transition-colors hover:border-brand-500 [-webkit-touch-callout:none] dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-400"
+      >
+        <div className="relative aspect-[4/3] w-full overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+          <div className="flex h-full w-full items-center justify-center" aria-hidden>
+            <Icon name="package" className="h-10 w-10 text-zinc-300 dark:text-zinc-600" />
+          </div>
+          <span className="absolute right-1.5 top-1.5 rounded-full bg-amber-100/95 px-2 py-0.5 text-[10px] font-medium text-amber-700 shadow-sm backdrop-blur-sm dark:bg-amber-900/70 dark:text-amber-200">
+            sem validade
+          </span>
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col p-2.5">
+          <p className="line-clamp-2 text-sm font-medium leading-tight">{item.raw_text}</p>
+        </div>
+      </Link>
+    </li>
   );
 }
 

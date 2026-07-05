@@ -205,7 +205,7 @@ export default function Dispensa() {
           Nenhum item nesse filtro.
         </p>
       ) : (
-        <ul className="space-y-2">
+        <ul className="grid grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))] gap-3">
           {list.map((item) => (
             <PantryCard
               key={item.id}
@@ -252,6 +252,12 @@ interface PantryCardProps {
 function PantryCard({ item, onOpen, onSendToList, onLongPress }: PantryCardProps) {
   const longPress = useLongPress(onLongPress, { delay: 450 });
   const status = expiryStatus(item.expiry_date);
+  const subtitle =
+    item.quantity && item.unit
+      ? `${item.quantity} ${unitLabel(item.unit)}`
+      : item.quantity != null
+        ? String(item.quantity)
+        : '';
   return (
     <li>
       <div
@@ -262,35 +268,21 @@ function PantryCard({ item, onOpen, onSendToList, onLongPress }: PantryCardProps
           longPress.onClick(e);
           if (!e.defaultPrevented) onOpen();
         }}
-        className="cursor-pointer select-none rounded-xl border border-zinc-200 bg-white p-3 hover:bg-zinc-50 [-webkit-touch-callout:none] dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800/60"
+        className="group flex h-full cursor-pointer select-none flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white transition-colors hover:border-brand-500 [-webkit-touch-callout:none] dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-400"
       >
-        <div className="flex items-start gap-2">
-          {statusIcon(status) ? (
-            <Icon name={statusIcon(status)!} className={`h-5 w-5 shrink-0 ${statusColor(status)}`} />
-          ) : (
-            <span className={`text-xl leading-none ${statusColor(status)}`} aria-hidden>
-              —
+        <div className="relative aspect-[4/3] w-full overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+          <div className="flex h-full w-full items-center justify-center" aria-hidden>
+            {statusIcon(status) ? (
+              <Icon name={statusIcon(status)!} className={`h-10 w-10 ${statusColor(status)}`} />
+            ) : (
+              <span className={`text-3xl leading-none ${statusColor(status)}`}>—</span>
+            )}
+          </div>
+          {item.kind === 'household' && (
+            <span className="absolute left-1.5 top-1.5 rounded-full bg-amber-100/95 px-2 py-0.5 text-[10px] font-medium text-amber-700 shadow-sm backdrop-blur-sm dark:bg-amber-900/70 dark:text-amber-200">
+              Casa
             </span>
           )}
-          <div className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-medium">{item.raw_text}</span>
-            <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-zinc-500 dark:text-zinc-400">
-              {item.kind === 'household' && (
-                <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
-                  <Icon name="package" className="h-3.5 w-3.5" /> Casa
-                </span>
-              )}
-              <span>
-                {item.quantity && item.unit
-                  ? `${item.quantity} ${unitLabel(item.unit)}`
-                  : item.quantity ?? ''}
-                {item.store && ` · ${item.store}`}
-              </span>
-            </p>
-            <p className={`mt-0.5 text-xs font-medium ${statusColor(status)}`}>
-              {expiryLabel(item.expiry_date)}
-            </p>
-          </div>
           <button
             type="button"
             onPointerDown={(e) => e.stopPropagation()}
@@ -298,12 +290,24 @@ function PantryCard({ item, onOpen, onSendToList, onLongPress }: PantryCardProps
               e.stopPropagation();
               onSendToList();
             }}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-sm leading-none text-zinc-500 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-brand-900/30 dark:hover:text-brand-400"
+            className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-zinc-500 shadow-sm hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-900/80 dark:text-zinc-300 dark:hover:bg-brand-900/40 dark:hover:text-brand-400"
             aria-label="Adicionar à lista de compras"
             title="Adicionar à lista de compras"
           >
-            <Icon name="shopping-cart" className="h-4 w-4" />
+            <Icon name="shopping-cart" className="h-3.5 w-3.5" />
           </button>
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col p-2.5">
+          <p className="line-clamp-2 text-sm font-medium leading-tight">{item.raw_text}</p>
+          {(subtitle || item.store) && (
+            <p className="mt-1 truncate text-xs text-zinc-500 dark:text-zinc-400">
+              {subtitle}
+              {item.store && `${subtitle ? ' · ' : ''}${item.store}`}
+            </p>
+          )}
+          <p className={`mt-auto pt-1 text-xs font-medium ${statusColor(status)}`}>
+            {expiryLabel(item.expiry_date)}
+          </p>
         </div>
       </div>
     </li>
