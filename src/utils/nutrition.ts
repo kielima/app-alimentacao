@@ -2,7 +2,7 @@ import { findIngredientById } from '../data/ingredients';
 import { findMealById } from '../data/meals';
 import { findRecipeById } from '../data/recipes';
 import type { NutritionPer100 } from '../types/ingredient';
-import type { Meal, MealItem } from '../types/meal';
+import { activeMealRef, type Meal, type MealItem } from '../types/meal';
 import type { PlanMealItem } from '../types/mealPlan';
 import type { Recipe, RecipeIngredient } from '../types/recipe';
 
@@ -183,18 +183,20 @@ function accumulateMealItem(
   let label = '(item)';
   // Receitas não têm porção padrão (são medidas em g/ml); ingredientes podem ter.
   let servingSizeG: number | null = null;
-  if (item.kind === 'recipe' && item.recipe_id) {
-    const recipe = findRecipeById(item.recipe_id);
+  // Segue a alternativa em uso (principal ou substituição escolhida).
+  const ref = activeMealRef(item);
+  if (ref.kind === 'recipe' && ref.recipe_id) {
+    const recipe = findRecipeById(ref.recipe_id);
     if (!recipe) {
-      skipped.push({ raw: item.recipe_id, reason: 'receita não encontrada' });
+      skipped.push({ raw: ref.recipe_id, reason: 'receita não encontrada' });
       return false;
     }
     label = recipe.name;
     per100 = recipePer100g(recipe);
-  } else if (item.kind === 'ingredient' && item.ingredient_id) {
-    const ing = findIngredientById(item.ingredient_id);
+  } else if (ref.kind === 'ingredient' && ref.ingredient_id) {
+    const ing = findIngredientById(ref.ingredient_id);
     if (!ing) {
-      skipped.push({ raw: item.ingredient_id, reason: 'ingrediente não encontrado' });
+      skipped.push({ raw: ref.ingredient_id, reason: 'ingrediente não encontrado' });
       return false;
     }
     label = ing.name;
@@ -215,18 +217,18 @@ function accumulateMealItem(
     skipped.push({ raw: label, reason: 'sem dados nutricionais' });
     return false;
   }
-  if (item.quantity == null || !item.unit) {
+  if (ref.quantity == null || !ref.unit) {
     skipped.push({ raw: label, reason: 'quantidade não informada' });
     return false;
   }
-  const base = quantityToGrams(item.quantity, item.unit, servingSizeG);
+  const base = quantityToGrams(ref.quantity, ref.unit, servingSizeG);
   if (base === null) {
     skipped.push({
       raw: label,
       reason:
-        needsServingSize(item.unit) && item.kind === 'ingredient'
-          ? `defina a porção padrão (g) de "${label}" para usar a unidade "${item.unit}"`
-          : `unidade "${item.unit}" sem conversão`,
+        needsServingSize(ref.unit) && ref.kind === 'ingredient'
+          ? `defina a porção padrão (g) de "${label}" para usar a unidade "${ref.unit}"`
+          : `unidade "${ref.unit}" sem conversão`,
     });
     return false;
   }

@@ -10,7 +10,9 @@ import { useAllRecipes } from '../data/recipes';
 import { upsertUserMeal } from '../data/userMeals';
 import { uniqueSlug } from '../utils/slug';
 import { MEAL_TYPES, type MealType } from '../types/mealPlan';
-import { getMealSlots, type Meal, type MealItem, type MealItemKind } from '../types/meal';
+import { getMealSlots, type Meal, type MealItem, type MealItemKind, type MealItemRef } from '../types/meal';
+import type { Ingredient } from '../types/ingredient';
+import type { Recipe } from '../types/recipe';
 
 const UNIT_OPTIONS = [
   { value: '', label: '—' },
@@ -25,12 +27,22 @@ const UNIT_OPTIONS = [
   { value: 'a_gosto', label: 'a gosto' },
 ];
 
+interface FormSubstitute {
+  kind: MealItemKind;
+  ref_id: string;
+  quantity: string;
+  unit: string;
+}
+
 interface FormItem {
   id: string;
   kind: MealItemKind;
   ref_id: string;
   quantity: string;
   unit: string;
+  substitutes: FormSubstitute[];
+  /** Índice em `substitutes` da alternativa ativa; null = usar o principal. */
+  active_substitute: number | null;
 }
 
 interface FormState {
@@ -44,6 +56,8 @@ interface Draft {
   state: FormState;
   pendingItemId: string | null;
   pendingKind: MealItemKind | null;
+  /** Quando definido, o slot alvo é a alternativa `pendingSubIndex` do item. */
+  pendingSubIndex: number | null;
   editingId: string | null;
 }
 
@@ -58,6 +72,21 @@ function emptyItem(kind: MealItemKind = 'recipe'): FormItem {
     ref_id: '',
     quantity: '',
     unit: '',
+    substitutes: [],
+    active_substitute: null,
+  };
+}
+
+function emptySubstitute(kind: MealItemKind = 'recipe'): FormSubstitute {
+  return { kind, ref_id: '', quantity: '', unit: '' };
+}
+
+function refToForm(ref: MealItemRef): FormSubstitute {
+  return {
+    kind: ref.kind,
+    ref_id: ref.kind === 'recipe' ? (ref.recipe_id ?? '') : (ref.ingredient_id ?? ''),
+    quantity: ref.quantity?.toString() ?? '',
+    unit: ref.unit ?? '',
   };
 }
 
@@ -81,22 +110,55 @@ function mealToForm(m: Meal | undefined): FormState {
           ref_id: i.kind === 'recipe' ? (i.recipe_id ?? '') : (i.ingredient_id ?? ''),
           quantity: i.quantity?.toString() ?? '',
           unit: i.unit ?? '',
+          substitutes: (i.substitutes ?? []).map(refToForm),
+          active_substitute: i.active_substitute ?? null,
         }))
       : [emptyItem()],
+  };
+}
+
+/** Converte um slot do formulário (item ou alternativa) em MealItemRef. Retorna
+ *  null quando não há vínculo selecionado. */
+function formRefToMeal(ref: FormSubstitute): MealItemRef | null {
+  if (!ref.ref_id) return null;
+  return {
+    kind: ref.kind,
+    recipe_id: ref.kind === 'recipe' ? ref.ref_id : undefined,
+    ingredient_id: ref.kind === 'ingredient' ? ref.ref_id : undefined,
+    quantity: ref.quantity ? Number(ref.quantity) : null,
+    unit: ref.unit || null,
   };
 }
 
 function formToMeal(state: FormState, original: Meal | undefined): Meal {
   const items: MealItem[] = state.items
     .filter((i) => i.ref_id)
-    .map((i) => ({
-      id: i.id,
-      kind: i.kind,
-      recipe_id: i.kind === 'recipe' ? i.ref_id : undefined,
-      ingredient_id: i.kind === 'ingredient' ? i.ref_id : undefined,
-      quantity: i.quantity ? Number(i.quantity) : null,
-      unit: i.unit || null,
-    }));
+    .map((i) => {
+      // Alternativas válidas (com vínculo). Guarda o índice original para
+      // remapear a alternativa ativa depois de descartar as vazias.
+      const built = i.substitutes
+        .map((s, origIdx) => ({ origIdx, ref: formRefToMeal(s) }))
+        .filter((x): x is { origIdx: number; ref: MealItemRef } => x.ref !== null);
+      const substitutes = built.map((x) => x.ref);
+      let active: number | null = null;
+      if (i.active_substitute != null) {
+        const pos = built.findIndex((x) => x.origIdx === i.active_substitute);
+        if (pos >= 0) active = pos;
+      }
+      const extra =
+        substitutes.length > 0
+          ? { substitutes, ...(active != null ? { active_substitute: active } : {}) }
+          : {};
+      return {
+        id: i.id,
+        kind: i.kind,
+        recipe_id: i.kind === 'recipe' ? i.ref_id : undefined,
+        ingredient_id: i.kind === 'ingredient' ? i.ref_id : undefined,
+        quantity: i.quantity ? Number(i.quantity) : null,
+        unit: i.unit || null,
+        ...extra,
+      };
+    });
   return {
     ...original,
     id: original?.id ?? '',
@@ -149,21 +211,37 @@ export default function RefeicaoForm() {
                   ? newIngredientId
                   : null;
             if (incomingId) {
+              const unitFor = (kind: MealItemKind | null, currentUnit: string) => {
+                if (kind === 'ingredient' && !currentUnit) {
+                  const matched = ingredients.find((i) => i.id === incomingId);
+                  if (matched) return matched.default_unit;
+                }
+                return currentUnit;
+              };
               restored = {
                 ...restored,
                 items: restored.items.map((it) => {
                   if (it.id !== draft.pendingItemId) return it;
                   const nextKind = draft.pendingKind ?? it.kind;
-                  let nextUnit = it.unit;
-                  if (nextKind === 'ingredient' && !it.unit) {
-                    const matched = ingredients.find((i) => i.id === incomingId);
-                    if (matched) nextUnit = matched.default_unit;
+                  if (draft.pendingSubIndex != null) {
+                    // Vincula o item recém-criado a uma alternativa.
+                    const subs = it.substitutes.map((s, si) =>
+                      si === draft.pendingSubIndex
+                        ? {
+                            ...s,
+                            kind: nextKind,
+                            ref_id: incomingId,
+                            unit: unitFor(nextKind, s.unit),
+                          }
+                        : s,
+                    );
+                    return { ...it, substitutes: subs };
                   }
                   return {
                     ...it,
                     kind: nextKind,
                     ref_id: incomingId,
-                    unit: nextUnit,
+                    unit: unitFor(nextKind, it.unit),
                   };
                 }),
               };
@@ -204,6 +282,7 @@ export default function RefeicaoForm() {
       state,
       pendingItemId: null,
       pendingKind: null,
+      pendingSubIndex: null,
       editingId: id ?? null,
     };
     try {
@@ -257,6 +336,33 @@ export default function RefeicaoForm() {
       ...s,
       items: s.items.length === 1 ? [emptyItem()] : s.items.filter((_, i) => i !== idx),
     }));
+
+  // Navega para criar uma nova receita/ingrediente, guardando o slot alvo
+  // (item principal ou alternativa) para revincular ao voltar.
+  const startCreateNew = (
+    item: FormItem,
+    kind: MealItemKind,
+    query: string | undefined,
+    subIndex: number | null,
+  ) => {
+    const draft: Draft = {
+      state: stateRef.current,
+      pendingItemId: item.id,
+      pendingKind: kind,
+      pendingSubIndex: subIndex,
+      editingId: id ?? null,
+    };
+    sessionStorage.setItem(draftKey, JSON.stringify(draft));
+    const params = new URLSearchParams();
+    params.set('return', location.pathname);
+    const trimmed = query?.trim();
+    if (trimmed) params.set('name', trimmed);
+    navigate(
+      kind === 'recipe'
+        ? `/receitas/nova?${params.toString()}`
+        : `/ingredientes/novo?${params.toString()}`,
+    );
+  };
 
   void meals; // placeholder for future cross-refs
 
@@ -341,113 +447,15 @@ export default function RefeicaoForm() {
         </h2>
         <ul className="space-y-3">
           {state.items.map((it, idx) => (
-            <li
+            <ItemRow
               key={it.id}
-              className="rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900"
-            >
-              <div className="mb-2 flex gap-1">
-                <button
-                  type="button"
-                  onClick={() => updateItem(idx, { kind: 'recipe', ref_id: '' })}
-                  className={`rounded-md px-2 py-1 text-xs font-medium ${
-                    it.kind === 'recipe'
-                      ? 'bg-brand-500 text-white dark:bg-brand-600'
-                      : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300'
-                  }`}
-                >
-                  <span className="inline-flex items-center gap-1">
-                    <Icon name="chef-hat" className="h-3.5 w-3.5" /> Receita
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => updateItem(idx, { kind: 'ingredient', ref_id: '' })}
-                  className={`rounded-md px-2 py-1 text-xs font-medium ${
-                    it.kind === 'ingredient'
-                      ? 'bg-brand-500 text-white dark:bg-brand-600'
-                      : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300'
-                  }`}
-                >
-                  <span className="inline-flex items-center gap-1">
-                    <Icon name="carrot" className="h-3.5 w-3.5" /> Ingrediente
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => removeItem(idx)}
-                  className="ml-auto inline-flex items-center justify-center rounded-md bg-red-100 px-2 py-1 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
-                  aria-label="Remover"
-                >
-                  <TrashIcon className="h-4 w-4" />
-                </button>
-              </div>
-              <SearchableSelect
-                value={it.ref_id}
-                onChange={(newId) => {
-                  if (it.kind === 'ingredient') {
-                    const matched = sortedIngredients.find((i) => i.id === newId);
-                    updateItem(idx, {
-                      ref_id: newId,
-                      unit: matched && !it.unit ? matched.default_unit : it.unit,
-                    });
-                  } else {
-                    updateItem(idx, { ref_id: newId });
-                  }
-                }}
-                options={
-                  it.kind === 'recipe'
-                    ? sortedRecipes.map((r) => ({ value: r.id, label: r.name }))
-                    : sortedIngredients.map((i) => ({
-                        value: i.id,
-                        label: i.brand ? `${i.brand} — ${i.name}` : i.name,
-                      }))
-                }
-                placeholder="— Selecione —"
-                createLabel={`Criar ${it.kind === 'recipe' ? 'nova receita' : 'novo ingrediente'}`}
-                onCreate={(q) => {
-                  const draft: Draft = {
-                    state: stateRef.current,
-                    pendingItemId: it.id,
-                    pendingKind: it.kind,
-                    editingId: id ?? null,
-                  };
-                  sessionStorage.setItem(draftKey, JSON.stringify(draft));
-                  const params = new URLSearchParams();
-                  params.set('return', location.pathname);
-                  const trimmed = q?.trim();
-                  if (trimmed) params.set('name', trimmed);
-                  navigate(
-                    it.kind === 'recipe'
-                      ? `/receitas/nova?${params.toString()}`
-                      : `/ingredientes/novo?${params.toString()}`,
-                  );
-                }}
-                className="mb-2"
-              />
-              <div className="grid grid-cols-[80px,1fr] gap-2">
-                <input
-                  type="number"
-                  min={0}
-                  step="any"
-                  inputMode="decimal"
-                  value={it.quantity}
-                  onChange={(e) => updateItem(idx, { quantity: e.target.value })}
-                  placeholder="Qtd"
-                  className={`${inputClass} text-sm`}
-                />
-                <select
-                  value={it.unit}
-                  onChange={(e) => updateItem(idx, { unit: e.target.value })}
-                  className={`${inputClass} text-sm`}
-                >
-                  {UNIT_OPTIONS.map((u) => (
-                    <option key={u.value} value={u.value}>
-                      {u.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </li>
+              item={it}
+              sortedRecipes={sortedRecipes}
+              sortedIngredients={sortedIngredients}
+              onUpdate={(patch) => updateItem(idx, patch)}
+              onRemove={() => removeItem(idx)}
+              onCreateNew={(kind, query, subIndex) => startCreateNew(it, kind, query, subIndex ?? null)}
+            />
           ))}
         </ul>
         <div className="mt-2 grid grid-cols-2 gap-2">
@@ -477,6 +485,278 @@ export default function RefeicaoForm() {
         <Icon name="x" className="h-7 w-7" />
       </button>
     </form>
+  );
+}
+
+/** Um slot (item principal ou alternativa): alternância Receita/Ingrediente,
+ *  seletor com busca, quantidade e unidade. */
+function RefSlotFields({
+  kind,
+  ref_id,
+  quantity,
+  unit,
+  sortedRecipes,
+  sortedIngredients,
+  onChange,
+  onCreateNew,
+}: {
+  kind: MealItemKind;
+  ref_id: string;
+  quantity: string;
+  unit: string;
+  sortedRecipes: Recipe[];
+  sortedIngredients: Ingredient[];
+  onChange: (patch: Partial<FormSubstitute>) => void;
+  onCreateNew: (kind: MealItemKind, query?: string) => void;
+}) {
+  return (
+    <>
+      <div className="mb-2 flex gap-1">
+        <KindToggle
+          active={kind === 'recipe'}
+          icon="chef-hat"
+          label="Receita"
+          onClick={() => onChange({ kind: 'recipe', ref_id: '' })}
+        />
+        <KindToggle
+          active={kind === 'ingredient'}
+          icon="carrot"
+          label="Ingrediente"
+          onClick={() => onChange({ kind: 'ingredient', ref_id: '' })}
+        />
+      </div>
+      <SearchableSelect
+        value={ref_id}
+        onChange={(newId) => {
+          if (kind === 'ingredient') {
+            const matched = sortedIngredients.find((i) => i.id === newId);
+            onChange({ ref_id: newId, unit: matched && !unit ? matched.default_unit : unit });
+          } else {
+            onChange({ ref_id: newId });
+          }
+        }}
+        options={
+          kind === 'recipe'
+            ? sortedRecipes.map((r) => ({ value: r.id, label: r.name }))
+            : sortedIngredients.map((i) => ({
+                value: i.id,
+                label: i.brand ? `${i.brand} — ${i.name}` : i.name,
+              }))
+        }
+        placeholder="— Selecione —"
+        createLabel={`Criar ${kind === 'recipe' ? 'nova receita' : 'novo ingrediente'}`}
+        onCreate={(q) => onCreateNew(kind, q)}
+        className="mb-2"
+      />
+      <div className="grid grid-cols-[80px,1fr] gap-2">
+        <input
+          type="number"
+          min={0}
+          step="any"
+          inputMode="decimal"
+          value={quantity}
+          onChange={(e) => onChange({ quantity: e.target.value })}
+          placeholder="Qtd"
+          className={`${inputClass} text-sm`}
+        />
+        <select
+          value={unit}
+          onChange={(e) => onChange({ unit: e.target.value })}
+          className={`${inputClass} text-sm`}
+        >
+          {UNIT_OPTIONS.map((u) => (
+            <option key={u.value} value={u.value}>
+              {u.label}
+            </option>
+          ))}
+        </select>
+      </div>
+    </>
+  );
+}
+
+function ItemRow({
+  item,
+  sortedRecipes,
+  sortedIngredients,
+  onUpdate,
+  onRemove,
+  onCreateNew,
+}: {
+  item: FormItem;
+  sortedRecipes: Recipe[];
+  sortedIngredients: Ingredient[];
+  onUpdate: (patch: Partial<FormItem>) => void;
+  onRemove: () => void;
+  onCreateNew: (kind: MealItemKind, query?: string, subIndex?: number | null) => void;
+}) {
+  const refLabel = (kind: MealItemKind, ref_id: string, fallback: string): string => {
+    if (!ref_id) return fallback;
+    if (kind === 'recipe') return sortedRecipes.find((r) => r.id === ref_id)?.name ?? fallback;
+    const i = sortedIngredients.find((x) => x.id === ref_id);
+    return i ? (i.brand ? `${i.brand} — ${i.name}` : i.name) : fallback;
+  };
+
+  const addSubstitute = () =>
+    onUpdate({ substitutes: [...item.substitutes, emptySubstitute(item.kind)] });
+
+  const updateSubstitute = (idx: number, patch: Partial<FormSubstitute>) =>
+    onUpdate({
+      substitutes: item.substitutes.map((s, i) => (i === idx ? { ...s, ...patch } : s)),
+    });
+
+  const removeSubstitute = (idx: number) => {
+    const substitutes = item.substitutes.filter((_, i) => i !== idx);
+    // Reajusta a alternativa ativa após a remoção.
+    let active = item.active_substitute;
+    if (active === idx) active = null;
+    else if (active != null && active > idx) active -= 1;
+    onUpdate({ substitutes, active_substitute: active });
+  };
+
+  const hasSubs = item.substitutes.length > 0;
+
+  return (
+    <li className="rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="mb-2 flex justify-end">
+        <button
+          type="button"
+          onClick={onRemove}
+          className="inline-flex items-center justify-center rounded-md bg-red-100 px-2 py-1 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
+          aria-label="Remover item"
+        >
+          <TrashIcon className="h-4 w-4" />
+        </button>
+      </div>
+      <RefSlotFields
+        kind={item.kind}
+        ref_id={item.ref_id}
+        quantity={item.quantity}
+        unit={item.unit}
+        sortedRecipes={sortedRecipes}
+        sortedIngredients={sortedIngredients}
+        onChange={(patch) => onUpdate(patch)}
+        onCreateNew={(kind, q) => onCreateNew(kind, q, null)}
+      />
+
+      {/* Alternativas (substituições equivalentes: ex. iogurte grego OU whey) */}
+      {hasSubs && (
+        <div className="mt-3 space-y-2 border-t border-dashed border-zinc-200 pt-3 dark:border-zinc-700">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+            Alternativas (ou…)
+          </p>
+          {item.substitutes.map((sub, i) => (
+            <div key={i} className="rounded-lg bg-zinc-50 p-2 dark:bg-zinc-800/50">
+              <div className="mb-2 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => removeSubstitute(i)}
+                  className="inline-flex items-center justify-center rounded-md bg-red-100 px-2 py-1 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
+                  aria-label="Remover alternativa"
+                >
+                  <TrashIcon className="h-4 w-4" />
+                </button>
+              </div>
+              <RefSlotFields
+                kind={sub.kind}
+                ref_id={sub.ref_id}
+                quantity={sub.quantity}
+                unit={sub.unit}
+                sortedRecipes={sortedRecipes}
+                sortedIngredients={sortedIngredients}
+                onChange={(patch) => updateSubstitute(i, patch)}
+                onCreateNew={(kind, q) => onCreateNew(kind, q, i)}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={addSubstitute}
+        className="mt-2 text-xs font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
+      >
+        + Adicionar alternativa
+      </button>
+
+      {/* Qual opção conta na nutrição */}
+      {hasSubs && (
+        <div className="mt-3">
+          <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+            Usar no cálculo
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            <SubstituteChip
+              label={refLabel(item.kind, item.ref_id, 'Principal')}
+              active={item.active_substitute == null}
+              onClick={() => onUpdate({ active_substitute: null })}
+            />
+            {item.substitutes.map((sub, i) => (
+              <SubstituteChip
+                key={i}
+                label={refLabel(sub.kind, sub.ref_id, `Alternativa ${i + 1}`)}
+                active={item.active_substitute === i}
+                onClick={() => onUpdate({ active_substitute: i })}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </li>
+  );
+}
+
+function KindToggle({
+  active,
+  icon,
+  label,
+  onClick,
+}: {
+  active: boolean;
+  icon: string;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-md px-2 py-1 text-xs font-medium ${
+        active
+          ? 'bg-brand-500 text-white dark:bg-brand-600'
+          : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300'
+      }`}
+    >
+      <span className="inline-flex items-center gap-1">
+        <Icon name={icon} className="h-3.5 w-3.5" /> {label}
+      </span>
+    </button>
+  );
+}
+
+function SubstituteChip({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex max-w-full items-center gap-1 truncate rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+        active
+          ? 'bg-brand-500 text-white dark:bg-brand-600'
+          : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+      }`}
+    >
+      {active && <Icon name="check" className="h-3 w-3 shrink-0" />}
+      <span className="truncate">{label}</span>
+    </button>
   );
 }
 
