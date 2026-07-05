@@ -262,8 +262,8 @@ export default function IngredienteForm() {
           </div>
           <p className="mb-2 text-[11px] text-zinc-400 dark:text-zinc-500">
             {liveIngredient.nutrition_per_100
-              ? 'Revise ou substitua os valores por uma base consolidada (TACO → Open Food Facts), foto do rótulo ou estimativa por IA. Você confere antes de salvar.'
-              : 'Preencha por uma base consolidada (TACO → Open Food Facts), foto do rótulo ou estimativa por IA. Você confere os valores antes de salvar.'}
+              ? 'Revise ou substitua os valores por uma base consolidada (TBCA → TACO → Open Food Facts), foto do rótulo ou estimativa por IA. Você confere antes de salvar.'
+              : 'Preencha por uma base consolidada (TBCA → TACO → Open Food Facts), foto do rótulo ou estimativa por IA. Você confere os valores antes de salvar.'}
           </p>
           <NutritionFillActions ingredient={liveIngredient} />
         </section>

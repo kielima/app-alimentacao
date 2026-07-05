@@ -126,13 +126,14 @@ type ActiveModal =
       source: NutritionSource;
       matchName?: string;
       tacoId?: string;
+      tbcaCode?: string;
       offBarcode?: string;
     }
   | null;
 
 /**
  * Seção "Ingredientes sem tabela nutricional" com preenchimento em cascata:
- * TACO → Open Food Facts (automático) e, se falhar, foto ou estimativa por IA.
+ * TBCA → TACO → Open Food Facts (automático) e, se falhar, foto ou estimativa por IA.
  */
 function NutritionGapSection({ ingredients }: { ingredients: Ingredient[] }) {
   const [modal, setModal] = useState<ActiveModal>(null);
@@ -164,14 +165,15 @@ function NutritionGapSection({ ingredients }: { ingredients: Ingredient[] }) {
           source: res.source,
           matchName: res.matchName,
           tacoId: res.tacoId,
+          tbcaCode: res.tbcaCode,
           offBarcode: res.offBarcode,
         });
       } else {
         setMsg(
           ing.id,
           geminiConfigured
-            ? 'Não achei na TACO nem no Open Food Facts. Use a foto ou a estimativa por IA.'
-            : 'Não achei na TACO nem no Open Food Facts. Preencha pela página do ingrediente.',
+            ? 'Não achei na TBCA, na TACO nem no Open Food Facts. Use a foto ou a estimativa por IA.'
+            : 'Não achei na TBCA, na TACO nem no Open Food Facts. Preencha pela página do ingrediente.',
         );
       }
     } catch (err) {
@@ -210,7 +212,7 @@ function NutritionGapSection({ ingredients }: { ingredients: Ingredient[] }) {
         </span>
       </div>
       <p className="mb-2 text-[11px] text-zinc-400 dark:text-zinc-500">
-        Preencha por uma base consolidada (TACO → Open Food Facts) ou, se não achar, por foto do
+        Preencha por uma base consolidada (TBCA → TACO → Open Food Facts) ou, se não achar, por foto do
         rótulo ou estimativa por IA. Você confere os valores antes de salvar.
       </p>
       <ul className="space-y-1.5">
@@ -243,6 +245,7 @@ function NutritionGapSection({ ingredients }: { ingredients: Ingredient[] }) {
           source={modal.source}
           matchName={modal.matchName}
           tacoId={modal.tacoId}
+          tbcaCode={modal.tbcaCode}
           offBarcode={modal.offBarcode}
           onClose={() => setModal(null)}
           onSaved={() => setModal(null)}

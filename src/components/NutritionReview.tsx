@@ -5,16 +5,17 @@ import { upsertUserIngredient } from '../data/userIngredients';
 import type { Ingredient, NutritionPer100 } from '../types/ingredient';
 
 /** De onde vieram os valores que estão em revisão. */
-export type NutritionSource = 'photo' | 'taco' | 'off' | 'ai';
+export type NutritionSource = 'photo' | 'taco' | 'tbca' | 'off' | 'ai';
 
 interface Props {
   ingredient: Ingredient;
   /** Valores iniciais, já normalizados por 100 g/ml. */
   data: ExtractedNutrition;
   source: NutritionSource;
-  /** Nome do alimento/produto casado (TACO/OFF), para conferência. */
+  /** Nome do alimento/produto casado (TBCA/TACO/OFF), para conferência. */
   matchName?: string;
   tacoId?: string;
+  tbcaCode?: string;
   offBarcode?: string;
   /** Botão secundário (ex.: "Outra foto"). Escondido se ausente. */
   backLabel?: string;
@@ -72,6 +73,15 @@ function sourceBanner(
           ? `Valores de "${matchName}" (TACO), por 100 ${unitSuffix}. Se não for o mesmo alimento, feche e use foto ou IA.`
           : `Valores por 100 ${unitSuffix} — confira e ajuste se precisar.`,
       };
+    case 'tbca':
+      return {
+        icon: 'utensils',
+        tone: 'ok',
+        title: 'Tabela TBCA (USP/FoRC)',
+        body: matchName
+          ? `Valores de "${matchName}" (TBCA), por 100 ${unitSuffix}. Se não for o mesmo alimento, feche e use foto ou IA.`
+          : `Valores por 100 ${unitSuffix} — confira e ajuste se precisar.`,
+      };
     case 'off':
       return {
         icon: 'tag',
@@ -109,6 +119,7 @@ export default function NutritionReview({
   source,
   matchName,
   tacoId,
+  tbcaCode,
   offBarcode,
   backLabel,
   onBack,
@@ -163,6 +174,7 @@ export default function NutritionReview({
       needs_review: false,
     };
     if (source === 'taco' && tacoId) payload.taco_id = tacoId;
+    if (source === 'tbca' && tbcaCode) payload.tbca_code = tbcaCode;
     if (source === 'off' && offBarcode) payload.off_barcode = offBarcode;
     if (servingNum !== null) payload.serving_size_g = servingNum;
     if (servingDesc.trim()) payload.serving_description = servingDesc.trim();

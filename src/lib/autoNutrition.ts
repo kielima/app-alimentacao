@@ -1,15 +1,18 @@
 import type { ExtractedNutrition } from './gemini';
 import type { Ingredient, NutritionPer100 } from '../types/ingredient';
-import { findTacoMatch, type TacoFood } from '../data/taco';
+import type { FoodEntry, FoodMatch } from '../data/foodMatch';
+import { findTacoMatch } from '../data/taco';
+import { findTbcaMatch } from '../data/tbca';
 import { lookupBarcode, searchByName, type OffProduct } from './openFoodFacts';
 
-/** Resultado do preenchimento automático (cascata TACO → Open Food Facts). */
+/** Resultado do preenchimento automático (cascata TBCA → TACO → Open Food Facts). */
 export interface AutoFillResult {
-  source: 'taco' | 'off';
+  source: 'taco' | 'tbca' | 'off';
   data: ExtractedNutrition;
   /** Nome do alimento/produto casado, para o usuário conferir na revisão. */
   matchName: string;
   tacoId?: string;
+  tbcaCode?: string;
   offBarcode?: string;
 }
 
@@ -38,8 +41,8 @@ function toExtracted(
   };
 }
 
-function fromTaco(food: TacoFood): ExtractedNutrition {
-  // Valores da TACO são sempre por 100 g da parte comestível.
+function fromFood(food: FoodEntry): ExtractedNutrition {
+  // Valores das tabelas (TACO/TBCA) são sempre por 100 g da parte comestível.
   return toExtracted(food.nutrition_per_100, food.extras_per_100 ?? {}, 'g');
 }
 
@@ -49,24 +52,38 @@ function fromOff(product: OffProduct, unit: 'g' | 'ml'): ExtractedNutrition {
   });
 }
 
+/** Empacota um casamento de tabela local (TBCA/TACO) como resultado do autofill. */
+function fromLocalMatch(source: 'tbca' | 'taco', match: FoodMatch): AutoFillResult {
+  return {
+    source,
+    data: fromFood(match.food),
+    matchName: match.food.name,
+    ...(source === 'tbca' ? { tbcaCode: match.food.id } : { tacoId: match.food.id }),
+  };
+}
+
 /**
- * Tenta preencher a tabela nutricional automaticamente, na ordem:
- *   1. TACO (base local, ideal para in natura);
+ * Tenta preencher a tabela nutricional automaticamente:
+ *   1. Bases locais TBCA e TACO — prefere-se a TBCA (mais abrangente, ~5.500
+ *      alimentos), mas um casamento de ALTA confiança sobrepõe-se a um de baixa,
+ *      para um palpite fraco da TBCA não vencer um acerto forte da TACO (ex.:
+ *      "arroz" → não deve casar "Arroz, farelo, cru");
  *   2. Open Food Facts (código de barras salvo, senão busca por nome).
  * Devolve o resultado (para revisão) ou null quando nada serve — nesse caso o
  * chamador oferece o preenchimento manual (foto ou IA).
  */
 export async function autoFillNutrition(ingredient: Ingredient): Promise<AutoFillResult | null> {
-  // 1) TACO.
+  // 1) Bases locais. TBCA primeiro entre casamentos de igual confiança; um
+  // casamento 'high' (de qualquer base) vence um 'medium'.
+  const tbca = await findTbcaMatch(ingredient.name, ingredient.brand);
   const taco = findTacoMatch(ingredient.name, ingredient.brand);
-  if (taco) {
-    return {
-      source: 'taco',
-      data: fromTaco(taco.food),
-      matchName: taco.food.name,
-      tacoId: taco.food.id,
-    };
-  }
+  const localMatch =
+    (tbca?.confidence === 'high' && (['tbca', tbca] as const)) ||
+    (taco?.confidence === 'high' && (['taco', taco] as const)) ||
+    (tbca && (['tbca', tbca] as const)) ||
+    (taco && (['taco', taco] as const)) ||
+    null;
+  if (localMatch) return fromLocalMatch(localMatch[0], localMatch[1]);
 
   // 2) Open Food Facts. Erros de rede caem no fluxo manual (retorna null).
   const unit = baseUnit(ingredient);

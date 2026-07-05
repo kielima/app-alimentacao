@@ -21,13 +21,14 @@ type ActiveModal =
       source: NutritionSource;
       matchName?: string;
       tacoId?: string;
+      tbcaCode?: string;
       offBarcode?: string;
     }
   | null;
 
 /**
  * Linha de ações para obter/revisar a tabela nutricional de um ingrediente:
- * base consolidada (TACO → Open Food Facts), foto do rótulo ou estimativa por IA.
+ * base consolidada (TBCA → TACO → Open Food Facts), foto do rótulo ou estimativa por IA.
  * Os mesmos botões usados em "Dados a completar", reutilizáveis em outras telas
  * (ex.: edição do ingrediente). O usuário confere os valores antes de salvar.
  */
@@ -54,13 +55,14 @@ export default function NutritionFillActions({
           source: res.source,
           matchName: res.matchName,
           tacoId: res.tacoId,
+          tbcaCode: res.tbcaCode,
           offBarcode: res.offBarcode,
         });
       } else {
         setMessage(
           geminiConfigured
-            ? 'Não achei na TACO nem no Open Food Facts. Use a foto ou a estimativa por IA.'
-            : 'Não achei na TACO nem no Open Food Facts.',
+            ? 'Não achei na TBCA, na TACO nem no Open Food Facts. Use a foto ou a estimativa por IA.'
+            : 'Não achei na TBCA, na TACO nem no Open Food Facts.',
         );
       }
     } catch (err) {
@@ -163,6 +165,7 @@ export default function NutritionFillActions({
           source={modal.source}
           matchName={modal.matchName}
           tacoId={modal.tacoId}
+          tbcaCode={modal.tbcaCode}
           offBarcode={modal.offBarcode}
           onClose={() => setModal(null)}
           onSaved={() => {
