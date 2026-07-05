@@ -278,10 +278,14 @@ export function buildAutoDayPlan(
   const calorieGap = rawCal > KCAL_TOLERANCE ? rawCal : 0;
   const gap: DayGap = { current, proteinGap, calorieGap };
 
-  // Distribui receitas/ingredientes da dispensa pelos horários vazios (combos).
-  const emptySlots = slots.filter((s) => s.meal === null);
-  if ((proteinGap > 0 || calorieGap > 0) && emptySlots.length > 0) {
-    distributeFillItems(emptySlots, recipes, ingredients, availability, proteinGap, calorieGap);
+  // Distribui receitas/ingredientes da dispensa pelos horários (vazios primeiro,
+  // depois complementando os preenchidos) para espalhar em vez de empilhar.
+  if (proteinGap > 0 || calorieGap > 0) {
+    const ordered = [
+      ...slots.filter((s) => s.meal === null),
+      ...slots.filter((s) => s.meal !== null),
+    ];
+    distributeFillItems(ordered, recipes, ingredients, availability, proteinGap, calorieGap);
   }
 
   return {
@@ -312,12 +316,43 @@ function planItemMacros(item: PlanMealItem): { macros: Macros; counted: number }
   };
 }
 
-/** Porção padrão sugerida para um ingrediente: 1 unidade (medidas contáveis) ou
- *  100 g/ml. */
+/** Teto de calorias por item sugerido — acima disso, a porção é reduzida para
+ *  não propor coisas como 100 g de óleo (900 kcal). */
+const CAP_KCAL = 300;
+
+/** Porção nominal de um ingrediente: 1 unidade (medidas contáveis), a porção
+ *  padrão (`serving_size_g`) quando houver, ou 100 g/ml. */
 function defaultIngredientPortion(ing: Ingredient): { quantity: number; unit: string } {
-  return ing.default_unit === 'unit'
-    ? { quantity: 1, unit: 'unit' }
-    : { quantity: 100, unit: ing.default_unit };
+  if (ing.default_unit === 'unit') return { quantity: 1, unit: 'unit' };
+  if (ing.serving_size_g && ing.serving_size_g > 0) {
+    return { quantity: ing.serving_size_g, unit: ing.default_unit };
+  }
+  return { quantity: 100, unit: ing.default_unit };
+}
+
+/** Arredonda a quantidade conforme a unidade (g/ml em 5; contáveis em 0,5). */
+function roundPortion(q: number, unit: string): number {
+  if (unit === 'g' || unit === 'ml') {
+    const r = Math.round(q / 5) * 5;
+    return r < 5 ? 5 : r;
+  }
+  const r = Math.round(q * 2) / 2;
+  return r < 0.5 ? 0.5 : r;
+}
+
+/** Macros na porção base; se passar do teto de kcal, reduz a porção (e recalcula). */
+function cappedPortion(
+  build: (quantity: number) => PlanMealItem,
+  baseQuantity: number,
+  unit: string,
+): { quantity: number; macros: Macros; counted: number } {
+  const base = planItemMacros(build(baseQuantity));
+  if (base.counted === 0 || base.macros.calories <= CAP_KCAL) {
+    return { quantity: baseQuantity, macros: base.macros, counted: base.counted };
+  }
+  const scaled = roundPortion((baseQuantity * CAP_KCAL) / base.macros.calories, unit);
+  const capped = planItemMacros(build(scaled));
+  return { quantity: scaled, macros: capped.macros, counted: capped.counted };
 }
 
 /** Menor validade (dias) e nº de itens vencendo entre um conjunto de ingredientes
@@ -377,14 +412,16 @@ function collectCandidates(
 
   for (const ing of ingredients) {
     if (!availability.has(ing.id)) continue;
-    const { quantity, unit } = defaultIngredientPortion(ing);
-    const { macros, counted } = planItemMacros({
-      id: `c-${ing.id}`,
-      kind: 'ingredient',
-      ingredient_id: ing.id,
-      quantity,
+    // Não sugere gordura quase pura (óleos/temperos) como item isolado: muito
+    // calórica e sem proteína — só faz sentido dentro de receitas.
+    const n = ing.nutrition_per_100;
+    if (n && numOr0(n.calories) >= 700 && numOr0(n.protein) <= 5) continue;
+    const { quantity: baseQty, unit } = defaultIngredientPortion(ing);
+    const { quantity, macros, counted } = cappedPortion(
+      (q) => ({ id: `c-${ing.id}`, kind: 'ingredient', ingredient_id: ing.id, quantity: q, unit }),
+      baseQty,
       unit,
-    });
+    );
     if (counted === 0) continue;
     const { earliest, expiring } = expiryOf([ing.id], availability);
     out.push({
@@ -409,20 +446,18 @@ function collectCandidates(
       consumed,
     );
     if (!makeable) continue;
-    const { macros, counted } = planItemMacros({
-      id: `c-${recipe.id}`,
-      kind: 'recipe',
-      recipe_id: recipe.id,
-      quantity: 100,
-      unit: 'g',
-    });
+    const { quantity, macros, counted } = cappedPortion(
+      (q) => ({ id: `c-${recipe.id}`, kind: 'recipe', recipe_id: recipe.id, quantity: q, unit: 'g' }),
+      100,
+      'g',
+    );
     if (counted === 0) continue;
     const { earliest, expiring } = expiryOf(consumed, availability);
     out.push({
       id: recipe.id,
       kind: 'recipe',
       label: recipe.name,
-      quantity: 100,
+      quantity,
       unit: 'g',
       macros,
       isAnchor: isAnchor(macros),
@@ -459,15 +494,17 @@ function toFillItem(c: Candidate, mealType: MealType): AutoFillItem {
 }
 
 /**
- * Distribui candidatos pelos horários vazios, respeitando as etiquetas de
- * horário. Cada horário recebe a sua fatia da lacuna (proteína/calorias):
- * primeiro âncoras proteicas, depois acompanhamentos (forma combos tipo
- * proteína + fruta). Sem cap fixo de itens — limitado pela fatia do horário e
- * pelos candidatos disponíveis. Preenche `slot.fillItems`. As quantidades são
- * equilibradas depois, ao aplicar (otimizador).
+ * Distribui candidatos pelos horários, respeitando as etiquetas de horário.
+ * Espalha em vez de empilhar: percorre os slots em rodadas (round-robin),
+ * adicionando 1 item por slot a cada rodada até cobrir a lacuna do dia
+ * (proteína/calorias). Enquanto falta proteína, prioriza âncoras; depois,
+ * acompanhamentos para as calorias. `orderedSlots` vem com os vazios primeiro,
+ * então eles têm prioridade, mas os preenchidos também podem receber
+ * complementos. Sem cap fixo por horário. As quantidades são equilibradas
+ * depois, ao aplicar (otimizador).
  */
 function distributeFillItems(
-  emptySlots: AutoPlanSlot[],
+  orderedSlots: AutoPlanSlot[],
   recipes: Recipe[],
   ingredients: Ingredient[],
   availability: Map<string, number | null>,
@@ -475,51 +512,43 @@ function distributeFillItems(
   calorieGap: number,
 ): void {
   const candidates = collectCandidates(recipes, ingredients, availability);
-  if (candidates.length === 0) return;
+  if (candidates.length === 0 || orderedSlots.length === 0) return;
 
   const usedIds = new Set<string>();
-  const n = emptySlots.length;
-  const slotProtein = proteinGap / n;
-  const slotCal = calorieGap / n;
   const byExpiry = (a: Candidate, b: Candidate) =>
     (a.earliestDays ?? Number.POSITIVE_INFINITY) - (b.earliestDays ?? Number.POSITIVE_INFINITY);
 
-  for (const slot of emptySlots) {
-    const mt = slot.mealType;
-    const eligible = () =>
-      candidates.filter((c) => !usedIds.has(c.id) && eligibleForSlot(c.slots, mt));
-    const take = (c: Candidate) => {
-      usedIds.add(c.id);
-      slot.fillItems.push(toFillItem(c, mt));
-    };
+  let remProtein = proteinGap;
+  let remCal = calorieGap;
+  let progressed = true;
 
-    let bp = slotProtein;
-    let bc = slotCal;
+  while ((remProtein > 0.5 || remCal > 5) && progressed) {
+    progressed = false;
+    for (const slot of orderedSlots) {
+      if (remProtein <= 0.5 && remCal <= 5) break;
+      const mt = slot.mealType;
+      const pool = candidates.filter(
+        (c) => !usedIds.has(c.id) && eligibleForSlot(c.slots, mt),
+      );
+      if (pool.length === 0) continue;
 
-    // Proteína: âncoras (maior proteína; validade desempata) até a fatia.
-    while (bp > 0.5) {
-      const pool = eligible().filter((c) => c.isAnchor);
-      if (pool.length === 0) break;
-      pool.sort((a, b) => b.macros.protein - a.macros.protein || byExpiry(a, b));
-      take(pool[0]);
-      bp -= pool[0].macros.protein;
-      bc -= pool[0].macros.calories;
-    }
-    // Calorias: acompanhamentos (maior caloria; validade desempata) até a fatia.
-    while (bc > 5) {
-      const pool = eligible().filter((c) => !c.isAnchor);
-      if (pool.length === 0) break;
-      pool.sort((a, b) => b.macros.calories - a.macros.calories || byExpiry(a, b));
-      take(pool[0]);
-      bc -= pool[0].macros.calories;
-    }
-    // Garante ao menos 1 item se algo elegível sobrou e o horário ficou vazio.
-    if (slot.fillItems.length === 0) {
-      const pool = eligible();
-      if (pool.length > 0) {
-        pool.sort((a, b) => b.macros.protein - a.macros.protein || byExpiry(a, b));
-        take(pool[0]);
+      let pick: Candidate;
+      if (remProtein > 0.5) {
+        // Prioriza âncoras (maior proteína); se não houver, o melhor proteico.
+        const anchors = pool.filter((c) => c.isAnchor);
+        pick = (anchors.length ? anchors : pool).sort(
+          (a, b) => b.macros.protein - a.macros.protein || byExpiry(a, b),
+        )[0];
+      } else {
+        // Só calorias: acompanhamentos (maior caloria; validade desempata).
+        pick = pool.sort((a, b) => b.macros.calories - a.macros.calories || byExpiry(a, b))[0];
       }
+
+      usedIds.add(pick.id);
+      slot.fillItems.push(toFillItem(pick, mt));
+      remProtein -= pick.macros.protein;
+      remCal -= pick.macros.calories;
+      progressed = true;
     }
   }
 }
