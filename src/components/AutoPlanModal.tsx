@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Icon from './Icon';
 import { MEAL_TYPES, type PlanType } from '../types/mealPlan';
 import { unitLabel } from '../utils/units';
-import type { AutoPlanResult, GapFillResult, GapSuggestion } from '../utils/autoPlan';
+import type { AutoPlanResult, AutoFillItem } from '../utils/autoPlan';
 
 const slotMeta = (value: string) => MEAL_TYPES.find((m) => m.value === value);
 
@@ -17,14 +17,20 @@ function expiryHint(days: number | null): string | null {
 
 const round = (v: number) => Math.round(v);
 
-/** "100 g", "1 unidade"… para a porção sugerida. */
+/** "100 g", "1 unidade"… para a porção nominal. */
 function portionLabel(quantity: number, unit: string): string {
   return `${quantity.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} ${unitLabel(unit)}`;
 }
 
+function gapSummary(proteinGap: number, calorieGap: number): string {
+  const parts: string[] = [];
+  if (proteinGap > 0) parts.push(`${round(proteinGap)} g de proteína`);
+  if (calorieGap > 0) parts.push(`${round(calorieGap)} kcal`);
+  return parts.join(' e ');
+}
+
 export default function AutoPlanModal({
   result,
-  gapFill,
   dayLabel,
   planType,
   expiredIgnoredCount = 0,
@@ -32,29 +38,30 @@ export default function AutoPlanModal({
   onClose,
 }: {
   result: AutoPlanResult;
-  /** Sugestões de receitas/ingredientes da dispensa para bater a meta. */
-  gapFill?: GapFillResult;
   dayLabel: string;
   planType: PlanType;
   /** Ingredientes desconsiderados por só terem itens vencidos na dispensa. */
   expiredIgnoredCount?: number;
-  onApply: (selectedSuggestionIds: string[]) => void;
+  onApply: (selectedFillKeys: string[]) => void;
   onClose: () => void;
 }) {
-  const { slots, makeableCount, filledCount } = result;
+  const { slots, makeableCount, filledCount, gap } = result;
   const emptySlots = slots.length - filledCount;
-  const nothingToPlan = makeableCount === 0;
 
-  const suggestions = gapFill?.suggestions ?? [];
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const toggle = (id: string) =>
+  const allFill = slots.flatMap((s) => s.fillItems);
+  const [selected, setSelected] = useState<Set<string>>(
+    () => new Set(allFill.map((f) => f.key)),
+  );
+  const toggle = (key: string) =>
     setSelected((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       return next;
     });
 
+  const hasGap = gap.proteinGap > 0 || gap.calorieGap > 0;
+  const nothingToPlan = makeableCount === 0 && allFill.length === 0;
   const canApply = filledCount > 0 || selected.size > 0;
 
   return (
@@ -114,56 +121,35 @@ export default function AutoPlanModal({
                 {makeableCount === 1 ? 'refeição montável' : 'refeições montáveis'} · preenchendo{' '}
                 <strong>{filledCount}</strong> de {slots.length}{' '}
                 {slots.length === 1 ? 'horário' : 'horários'}
-                {emptySlots > 0 && ` (${emptySlots} sem opção)`}
+                {emptySlots > 0 && ` (${emptySlots} sem refeição)`}
               </span>
             </div>
 
+            {hasGap && allFill.length > 0 && (
+              <p className="mb-2 text-[11px] text-zinc-400 dark:text-zinc-500">
+                Faltam {gapSummary(gap.proteinGap, gap.calorieGap)}. Preenchi os horários vazios com
+                itens da dispensa — desmarque o que não quiser. Quantidades equilibradas ao aplicar.
+              </p>
+            )}
+
             <ul className="space-y-1">
-              {slots.map((slot) => {
-                const mt = slotMeta(slot.mealType);
-                const hint = slot.meal ? expiryHint(slot.earliestDays) : null;
-                return (
-                  <li
-                    key={slot.mealType}
-                    className="flex items-center gap-2 rounded-lg bg-zinc-50 px-3 py-2 text-sm dark:bg-zinc-950"
-                  >
-                    <Icon
-                      name={mt?.icon ?? 'utensils'}
-                      className="h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-500"
-                    />
-                    <span className="w-24 shrink-0 text-[11px] text-zinc-400 dark:text-zinc-500">
-                      {mt?.label ?? slot.mealType}
-                    </span>
-                    {slot.meal ? (
-                      <span className="min-w-0 flex-1 truncate font-medium">{slot.meal.name}</span>
-                    ) : (
-                      <span className="min-w-0 flex-1 truncate text-zinc-400 dark:text-zinc-600">
-                        — sem refeição montável
-                      </span>
-                    )}
-                    {slot.expiringConsumed > 0 && hint && (
-                      <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-                        <Icon name="alert-triangle" className="h-3 w-3" />
-                        {hint}
-                      </span>
-                    )}
-                  </li>
-                );
-              })}
+              {slots.map((slot) => (
+                <SlotRow
+                  key={slot.mealType}
+                  slot={slot}
+                  selected={selected}
+                  onToggle={toggle}
+                />
+              ))}
             </ul>
           </>
         )}
 
-        {gapFill && suggestions.length > 0 && (
-          <GapSuggestions gap={gapFill} selected={selected} onToggle={toggle} />
-        )}
-
-        {(filledCount > 0 || suggestions.length > 0) && (
+        {(filledCount > 0 || allFill.length > 0) && (
           <div className="mt-3 flex gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-200">
             <Icon name="alert-triangle" className="mt-0.5 h-4 w-4 shrink-0" />
             <span>
-              Isto <strong>substitui</strong> tudo o que já está neste dia. Depois você pode
-              ajustar as quantidades para a meta.
+              Isto <strong>substitui</strong> tudo o que já está neste dia.
             </span>
           </div>
         )}
@@ -182,9 +168,7 @@ export default function AutoPlanModal({
             disabled={!canApply}
             className="rounded-full bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50 dark:bg-brand-600 dark:hover:bg-brand-500"
           >
-            {selected.size > 0
-              ? `Aplicar (+${selected.size} ${selected.size === 1 ? 'sugestão' : 'sugestões'})`
-              : 'Aplicar (substitui o dia)'}
+            Aplicar (substitui o dia)
           </button>
         </div>
       </div>
@@ -192,59 +176,77 @@ export default function AutoPlanModal({
   );
 }
 
-function gapSummary(proteinGap: number, calorieGap: number): string {
-  const parts: string[] = [];
-  if (proteinGap > 0) parts.push(`${round(proteinGap)} g de proteína`);
-  if (calorieGap > 0) parts.push(`${round(calorieGap)} kcal`);
-  return parts.join(' e ');
-}
-
-function GapSuggestions({
-  gap,
+function SlotRow({
+  slot,
   selected,
   onToggle,
 }: {
-  gap: GapFillResult;
+  slot: AutoPlanResult['slots'][number];
   selected: Set<string>;
-  onToggle: (id: string) => void;
+  onToggle: (key: string) => void;
 }) {
+  const mt = slotMeta(slot.mealType);
+  const hint = slot.meal ? expiryHint(slot.earliestDays) : null;
+  const hasFill = slot.fillItems.length > 0;
+
   return (
-    <section className="mt-4">
-      <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-        Sugestões para bater a meta
-      </h3>
-      <p className="mb-2 text-[11px] text-zinc-400 dark:text-zinc-500">
-        Faltam {gapSummary(gap.proteinGap, gap.calorieGap)}. Marque o que quer incluir — entra na
-        ceia e você pode reposicionar depois.
-      </p>
-      <ul className="space-y-1.5">
-        {gap.suggestions.map((s) => (
-          <SuggestionRow
-            key={s.id}
-            suggestion={s}
-            checked={selected.has(s.id)}
-            onToggle={() => onToggle(s.id)}
-          />
-        ))}
-      </ul>
-    </section>
+    <li className="rounded-lg bg-zinc-50 dark:bg-zinc-950">
+      <div className="flex items-center gap-2 px-3 py-2 text-sm">
+        <Icon
+          name={mt?.icon ?? 'utensils'}
+          className="h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-500"
+        />
+        <span className="w-24 shrink-0 text-[11px] text-zinc-400 dark:text-zinc-500">
+          {mt?.label ?? slot.mealType}
+        </span>
+        {slot.meal ? (
+          <span className="min-w-0 flex-1 truncate font-medium">{slot.meal.name}</span>
+        ) : hasFill ? (
+          <span className="min-w-0 flex-1 truncate text-[11px] text-zinc-400 dark:text-zinc-500">
+            combinar da dispensa:
+          </span>
+        ) : (
+          <span className="min-w-0 flex-1 truncate text-zinc-400 dark:text-zinc-600">
+            — sem opção
+          </span>
+        )}
+        {slot.meal && slot.expiringConsumed > 0 && hint && (
+          <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+            <Icon name="alert-triangle" className="h-3 w-3" />
+            {hint}
+          </span>
+        )}
+      </div>
+      {hasFill && (
+        <ul className="space-y-1 px-2 pb-2">
+          {slot.fillItems.map((f) => (
+            <FillRow
+              key={f.key}
+              item={f}
+              checked={selected.has(f.key)}
+              onToggle={() => onToggle(f.key)}
+            />
+          ))}
+        </ul>
+      )}
+    </li>
   );
 }
 
-function SuggestionRow({
-  suggestion,
+function FillRow({
+  item,
   checked,
   onToggle,
 }: {
-  suggestion: GapSuggestion;
+  item: AutoFillItem;
   checked: boolean;
   onToggle: () => void;
 }) {
-  const { kind, label, quantity, unit, macros, expiringConsumed, earliestDays } = suggestion;
+  const { kind, label, quantity, unit, macros, expiringConsumed, earliestDays } = item;
   const hint = expiringConsumed > 0 ? expiryHint(earliestDays) : null;
   return (
     <li>
-      <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-sm dark:border-zinc-800 dark:bg-zinc-900">
         <input
           type="checkbox"
           checked={checked}

@@ -14,6 +14,7 @@ import { hideRecipe } from '../data/hiddenRecipes';
 import { upsertShoppingItem } from '../data/shoppingList';
 import { usePantryItems } from '../data/pantry';
 import { recipeCategoryIds, type Recipe, type RecipeIngredient } from '../types/recipe';
+import { MEAL_TYPES } from '../types/mealPlan';
 
 export default function ReceitaDetalhe() {
   const { id } = useParams<{ id: string }>();
@@ -174,6 +175,15 @@ export default function ReceitaDetalhe() {
             <Icon name={c.icon} className="h-3.5 w-3.5" /> {c.name}
           </span>
         ))}
+        {(recipe.meal_types ?? []).map((mt) => {
+          const meta = MEAL_TYPES.find((m) => m.value === mt);
+          if (!meta) return null;
+          return (
+            <span key={mt} className="inline-flex items-center gap-1">
+              <Icon name={meta.icon} className="h-3.5 w-3.5" /> {meta.label}
+            </span>
+          );
+        })}
         {recipe.prep_time_min && (
           <span className="inline-flex items-center gap-1">
             <Icon name="clock" className="h-3.5 w-3.5" /> {recipe.prep_time_min} min

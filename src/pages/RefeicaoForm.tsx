@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import Icon from '../components/Icon';
+import MealTypeChips from '../components/MealTypeChips';
 import SearchableSelect from '../components/SearchableSelect';
 import TrashIcon from '../components/TrashIcon';
 import { useAllIngredients } from '../data/ingredients';
@@ -9,7 +10,7 @@ import { useAllMeals, findMealById, allMealIds } from '../data/meals';
 import { useAllRecipes } from '../data/recipes';
 import { upsertUserMeal } from '../data/userMeals';
 import { uniqueSlug } from '../utils/slug';
-import { MEAL_TYPES, type MealType } from '../types/mealPlan';
+import { type MealType } from '../types/mealPlan';
 import { getMealSlots, type Meal, type MealItem, type MealItemKind, type MealItemRef } from '../types/meal';
 import type { Ingredient } from '../types/ingredient';
 import type { Recipe } from '../types/recipe';
@@ -399,33 +400,10 @@ export default function RefeicaoForm() {
       </Field>
 
       <Field label="Slots (opcional)">
-        <div className="flex flex-wrap gap-1.5">
-          {MEAL_TYPES.map((m) => {
-            const selected = state.meal_types.includes(m.value);
-            return (
-              <button
-                key={m.value}
-                type="button"
-                onClick={() =>
-                  setState((s) => ({
-                    ...s,
-                    meal_types: selected
-                      ? s.meal_types.filter((t) => t !== m.value)
-                      : [...s.meal_types, m.value],
-                  }))
-                }
-                aria-pressed={selected}
-                className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                  selected
-                    ? 'bg-brand-500 text-white dark:bg-brand-600'
-                    : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700'
-                }`}
-              >
-                <Icon name={m.icon} className="h-3.5 w-3.5" /> {m.label}
-              </button>
-            );
-          })}
-        </div>
+        <MealTypeChips
+          value={state.meal_types}
+          onChange={(meal_types) => setState((s) => ({ ...s, meal_types }))}
+        />
         <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
           Toque para escolher um ou mais slots em que esta refeição pode aparecer.
         </p>
