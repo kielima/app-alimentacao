@@ -30,7 +30,8 @@ import Pendencias from './pages/Pendencias';
 import { useTheme } from './hooks/useTheme';
 import { useAuth } from './hooks/useAuth';
 import { PlanoProvider, usePlano } from './contexts/PlanoContext';
-import { DAYS_OF_WEEK, todayDayOfWeek, type DayOfWeek } from './types/mealPlan';
+import { DAYS_OF_WEEK, todayDayOfWeek, type DayOfWeek, type PlanType } from './types/mealPlan';
+import { setPlanTypeForDay, useTiposTreino } from './data/treino';
 
 function PlanoHeaderStrip() {
   const { day, setDay } = usePlano();
@@ -69,12 +70,21 @@ function PlanoHeaderStrip() {
 }
 
 function PlanTypeToggleButton() {
-  const { planType, setPlanType } = usePlano();
+  const { day, planType, setPlanType } = usePlano();
+  const tiposTreino = useTiposTreino();
   const isTraining = planType === 'training_day';
+  const toggle = () => {
+    const next: PlanType = isTraining ? 'rest_day' : 'training_day';
+    setPlanType(next);
+    // Persiste a escolha no doc compartilhado; o ritual escuta e reage (limpa a
+    // execução do dia no descanso e reescalona). Sem isso, o toggle seria só
+    // estado local e o auto-follow reverteria na próxima troca de dia.
+    setPlanTypeForDay(day, next, tiposTreino);
+  };
   return (
     <button
       type="button"
-      onClick={() => setPlanType(isTraining ? 'rest_day' : 'training_day')}
+      onClick={toggle}
       className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 px-3 text-sm text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
       aria-label={`${isTraining ? 'Dia de Treino' : 'Dia de Descanso'}. Clique para alternar.`}
       title={isTraining ? 'Dia de Treino' : 'Dia de Descanso'}
