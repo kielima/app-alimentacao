@@ -36,6 +36,7 @@ import OptimizePlanModal from '../components/OptimizePlanModal';
 import AutoPlanModal from '../components/AutoPlanModal';
 import { usePantryItems } from '../data/pantry';
 import { getMealSlots, type Meal } from '../types/meal';
+import { unitLabel } from '../utils/units';
 import type { Recipe } from '../types/recipe';
 import type { Ingredient } from '../types/ingredient';
 
@@ -758,7 +759,9 @@ function PlanMealCard({
                       <Icon name={isExpanded ? 'chevron-up' : 'chevron-down'} className="h-4 w-4" />
                     </span>
                   </button>
-                  {isExpanded && <MealItemsExpanded meal={refeicao} />}
+                  {isExpanded && (
+                    <MealItemsExpanded meal={refeicao} multiplier={item.quantity ?? 1} />
+                  )}
                 </li>
               );
             }
@@ -915,7 +918,32 @@ function QuantityRow({
   );
 }
 
-function MealItemsExpanded({ meal }: { meal: Meal }) {
+/** Formata uma quantidade de item (grama/ml arredondam ao inteiro; demais unidades, 1 casa). */
+function formatItemQty(quantity: number, unit: string | null): string {
+  const digits = unit === 'g' || unit === 'ml' ? 0 : 1;
+  const n = quantity.toLocaleString('pt-BR', { maximumFractionDigits: digits });
+  return unit ? `${n} ${unitLabel(unit)}` : n;
+}
+
+function ItemQtyDisplay({ quantity, unit, multiplier }: { quantity: number; unit: string | null; multiplier: number }) {
+  if (multiplier !== 1) {
+    return (
+      <span className="shrink-0 text-xs tabular-nums text-zinc-400 dark:text-zinc-500">
+        <span className="line-through">{formatItemQty(quantity, unit)}</span>{' '}
+        <span className="font-semibold text-zinc-700 dark:text-zinc-200">
+          {formatItemQty(quantity * multiplier, unit)}
+        </span>
+      </span>
+    );
+  }
+  return (
+    <span className="shrink-0 text-xs text-zinc-400 dark:text-zinc-500">
+      {formatItemQty(quantity, unit)}
+    </span>
+  );
+}
+
+function MealItemsExpanded({ meal, multiplier = 1 }: { meal: Meal; multiplier?: number }) {
   if (meal.items.length === 0) {
     return (
       <p className="px-2 pb-2 text-xs text-zinc-400 dark:text-zinc-500">Sem itens cadastrados.</p>
@@ -942,10 +970,7 @@ function MealItemsExpanded({ meal }: { meal: Meal }) {
                 </span>
               )}
               {item.quantity != null && (
-                <span className="shrink-0 text-xs text-zinc-400 dark:text-zinc-500">
-                  {item.quantity}
-                  {item.unit ? ` ${item.unit}` : ''}
-                </span>
+                <ItemQtyDisplay quantity={item.quantity} unit={item.unit} multiplier={multiplier} />
               )}
             </li>
           );
@@ -968,10 +993,7 @@ function MealItemsExpanded({ meal }: { meal: Meal }) {
                 </span>
               )}
               {item.quantity != null && (
-                <span className="shrink-0 text-xs text-zinc-400 dark:text-zinc-500">
-                  {item.quantity}
-                  {item.unit ? ` ${item.unit}` : ''}
-                </span>
+                <ItemQtyDisplay quantity={item.quantity} unit={item.unit} multiplier={multiplier} />
               )}
             </li>
           );
