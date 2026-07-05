@@ -31,7 +31,11 @@ import { computePlanItemsNutrition, type NutritionBreakdown } from '../utils/nut
 import { useUserProfile } from '../data/userProfile';
 import { dayTargets, type PlanDayTargets } from '../utils/profileTargets';
 import { optimizeDayPlan, type OptimizeResult } from '../utils/planOptimizer';
+import { buildAutoDayPlan, type AutoPlanResult } from '../utils/autoPlan';
 import OptimizePlanModal from '../components/OptimizePlanModal';
+import AutoPlanModal from '../components/AutoPlanModal';
+import { usePantryItems } from '../data/pantry';
+import { daysUntil } from '../utils/expiry';
 import { getMealSlots, type Meal } from '../types/meal';
 import type { Recipe } from '../types/recipe';
 import type { Ingredient } from '../types/ingredient';
@@ -136,6 +140,24 @@ export default function Plano() {
   const profile = useUserProfile();
   const dayTarget = useMemo(() => dayTargets(profile, planType), [profile, planType]);
   const [optimizeResult, setOptimizeResult] = useState<OptimizeResult | null>(null);
+  const [autoResult, setAutoResult] = useState<AutoPlanResult | null>(null);
+
+  // Menor validade (em dias) por ingrediente da dispensa comestível — chaves = o
+  // que está disponível. Mesmo padrão de casamento por ingredient_id da tela de
+  // receita; alimenta a montagem automática do plano a partir da dispensa.
+  const pantryItems = usePantryItems();
+  const pantryExpiryById = useMemo(() => {
+    const map = new Map<string, number | null>();
+    for (const item of pantryItems) {
+      if (item.kind === 'household' || !item.ingredient_id) continue;
+      const d = daysUntil(item.expiry_date);
+      const prev = map.get(item.ingredient_id);
+      // Guarda a menor validade (mais urgente); trata "sem data" como menos urgente.
+      if (!map.has(item.ingredient_id)) map.set(item.ingredient_id, d);
+      else if (d !== null && (prev == null || d < prev)) map.set(item.ingredient_id, d);
+    }
+    return map;
+  }, [pantryItems]);
 
   const dayPlan = useMemo(() => {
     const found = plans.find((p) => p.day_of_week === day && p.plan_type === planType);
@@ -182,6 +204,15 @@ export default function Plano() {
 
   const handleOptimize = () => {
     setOptimizeResult(optimizeDayPlan(dayPlan.meals, allMeals, dayTarget));
+  };
+
+  const handleAutoPlan = () => {
+    setAutoResult(buildAutoDayPlan(day, planType, allMeals, pantryExpiryById));
+  };
+
+  const handleApplyAuto = () => {
+    if (autoResult) upsertMealPlan(autoResult.dayPlan);
+    setAutoResult(null);
   };
 
   const handleApplyOptimize = () => {
@@ -244,6 +275,17 @@ export default function Plano() {
         dayLabel={dayLabel}
         target={dayTarget}
       />
+
+      {allMeals.length > 0 && (
+        <button
+          type="button"
+          onClick={handleAutoPlan}
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-brand-300 bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 dark:border-brand-700 dark:bg-brand-600 dark:hover:bg-brand-500"
+        >
+          <Icon name="package" className="h-4 w-4" />
+          Montar plano com a dispensa
+        </button>
+      )}
 
       {allItems.length > 0 && (
         <button
@@ -312,6 +354,16 @@ export default function Plano() {
           planType={planType}
           onApply={handleApplyOptimize}
           onClose={() => setOptimizeResult(null)}
+        />
+      )}
+
+      {autoResult && (
+        <AutoPlanModal
+          result={autoResult}
+          dayLabel={dayLabel}
+          planType={planType}
+          onApply={handleApplyAuto}
+          onClose={() => setAutoResult(null)}
         />
       )}
     </div>
