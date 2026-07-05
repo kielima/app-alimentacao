@@ -1,5 +1,18 @@
 # Scripts
 
+## Gerar a base da TBCA (`build-tbca.mjs`)
+
+`node scripts/build-tbca.mjs [input.jsonl]` gera `src/data/tbca.json` (consumido
+pelo preenchimento automático da tabela nutricional, junto da TACO e do Open
+Food Facts). A saída tem a mesma forma de `src/data/taco.json`.
+
+A TBCA ([tbca.net.br](https://www.tbca.net.br), USP/FoRC) não oferece
+download/API oficial. O input é um dump em **JSON-lines** (um alimento por
+linha, com `codigo`, `classe`, `descricao` e `nutrientes[]`), obtido por
+scraping das páginas de composição. Por padrão o script lê
+`scripts/data/tbca-raw.jsonl` (não versionado — ver `.gitignore`). O `codigo`
+alfanumérico da TBCA vira o `id` do alimento e é o valor gravado em `tbca_code`.
+
 ## Footer no app
 
 `src/pages/IngredienteDetalhe.tsx` mostra automaticamente:

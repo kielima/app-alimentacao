@@ -5,11 +5,12 @@ import type { Ingredient } from '../types/ingredient';
 
 interface Props {
   ingredient: Ingredient;
-  /** Valores já obtidos (cascata TACO/OFF ou estimativa da IA), por 100 g/ml. */
+  /** Valores já obtidos (cascata TBCA/TACO/OFF ou estimativa da IA), por 100 g/ml. */
   data: ExtractedNutrition;
   source: NutritionSource;
   matchName?: string;
   tacoId?: string;
+  tbcaCode?: string;
   offBarcode?: string;
   onSaved?: () => void;
   onClose: () => void;
@@ -17,7 +18,7 @@ interface Props {
 
 /**
  * Modal em tela cheia para revisar e salvar uma tabela nutricional já obtida de
- * uma fonte automática (TACO / Open Food Facts) ou de estimativa por IA.
+ * uma fonte automática (TBCA / TACO / Open Food Facts) ou de estimativa por IA.
  * A busca/estimativa acontece antes de abrir; aqui é só revisão + salvar.
  */
 export default function NutritionFillModal({
@@ -26,6 +27,7 @@ export default function NutritionFillModal({
   source,
   matchName,
   tacoId,
+  tbcaCode,
   offBarcode,
   onSaved,
   onClose,
@@ -53,6 +55,7 @@ export default function NutritionFillModal({
           source={source}
           matchName={matchName}
           tacoId={tacoId}
+          tbcaCode={tbcaCode}
           offBarcode={offBarcode}
           onSaved={onSaved}
           onClose={onClose}
