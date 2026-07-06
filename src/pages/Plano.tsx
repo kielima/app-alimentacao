@@ -85,6 +85,33 @@ function saveDone(day: DayOfWeek, planType: PlanType, done: Set<MealType>) {
   localStorage.setItem(doneKey(day, planType), JSON.stringify([...done]));
 }
 
+// ── Quantity-baseline helpers (para "Restaurar quantidades padrão") ────────
+// Guarda a quantidade de cada item de ANTES do primeiro "Ajustar quantidades"
+// aplicado no dia, para permitir desfazer os ajustes do otimizador.
+
+type QuantityBaseline = Record<string, number | null>;
+
+function baselineKey(day: DayOfWeek, planType: PlanType) {
+  return `app-alimentacao:qty-baseline:${viewedDate(day)}:${planType}`;
+}
+
+function loadBaseline(day: DayOfWeek, planType: PlanType): QuantityBaseline | null {
+  try {
+    const raw = localStorage.getItem(baselineKey(day, planType));
+    return raw ? (JSON.parse(raw) as QuantityBaseline) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveBaseline(day: DayOfWeek, planType: PlanType, baseline: QuantityBaseline) {
+  localStorage.setItem(baselineKey(day, planType), JSON.stringify(baseline));
+}
+
+function clearBaseline(day: DayOfWeek, planType: PlanType) {
+  localStorage.removeItem(baselineKey(day, planType));
+}
+
 // ──────────────────────────────────────────────────────────────────────────
 
 export default function Plano() {
@@ -126,6 +153,14 @@ export default function Plano() {
 
   useEffect(() => {
     setDoneMealTypes(loadDone(day, planType));
+  }, [day, planType]);
+
+  const [qtyBaseline, setQtyBaseline] = useState<QuantityBaseline | null>(() =>
+    loadBaseline(todayDayOfWeek(), 'training_day'),
+  );
+
+  useEffect(() => {
+    setQtyBaseline(loadBaseline(day, planType));
   }, [day, planType]);
 
   const toggleDone = (mealType: MealType) => {
@@ -199,7 +234,7 @@ export default function Plano() {
   };
 
   const handleOptimize = () => {
-    setOptimizeResult(optimizeDayPlan(dayPlan.meals, allMeals, dayTarget));
+    setOptimizeResult(optimizeDayPlan(dayPlan.meals, allMeals, dayTarget, doneMealTypes));
   };
 
   const handleAutoPlan = () => {
@@ -258,6 +293,12 @@ export default function Plano() {
       optimizeResult.changed.map((i) => [i.itemId, i.suggestedQuantity]),
     );
     if (newQtyById.size > 0) {
+      if (!qtyBaseline) {
+        const snapshot: QuantityBaseline = {};
+        for (const item of allItems) snapshot[item.id] = item.quantity;
+        saveBaseline(day, planType, snapshot);
+        setQtyBaseline(snapshot);
+      }
       upsertMealPlan({
         ...dayPlan,
         meals: dayPlan.meals.map((m) => ({
@@ -269,6 +310,23 @@ export default function Plano() {
       });
     }
     setOptimizeResult(null);
+  };
+
+  const handleResetQuantities = () => {
+    if (!qtyBaseline) return;
+    upsertMealPlan({
+      ...dayPlan,
+      meals: dayPlan.meals.map((m) => ({
+        ...m,
+        items: m.items.map((it) =>
+          Object.prototype.hasOwnProperty.call(qtyBaseline, it.id)
+            ? { ...it, quantity: qtyBaseline[it.id] }
+            : it,
+        ),
+      })),
+    });
+    clearBaseline(day, planType);
+    setQtyBaseline(null);
   };
 
   return (
@@ -333,6 +391,17 @@ export default function Plano() {
           <Icon name="sparkles" className="h-4 w-4" />
           Ajustar quantidades para a meta (
           {planType === 'training_day' ? 'treino' : 'descanso'})
+        </button>
+      )}
+
+      {qtyBaseline && (
+        <button
+          type="button"
+          onClick={handleResetQuantities}
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+        >
+          <Icon name="rotate-ccw" className="h-4 w-4" />
+          Restaurar quantidades padrão
         </button>
       )}
 

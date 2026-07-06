@@ -262,15 +262,38 @@ export function optimizeDayPlan(
   meals: PlanMeal[],
   catalog: Meal[],
   target: PlanDayTargets,
+  doneMealTypes?: Set<MealType>,
 ): OptimizeResult {
   const catalogById = new Map(catalog.map((m) => [m.id, m]));
   const work: Work[] = [];
   const lockedItems: OptimizedItem[] = [];
   let lockedTotals: Macros = { ...ZERO };
+  let doneLockedCount = 0;
 
   for (const meal of meals) {
+    const isDone = doneMealTypes?.has(meal.meal_type) ?? false;
     for (const item of meal.items) {
       const label = labelForItem(item, catalogById);
+      if (isDone) {
+        const macros = itemMacros(item, catalog);
+        const lockedItem: OptimizedItem = {
+          itemId: item.id,
+          mealType: meal.meal_type,
+          label,
+          kind: item.kind,
+          unit: item.unit ?? null,
+          locked: true,
+          lockReason: 'refeição já marcada como feita',
+          currentQuantity: item.quantity,
+          suggestedQuantity: item.quantity,
+          before: macros,
+          after: macros,
+        };
+        lockedItems.push(lockedItem);
+        lockedTotals = add(lockedTotals, lockedItem.before);
+        doneLockedCount += 1;
+        continue;
+      }
       const built = buildWork(item, meal.meal_type, label, catalog);
       if ('locked' in built) {
         lockedItems.push(built.locked);
@@ -347,10 +370,19 @@ export function optimizeDayPlan(
     .filter((i) => i.suggestedQuantity !== i.currentQuantity);
 
   const notes: string[] = [];
+  if (doneLockedCount > 0) {
+    notes.push(
+      doneLockedCount === 1
+        ? '1 item de uma refeição já marcada como feita foi mantido sem alteração (mas conta para o total do dia).'
+        : `${doneLockedCount} itens de refeições já marcadas como feitas foram mantidos sem alteração (mas contam para o total do dia).`,
+    );
+  }
   if (work.length === 0) {
     notes.push(
-      'Nenhum item ajustável neste dia. Verifique se os ingredientes têm dados nutricionais e ' +
-        'porção padrão (g), e se os itens das refeições têm quantidade — só assim dá para calcular e ajustar.',
+      doneLockedCount > 0
+        ? 'Nenhum item ajustável fora das refeições já marcadas. Desmarque uma refeição para poder ajustá-la.'
+        : 'Nenhum item ajustável neste dia. Verifique se os ingredientes têm dados nutricionais e ' +
+            'porção padrão (g), e se os itens das refeições têm quantidade — só assim dá para calcular e ajustar.',
     );
   }
   if (!meetsProtein) {
