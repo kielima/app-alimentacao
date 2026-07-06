@@ -57,7 +57,7 @@ export interface ExtractedNutrition {
 }
 
 /** Lê um File de imagem como base64 puro (sem o prefixo data:). */
-function fileToBase64(file: File): Promise<{ base64: string; mimeType: string }> {
+function rawFileToBase64(file: File): Promise<{ base64: string; mimeType: string }> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
@@ -71,6 +71,70 @@ function fileToBase64(file: File): Promise<{ base64: string; mimeType: string }>
     reader.onerror = () => reject(new Error('Não foi possível ler a imagem.'));
     reader.readAsDataURL(file);
   });
+}
+
+/** Carrega o arquivo como imagem desenhável, respeitando a orientação EXIF. */
+async function loadImage(file: File): Promise<ImageBitmap | HTMLImageElement> {
+  if (typeof createImageBitmap === 'function') {
+    try {
+      return await createImageBitmap(file, { imageOrientation: 'from-image' });
+    } catch {
+      // alguns formatos (ex.: HEIC) podem falhar aqui — cai no fallback abaixo
+    }
+  }
+  return await new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(img);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Não foi possível abrir a imagem.'));
+    };
+    img.src = url;
+  });
+}
+
+/**
+ * Redimensiona e recomprime a imagem (JPEG) antes de enviar: fotos da galeria em
+ * alta resolução viram um base64 grande demais para a função/callable e falham
+ * o upload. ~1600px no maior lado mantém a tabela legível. Cai para o arquivo
+ * original se o canvas falhar (ex.: formato não decodificável).
+ */
+async function fileToBase64(
+  file: File,
+  maxDim = 1600,
+  quality = 0.8,
+): Promise<{ base64: string; mimeType: string }> {
+  try {
+    const img = await loadImage(file);
+    const w0 = (img as HTMLImageElement).naturalWidth || img.width;
+    const h0 = (img as HTMLImageElement).naturalHeight || img.height;
+    if (!w0 || !h0) throw new Error('sem dimensões');
+
+    const scale = Math.min(1, maxDim / Math.max(w0, h0));
+    const w = Math.max(1, Math.round(w0 * scale));
+    const h = Math.max(1, Math.round(h0 * scale));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('sem contexto 2d');
+    ctx.drawImage(img, 0, 0, w, h);
+    if ('close' in img && typeof img.close === 'function') img.close();
+
+    const dataUrl = canvas.toDataURL('image/jpeg', quality);
+    const comma = dataUrl.indexOf(',');
+    const base64 = comma >= 0 ? dataUrl.slice(comma + 1) : '';
+    if (!base64) throw new Error('canvas vazio');
+    return { base64, mimeType: 'image/jpeg' };
+  } catch {
+    // Fallback: envia o arquivo original sem redimensionar.
+    return rawFileToBase64(file);
+  }
 }
 
 function round(value: number, digits = 2): number {
