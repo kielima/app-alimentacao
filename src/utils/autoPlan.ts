@@ -249,11 +249,12 @@ export function buildAutoDayPlan(
     const candidates = scored
       .filter((s) => getMealSlots(s.meal).includes(pm.meal_type) && mCnt(s.meal.id) < MAX_REPEAT)
       .sort((a, b) => mCnt(a.meal.id) - mCnt(b.meal.id) || compareBestFirst(a, b));
-    // Evita a mesma refeição em horários consecutivos (só permite se for a única
-    // opção). O horário anterior é o último empurrado em `slots`.
+    // Evita a mesma refeição em horários consecutivos — rígido: se a única
+    // elegível repetiria o anterior, o horário fica sem refeição e cai para
+    // receita/ingrediente (que preenchem e também não repetem em vizinhos).
+    // O horário anterior é o último empurrado em `slots`.
     const prevMealId = slots[slots.length - 1]?.meal?.id;
-    const pick =
-      candidates.find((s) => s.meal.id !== prevMealId) ?? candidates[0] ?? null;
+    const pick = candidates.find((s) => s.meal.id !== prevMealId) ?? null;
     if (!pick) {
       // Sem refeição disponível (ou todas no limite) → cai para receita/ingrediente.
       slots.push({
@@ -519,9 +520,11 @@ function toFillItem(c: Candidate, mealType: MealType): AutoFillItem {
  * Preenche os horários com receitas/ingredientes da dispensa, na hierarquia
  * **receita > ingrediente** (as refeições já foram posicionadas antes). Garante
  * que nenhum horário fique vazio e complementa para aproximar da meta, espalhando
- * pelos horários. A mesma receita/ingrediente entra no máx. `MAX_REPEAT`× nas
- * fases normais (relaxado só para não deixar horário vazio). As quantidades são
- * equilibradas depois, ao aplicar (otimizador).
+ * pelos horários — no máximo **1 fonte proteica (âncora) por horário** (a
+ * proteína extra é resolvida noutro horário ou por quantidade, ao equilibrar).
+ * A mesma receita/ingrediente entra no máx. `MAX_REPEAT`× nas fases normais
+ * (relaxado só para não deixar horário vazio). As quantidades são equilibradas
+ * depois, ao aplicar (otimizador).
  */
 function distributeFillItems(
   slots: AutoPlanSlot[],
@@ -545,11 +548,22 @@ function distributeFillItems(
   let remCal = calorieGap;
 
   /** Candidatos de um tipo elegíveis ao horário, abaixo do limite (cap null = sem
-   *  limite) e fora do conjunto `avoid` (dedup do próprio horário / adjacência). */
-  const pool = (list: Candidate[], mt: MealType, cap: number | null, avoid: Set<string>) =>
+   *  limite), fora do conjunto `avoid` (dedup do próprio horário / adjacência) e,
+   *  quando `excludeAnchors`, sem nenhuma fonte proteica (evita 2 âncoras no
+   *  mesmo horário, ex.: dois tipos de frango). */
+  const pool = (
+    list: Candidate[],
+    mt: MealType,
+    cap: number | null,
+    avoid: Set<string>,
+    excludeAnchors: boolean,
+  ) =>
     list.filter(
       (c) =>
-        eligibleForSlot(c.slots, mt) && (cap == null || cnt(c.id) < cap) && !avoid.has(c.id),
+        eligibleForSlot(c.slots, mt) &&
+        (cap == null || cnt(c.id) < cap) &&
+        !avoid.has(c.id) &&
+        !(excludeAnchors && c.isAnchor),
     );
 
   /** Melhor da lista: proteína quando ainda falta; senão caloria. Validade e
@@ -571,7 +585,8 @@ function distributeFillItems(
 
   /** Escolhe para o horário `i` na hierarquia receita > ingrediente. Nunca repete
    *  no próprio horário; com `avoidAdjacent`, também evita o que está nos horários
-   *  vizinhos (i-1 e i+1) — o mesmo item não fica em horários consecutivos. */
+   *  vizinhos (i-1 e i+1) — o mesmo item não fica em horários consecutivos. Se o
+   *  horário já tem uma fonte proteica (âncora), não busca outra — só acompanhamento. */
   const pickFor = (i: number, cap: number | null, avoidAdjacent: boolean): Candidate | undefined => {
     const mt = slots[i].mealType;
     const avoid = new Set(slotItemIds(slots[i]));
@@ -579,8 +594,12 @@ function distributeFillItems(
       for (const id of slotItemIds(slots[i - 1])) avoid.add(id);
       for (const id of slotItemIds(slots[i + 1])) avoid.add(id);
     }
-    const wantP = remProtein > 0.5;
-    return best(pool(recipeC, mt, cap, avoid), wantP) ?? best(pool(ingC, mt, cap, avoid), wantP);
+    const hasAnchor = slots[i].fillItems.some((f) => isAnchor(f.macros));
+    const wantP = remProtein > 0.5 && !hasAnchor;
+    return (
+      best(pool(recipeC, mt, cap, avoid, hasAnchor), wantP) ??
+      best(pool(ingC, mt, cap, avoid, hasAnchor), wantP)
+    );
   };
 
   const place = (slot: AutoPlanSlot, c: Candidate) => {
