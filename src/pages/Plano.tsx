@@ -34,6 +34,7 @@ import { optimizeDayPlan, type OptimizeResult } from '../utils/planOptimizer';
 import {
   buildAutoDayPlan,
   pantryAvailability,
+  mealSelectionKey,
   type AutoPlanResult,
 } from '../utils/autoPlan';
 import OptimizePlanModal from '../components/OptimizePlanModal';
@@ -257,19 +258,22 @@ export default function Plano() {
 
   const closeAuto = () => setAutoResult(null);
 
-  const handleApplyAuto = (selectedFillKeys: string[]) => {
+  const handleApplyAuto = (selectedKeys: string[]) => {
     if (autoResult) {
-      const selected = new Set(selectedFillKeys);
-      // Insere os itens escolhidos nos respectivos horários (fillItems carregam
-      // um PlanMealItem de id estável), depois equilibra as quantidades reusando
-      // o otimizador (mesma mecânica do "Ajustar quantidades").
+      const selected = new Set(selectedKeys);
+      // Monta o dia com o que foi marcado: a refeição do horário entra só se sua
+      // caixa estiver marcada; os fillItems escolhidos são anexados. Depois
+      // equilibra as quantidades reusando o otimizador ("Ajustar quantidades").
       const withFills = {
         ...autoResult.dayPlan,
         meals: autoResult.dayPlan.meals.map((m) => {
           const slot = autoResult.slots.find((s) => s.mealType === m.meal_type);
+          const keptMeal = m.items.filter(
+            (it) => it.kind !== 'meal' || selected.has(mealSelectionKey(m.meal_type)),
+          );
           const extras =
             slot?.fillItems.filter((f) => selected.has(f.key)).map((f) => f.planItem) ?? [];
-          return extras.length > 0 ? { ...m, items: [...m.items, ...extras] } : m;
+          return { ...m, items: [...keptMeal, ...extras] };
         }),
       };
       const optimized = optimizeDayPlan(withFills.meals, allMeals, dayTarget, doneMealTypes);

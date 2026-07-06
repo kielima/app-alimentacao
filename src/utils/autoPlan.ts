@@ -186,6 +186,10 @@ export interface AutoPlanSlot {
   fillItems: AutoFillItem[];
 }
 
+/** Chave de seleção (no modal) da refeição posicionada num horário. Namespace
+ *  distinto das chaves dos `fillItems` (`${mealType}:${id}`). */
+export const mealSelectionKey = (mealType: MealType): string => `meal:${mealType}`;
+
 /** Lacuna do dia (refeições montáveis) em relação à meta. */
 export interface DayGap {
   current: Macros;
@@ -245,7 +249,11 @@ export function buildAutoDayPlan(
     const candidates = scored
       .filter((s) => getMealSlots(s.meal).includes(pm.meal_type) && mCnt(s.meal.id) < MAX_REPEAT)
       .sort((a, b) => mCnt(a.meal.id) - mCnt(b.meal.id) || compareBestFirst(a, b));
-    const pick = candidates[0] ?? null;
+    // Evita a mesma refeição em horários consecutivos (só permite se for a única
+    // opção). O horário anterior é o último empurrado em `slots`.
+    const prevMealId = slots[slots.length - 1]?.meal?.id;
+    const pick =
+      candidates.find((s) => s.meal.id !== prevMealId) ?? candidates[0] ?? null;
     if (!pick) {
       // Sem refeição disponível (ou todas no limite) → cai para receita/ingrediente.
       slots.push({
@@ -475,6 +483,15 @@ function collectCandidates(
   return out;
 }
 
+/** Ids dos itens já num horário (refeição + fills) — para não repetir o mesmo
+ *  item no próprio horário nem em horários vizinhos. */
+function slotItemIds(slot: AutoPlanSlot | undefined): string[] {
+  if (!slot) return [];
+  const ids = slot.fillItems.map((f) => f.id);
+  if (slot.meal) ids.push(slot.meal.id);
+  return ids;
+}
+
 /** Constrói o AutoFillItem (com PlanMealItem de id estável) para um candidato. */
 function toFillItem(c: Candidate, mealType: MealType): AutoFillItem {
   const planItem: PlanMealItem = {
@@ -527,9 +544,13 @@ function distributeFillItems(
   let remProtein = proteinGap;
   let remCal = calorieGap;
 
-  /** Candidatos de um tipo elegíveis ao horário e abaixo do limite (cap null = sem limite). */
-  const pool = (list: Candidate[], mt: MealType, cap: number | null) =>
-    list.filter((c) => eligibleForSlot(c.slots, mt) && (cap == null || cnt(c.id) < cap));
+  /** Candidatos de um tipo elegíveis ao horário, abaixo do limite (cap null = sem
+   *  limite) e fora do conjunto `avoid` (dedup do próprio horário / adjacência). */
+  const pool = (list: Candidate[], mt: MealType, cap: number | null, avoid: Set<string>) =>
+    list.filter(
+      (c) =>
+        eligibleForSlot(c.slots, mt) && (cap == null || cnt(c.id) < cap) && !avoid.has(c.id),
+    );
 
   /** Melhor da lista: proteína quando ainda falta; senão caloria. Validade e
    *  menor uso desempatam. */
@@ -548,10 +569,18 @@ function distributeFillItems(
     )[0];
   };
 
-  /** Escolhe respeitando a hierarquia receita > ingrediente. */
-  const pickFor = (mt: MealType, cap: number | null): Candidate | undefined => {
+  /** Escolhe para o horário `i` na hierarquia receita > ingrediente. Nunca repete
+   *  no próprio horário; com `avoidAdjacent`, também evita o que está nos horários
+   *  vizinhos (i-1 e i+1) — o mesmo item não fica em horários consecutivos. */
+  const pickFor = (i: number, cap: number | null, avoidAdjacent: boolean): Candidate | undefined => {
+    const mt = slots[i].mealType;
+    const avoid = new Set(slotItemIds(slots[i]));
+    if (avoidAdjacent) {
+      for (const id of slotItemIds(slots[i - 1])) avoid.add(id);
+      for (const id of slotItemIds(slots[i + 1])) avoid.add(id);
+    }
     const wantP = remProtein > 0.5;
-    return best(pool(recipeC, mt, cap), wantP) ?? best(pool(ingC, mt, cap), wantP);
+    return best(pool(recipeC, mt, cap, avoid), wantP) ?? best(pool(ingC, mt, cap, avoid), wantP);
   };
 
   const place = (slot: AutoPlanSlot, c: Candidate) => {
@@ -561,10 +590,12 @@ function distributeFillItems(
     remCal -= c.macros.calories;
   };
 
-  // Fase 1 — item principal para cada horário sem refeição (receita > ingrediente).
-  for (const slot of slots) {
+  // Fase 1 — item principal para cada horário sem refeição (receita > ingrediente),
+  // evitando o mesmo item de horário vizinho.
+  for (let i = 0; i < slots.length; i++) {
+    const slot = slots[i];
     if (slot.meal || slot.fillItems.length > 0) continue;
-    const pick = pickFor(slot.mealType, MAX_REPEAT);
+    const pick = pickFor(i, MAX_REPEAT, true) ?? pickFor(i, MAX_REPEAT, false);
     if (pick) place(slot, pick);
   }
 
@@ -572,19 +603,20 @@ function distributeFillItems(
   let progressed = true;
   while ((remProtein > 0.5 || remCal > 5) && progressed) {
     progressed = false;
-    for (const slot of slots) {
+    for (let i = 0; i < slots.length; i++) {
       if (remProtein <= 0.5 && remCal <= 5) break;
-      const pick = pickFor(slot.mealType, MAX_REPEAT);
+      const pick = pickFor(i, MAX_REPEAT, true) ?? pickFor(i, MAX_REPEAT, false);
       if (!pick) continue;
-      place(slot, pick);
+      place(slots[i], pick);
       progressed = true;
     }
   }
 
-  // Garantia — nenhum horário vazio (relaxa o limite se preciso).
-  for (const slot of slots) {
+  // Garantia — nenhum horário vazio (relaxa adjacência e limite se preciso).
+  for (let i = 0; i < slots.length; i++) {
+    const slot = slots[i];
     if (slot.meal || slot.fillItems.length > 0) continue;
-    const pick = pickFor(slot.mealType, null);
+    const pick = pickFor(i, null, true) ?? pickFor(i, null, false);
     if (pick) place(slot, pick);
   }
 }
