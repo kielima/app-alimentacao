@@ -1,6 +1,7 @@
 import { findIngredientById } from '../data/ingredients';
 import { findMealById } from '../data/meals';
 import { findRecipeById } from '../data/recipes';
+import { activeMealRef } from '../types/meal';
 import type { Meal } from '../types/meal';
 import type {
   MealType,
@@ -129,16 +130,25 @@ const roundGrams = (q: number): number => {
   const r = Math.round(q / 5) * 5;
   return r < 5 ? 5 : r;
 };
-const roundCount = (q: number): number => {
-  if (q <= 0) return 0;
-  const r = Math.round(q * 2) / 2;
-  return r < 0.5 ? 0.5 : r;
+/** Itens que só existem inteiros (banana, ovo, pacote…) — nunca fração: ou um múltiplo cheio, ou zero. */
+const roundWhole = (q: number): number => {
+  if (q <= 0.5) return 0;
+  return Math.round(q);
 };
 const roundMultiplier = (q: number): number => {
   if (q <= 0) return 0;
   const r = Math.round(q * 20) / 20;
   return r < 0.25 ? 0.25 : r;
 };
+
+/** A refeição composta tem algum item indivisível (não g/ml)? Se sim, o multiplicador de
+ * porção precisa ser inteiro — fração de ×1 significaria comer parte de um item inteiro. */
+function mealHasIndivisibleItem(meal: Meal): boolean {
+  return meal.items.some((mi) => {
+    const ref = activeMealRef(mi);
+    return ref.unit !== 'g' && ref.unit !== 'ml';
+  });
+}
 
 interface Work {
   ref: OptimizedItem;
@@ -190,7 +200,8 @@ function buildWork(
       return lockedItem('sem dados nutricionais (itens da refeição sem porção/quantidade)');
     }
     const q0 = item.quantity != null && item.quantity > 0 ? item.quantity : 1;
-    return makeWork(item, mealType, label, mealMacros, q0, '×', roundMultiplier, q0 * MAX_MEAL_SCALE);
+    const round = mealHasIndivisibleItem(meal) ? roundWhole : roundMultiplier;
+    return makeWork(item, mealType, label, mealMacros, q0, '×', round, q0 * MAX_MEAL_SCALE);
   }
 
   // Ingrediente ou receita → escala a própria quantidade na sua unidade.
@@ -211,7 +222,7 @@ function buildWork(
     );
   }
   const unitMacros = scaleMacros(per100, gramsPerUnit / 100);
-  const round = unit === 'g' || unit === 'ml' ? roundGrams : roundCount;
+  const round = unit === 'g' || unit === 'ml' ? roundGrams : roundWhole;
   return makeWork(item, mealType, label, unitMacros, item.quantity, unit, round, item.quantity * MAX_SCALE);
 }
 
