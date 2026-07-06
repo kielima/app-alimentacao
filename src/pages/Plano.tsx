@@ -339,6 +339,23 @@ export default function Plano() {
     setQtyBaseline(null);
   };
 
+  const handleClearPlan = () => {
+    if (allItems.length === 0) return;
+    const confirmed = window.confirm(
+      `Limpar o plano de ${dayLabel}? Todos os itens das refeições deste dia serão removidos.`,
+    );
+    if (!confirmed) return;
+    upsertMealPlan({
+      ...dayPlan,
+      meals: dayPlan.meals.map((m) => ({ ...m, items: [] })),
+    });
+    clearBaseline(day, planType);
+    setQtyBaseline(null);
+    const emptyDone = new Set<MealType>();
+    saveDone(day, planType, emptyDone);
+    setDoneMealTypes(emptyDone);
+  };
+
   return (
     <div className="mx-auto max-w-6xl px-4 pt-2 pb-28">
       <button
@@ -412,6 +429,17 @@ export default function Plano() {
         >
           <Icon name="rotate-ccw" className="h-4 w-4" />
           Restaurar quantidades padrão
+        </button>
+      )}
+
+      {allItems.length > 0 && (
+        <button
+          type="button"
+          onClick={handleClearPlan}
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 hover:bg-red-100 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300 dark:hover:bg-red-900/30"
+        >
+          <TrashIcon className="h-4 w-4" />
+          Limpar plano do dia
         </button>
       )}
 
