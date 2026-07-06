@@ -6,6 +6,7 @@ import Icon from '../components/Icon';
 import { getMarket, upsertMarket, deleteMarket } from '../data/markets';
 import { useShoppingItems } from '../data/shoppingList';
 import { useAllIngredients } from '../data/ingredients';
+import { resolveItemName } from '../utils/itemName';
 import type { Market } from '../types/market';
 
 export default function MercadoForm() {
@@ -225,7 +226,7 @@ export default function MercadoForm() {
                       : 'text-brand-900 dark:text-brand-100'
                   }`}
                 >
-                  {item.raw_text}
+                  {resolveItemName(item)}
                 </span>
                 {item.price != null && (
                   <span className="ml-auto text-xs text-zinc-500">

@@ -18,6 +18,7 @@ import {
 import type { Ingredient } from '../types/ingredient';
 import type { PantryItem } from '../types/pantry';
 import type { ServingGap } from '../utils/dataGaps';
+import { resolveItemName } from '../utils/itemName';
 import { unitLabel } from '../utils/units';
 
 export default function Pendencias() {
@@ -198,7 +199,7 @@ function PantryGapCard({ item }: { item: PantryItem }) {
           </span>
         </div>
         <div className="flex min-w-0 flex-1 flex-col p-2.5">
-          <p className="line-clamp-2 text-sm font-medium leading-tight">{item.raw_text}</p>
+          <p className="line-clamp-2 text-sm font-medium leading-tight">{resolveItemName(item)}</p>
         </div>
       </Link>
     </li>

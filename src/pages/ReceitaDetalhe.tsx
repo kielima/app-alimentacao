@@ -18,6 +18,7 @@ import { getMealSlots } from '../types/meal';
 import type { MealItemRef } from '../types/meal';
 import { MEAL_TYPES } from '../types/mealPlan';
 import { recipeCategoryIds, type Recipe, type RecipeIngredient } from '../types/recipe';
+import { ingredientDisplayName } from '../utils/itemName';
 
 export default function ReceitaDetalhe() {
   const { id } = useParams<{ id: string }>();
@@ -469,7 +470,9 @@ function IngredientList({
           const ing = item.ingredient_id ? findIngredientById(item.ingredient_id) : undefined;
           const inner = (
             <span className="flex w-full items-center gap-2 text-sm">
-              <span className="text-zinc-900 dark:text-zinc-100">{item.raw_text}</span>
+              <span className="text-zinc-900 dark:text-zinc-100">
+                {ing ? ingredientDisplayName(ing) : item.raw_text}
+              </span>
               {item.is_optional && (
                 <span className="shrink-0 text-xs italic text-zinc-400 dark:text-zinc-500">
                   (opcional)
@@ -545,7 +548,7 @@ function IngredientList({
                             : 'text-zinc-500 dark:text-zinc-400'
                         }`}
                       >
-                        {opt.raw_text}
+                        {ingredientDisplayName(ing)}
                       </Link>
                     ) : (
                       <span
