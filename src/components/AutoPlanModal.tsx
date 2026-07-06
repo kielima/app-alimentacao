@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Icon from './Icon';
 import { MEAL_TYPES, type PlanType } from '../types/mealPlan';
 import { unitLabel } from '../utils/units';
-import type { AutoPlanResult, AutoFillItem } from '../utils/autoPlan';
+import { mealSelectionKey, type AutoPlanResult, type AutoFillItem } from '../utils/autoPlan';
 
 const slotMeta = (value: string) => MEAL_TYPES.find((m) => m.value === value);
 
@@ -52,7 +52,11 @@ export default function AutoPlanModal({
 
   const allFill = slots.flatMap((s) => s.fillItems);
   const [selected, setSelected] = useState<Set<string>>(
-    () => new Set(allFill.map((f) => f.key)),
+    () =>
+      new Set([
+        ...slots.filter((s) => s.meal).map((s) => mealSelectionKey(s.mealType)),
+        ...allFill.map((f) => f.key),
+      ]),
   );
   const toggle = (key: string) =>
     setSelected((prev) => {
@@ -64,7 +68,7 @@ export default function AutoPlanModal({
 
   const hasGap = gap.proteinGap > 0 || gap.calorieGap > 0;
   const nothingToPlan = makeableCount === 0 && allFill.length === 0;
-  const canApply = filledCount > 0 || selected.size > 0;
+  const canApply = selected.size > 0;
 
   return (
     <div
@@ -191,6 +195,7 @@ function SlotRow({
   const mt = slotMeta(slot.mealType);
   const hint = slot.meal ? expiryHint(slot.earliestDays) : null;
   const hasFill = slot.fillItems.length > 0;
+  const mealKey = mealSelectionKey(slot.mealType);
 
   return (
     <li className="rounded-lg bg-zinc-50 dark:bg-zinc-950">
@@ -203,7 +208,15 @@ function SlotRow({
           {mt?.label ?? slot.mealType}
         </span>
         {slot.meal ? (
-          <span className="min-w-0 flex-1 truncate font-medium">{slot.meal.name}</span>
+          <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2">
+            <input
+              type="checkbox"
+              checked={selected.has(mealKey)}
+              onChange={() => onToggle(mealKey)}
+              className="h-4 w-4 shrink-0 accent-brand-500"
+            />
+            <span className="min-w-0 flex-1 truncate font-medium">{slot.meal.name}</span>
+          </label>
         ) : hasFill ? (
           <span className="min-w-0 flex-1 truncate text-[11px] text-zinc-400 dark:text-zinc-500">
             combinar da dispensa:
