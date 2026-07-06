@@ -23,6 +23,7 @@ import type { MealItemRef } from '../types/meal';
 import { MEAL_TYPES } from '../types/mealPlan';
 import type { PantryItem } from '../types/pantry';
 import type { Unit } from '../types/ingredient';
+import { resolveItemName } from '../utils/itemName';
 
 const INGREDIENT_SEPARATOR = ' — ';
 
@@ -240,7 +241,7 @@ export default function DispensaForm() {
 
   const handleDelete = () => {
     if (!original) return;
-    if (!confirm(`Remover "${original.raw_text}" da dispensa?`)) return;
+    if (!confirm(`Remover "${resolveItemName(original)}" da dispensa?`)) return;
     deletePantryItem(original.id);
     navigate('/dispensa');
   };

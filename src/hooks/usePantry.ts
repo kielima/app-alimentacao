@@ -3,6 +3,7 @@ import { usePantryItems } from '../data/pantry';
 import { expiryStatus, type ExpiryStatus } from '../utils/expiry';
 import { matches } from '../utils/search';
 import { createUIStore } from '../utils/persistentUIState';
+import { resolveItemName } from '../utils/itemName';
 import type { PantryItem } from '../types/pantry';
 
 export type PantryFilter = 'todos' | ExpiryStatus;
@@ -76,7 +77,7 @@ export function usePantry(): UsePantryResult {
       .filter((i) =>
         filter === 'todos' ? true : expiryStatus(i.expiry_date, i.no_expiry) === filter,
       )
-      .filter((i) => matches(i.raw_text, query))
+      .filter((i) => matches(resolveItemName(i), query))
       .sort((a, b) => {
         const sa = STATUS_ORDER[expiryStatus(a.expiry_date, a.no_expiry)];
         const sb = STATUS_ORDER[expiryStatus(b.expiry_date, b.no_expiry)];
@@ -87,7 +88,7 @@ export function usePantry(): UsePantryResult {
         }
         if (a.expiry_date) return -1;
         if (b.expiry_date) return 1;
-        return a.raw_text.localeCompare(b.raw_text, 'pt-BR');
+        return resolveItemName(a).localeCompare(resolveItemName(b), 'pt-BR');
       });
   }, [items, query, filter, kindFilter]);
 

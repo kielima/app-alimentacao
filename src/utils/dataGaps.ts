@@ -2,6 +2,7 @@ import { ingredientNutritionSource, type Ingredient } from '../types/ingredient'
 import type { Meal } from '../types/meal';
 import type { Recipe } from '../types/recipe';
 import type { PantryItem } from '../types/pantry';
+import { resolveItemName } from './itemName';
 
 /**
  * Detecta dados faltantes que atrapalham o plano:
@@ -117,7 +118,7 @@ export function collectDataGaps(
   // Itens de comida na dispensa sem data de validade (e não marcados como "sem validade").
   const pantryNoExpiry = pantry
     .filter((p) => p.kind !== 'household' && !p.expiry_date && !p.no_expiry)
-    .sort((a, b) => a.raw_text.localeCompare(b.raw_text, 'pt-BR'));
+    .sort((a, b) => resolveItemName(a).localeCompare(resolveItemName(b), 'pt-BR'));
 
   const total =
     ingredientsNoNutrition.length +

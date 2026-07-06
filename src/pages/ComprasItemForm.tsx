@@ -20,6 +20,7 @@ import { MEAL_TYPES } from '../types/mealPlan';
 import { UNIT_OPTIONS } from '../utils/units';
 import { uniqueSlug } from '../utils/slug';
 import NutritionTable from '../components/NutritionTable';
+import { resolveItemName } from '../utils/itemName';
 import type { ShoppingItem } from '../types/shoppingList';
 import type { Unit } from '../types/ingredient';
 
@@ -234,7 +235,7 @@ export default function ComprasItemForm() {
 
   const handleDelete = () => {
     if (!original) return;
-    if (!confirm(`Remover "${original.raw_text}" da lista de compras?`)) return;
+    if (!confirm(`Remover "${resolveItemName(original)}" da lista de compras?`)) return;
     deleteShoppingItem(original.id);
     navigate('/compras');
   };

@@ -15,6 +15,7 @@ import { upsertShoppingItem } from '../data/shoppingList';
 import { upsertPantryItem, deletePantryItem } from '../data/pantry';
 import { useAllIngredients } from '../data/ingredients';
 import { handleScanForPantry } from '../lib/scanActions';
+import { resolveItemName } from '../utils/itemName';
 import type { PantryItem } from '../types/pantry';
 
 const filterChips: { value: PantryFilter; label: string; icon: string | null }[] = [
@@ -52,7 +53,7 @@ export default function Dispensa() {
     upsertShoppingItem({
       id: `from-pantry-${item.id}-${Date.now()}`,
       ingredient_id: item.ingredient_id,
-      raw_text: item.raw_text,
+      raw_text: resolveItemName(item),
       quantity: item.quantity,
       unit: item.unit,
       store: item.store,
@@ -82,7 +83,7 @@ export default function Dispensa() {
   };
 
   const removePantryItem = (item: PantryItem) => {
-    if (!confirm(`Apagar "${item.raw_text}" da dispensa? Esta ação não pode ser desfeita.`)) return;
+    if (!confirm(`Apagar "${resolveItemName(item)}" da dispensa? Esta ação não pode ser desfeita.`)) return;
     deletePantryItem(item.id);
     setActionItemId(null);
   };
@@ -222,7 +223,7 @@ export default function Dispensa() {
       {actionItem && (
         <CardActionSheet
           category="Item da dispensa"
-          title={actionItem.raw_text}
+          title={resolveItemName(actionItem)}
           onClose={() => setActionItemId(null)}
           actions={[
             {
@@ -299,7 +300,7 @@ function PantryCard({ item, onOpen, onSendToList, onLongPress }: PantryCardProps
           </button>
         </div>
         <div className="flex min-w-0 flex-1 flex-col p-2.5">
-          <p className="line-clamp-2 text-sm font-medium leading-tight">{item.raw_text}</p>
+          <p className="line-clamp-2 text-sm font-medium leading-tight">{resolveItemName(item)}</p>
           {(subtitle || item.store) && (
             <p className="mt-1 truncate text-xs text-zinc-500 dark:text-zinc-400">
               {subtitle}

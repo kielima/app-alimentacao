@@ -20,6 +20,7 @@ import { findRecipeById } from '../data/recipes';
 import { handleScanForShoppingList } from '../lib/scanActions';
 import { UNIT_OPTIONS, unitLabel } from '../utils/units';
 import { createUIStore } from '../utils/persistentUIState';
+import { resolveItemName } from '../utils/itemName';
 import type { ShoppingItem } from '../types/shoppingList';
 import type { Ingredient } from '../types/ingredient';
 
@@ -135,7 +136,7 @@ export default function Compras() {
       upsertPantryItem({
         id: `pantry-${Date.now()}-${item.id}`,
         ingredient_id: item.ingredient_id,
-        raw_text: item.raw_text,
+        raw_text: resolveItemName(item),
         quantity: item.quantity,
         unit: item.unit,
         expiry_date: item.expiry_date ?? null,
@@ -340,7 +341,7 @@ export default function Compras() {
                               : 'text-zinc-900 dark:text-zinc-100'
                           }`}
                         >
-                          {item.raw_text}
+                          {resolveItemName(item)}
                         </p>
                         <div className="flex flex-wrap items-center gap-x-2 text-[11px] text-zinc-500 dark:text-zinc-400">
                           {itemKind(item) === 'household' && (
