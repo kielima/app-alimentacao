@@ -46,7 +46,9 @@ export default function AutoPlanModal({
   onClose: () => void;
 }) {
   const { slots, makeableCount, filledCount, gap } = result;
-  const emptySlots = slots.length - filledCount;
+  // Horários preenchidos com itens da dispensa (sem refeição) e os que ficaram vazios.
+  const fillSlots = slots.filter((s) => !s.meal && s.fillItems.length > 0).length;
+  const trulyEmpty = slots.filter((s) => !s.meal && s.fillItems.length === 0).length;
 
   const allFill = slots.flatMap((s) => s.fillItems);
   const [selected, setSelected] = useState<Set<string>>(
@@ -118,10 +120,11 @@ export default function AutoPlanModal({
               <Icon name="package" className="h-4 w-4 shrink-0 text-brand-600 dark:text-brand-400" />
               <span>
                 <strong>{makeableCount}</strong>{' '}
-                {makeableCount === 1 ? 'refeição montável' : 'refeições montáveis'} · preenchendo{' '}
-                <strong>{filledCount}</strong> de {slots.length}{' '}
-                {slots.length === 1 ? 'horário' : 'horários'}
-                {emptySlots > 0 && ` (${emptySlots} sem refeição)`}
+                {makeableCount === 1 ? 'refeição montável' : 'refeições montáveis'} ·{' '}
+                <strong>{filledCount}</strong> {filledCount === 1 ? 'horário' : 'horários'} com
+                refeição
+                {fillSlots > 0 && `, ${fillSlots} com itens da dispensa`}
+                {trulyEmpty > 0 && ` (${trulyEmpty} sem opção)`}
               </span>
             </div>
 

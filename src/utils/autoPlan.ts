@@ -13,6 +13,9 @@ import type { DayOfWeek, DayPlan, MealType, PlanMealItem, PlanType } from '../ty
 /** Dias para uma validade contar como "vencendo" (espelha SOON_DAYS de expiry.ts). */
 const SOON_DAYS = 3;
 
+/** Máximo de vezes que a mesma refeição/receita pode ser recomendada num dia. */
+const MAX_REPEAT = 2;
+
 export interface PantryAvailability {
   /** ingredient_id → menor validade (dias) entre os itens NÃO vencidos; null =
    *  só há itens sem data. As chaves são o conjunto disponível para montar. */
@@ -231,16 +234,20 @@ export function buildAutoDayPlan(
   }
 
   const base = emptyDayPlan(day, planType);
-  const used = new Set<string>();
+  // Limite de repetição da mesma refeição no dia (variedade).
+  const mealCount = new Map<string, number>();
+  const mCnt = (id: string) => mealCount.get(id) ?? 0;
   const slots: AutoPlanSlot[] = [];
 
   const filledMeals = base.meals.map((pm) => {
+    // Refeições elegíveis para o horário ainda abaixo do limite; prioriza as
+    // menos usadas (variedade) e depois a validade (compareBestFirst).
     const candidates = scored
-      .filter((s) => getMealSlots(s.meal).includes(pm.meal_type))
-      .sort(compareBestFirst);
-    // Evita repetir uma refeição já colocada em outro horário quando houver alternativa.
-    const pick = candidates.find((s) => !used.has(s.meal.id)) ?? candidates[0] ?? null;
+      .filter((s) => getMealSlots(s.meal).includes(pm.meal_type) && mCnt(s.meal.id) < MAX_REPEAT)
+      .sort((a, b) => mCnt(a.meal.id) - mCnt(b.meal.id) || compareBestFirst(a, b));
+    const pick = candidates[0] ?? null;
     if (!pick) {
+      // Sem refeição disponível (ou todas no limite) → cai para receita/ingrediente.
       slots.push({
         mealType: pm.meal_type,
         meal: null,
@@ -250,7 +257,7 @@ export function buildAutoDayPlan(
       });
       return pm;
     }
-    used.add(pick.meal.id);
+    mealCount.set(pick.meal.id, mCnt(pick.meal.id) + 1);
     slots.push({
       mealType: pm.meal_type,
       meal: pick.meal,
@@ -278,15 +285,11 @@ export function buildAutoDayPlan(
   const calorieGap = rawCal > KCAL_TOLERANCE ? rawCal : 0;
   const gap: DayGap = { current, proteinGap, calorieGap };
 
-  // Distribui receitas/ingredientes da dispensa pelos horários (vazios primeiro,
-  // depois complementando os preenchidos) para espalhar em vez de empilhar.
-  if (proteinGap > 0 || calorieGap > 0) {
-    const ordered = [
-      ...slots.filter((s) => s.meal === null),
-      ...slots.filter((s) => s.meal !== null),
-    ];
-    distributeFillItems(ordered, recipes, ingredients, availability, proteinGap, calorieGap);
-  }
+  // Preenche os horários por hierarquia (receita > ingrediente) e complementa
+  // para a meta, sem deixar horário vazio. Sempre roda: mesmo com a meta batida,
+  // os horários sem refeição recebem um principal (o otimizador equilibra as
+  // quantidades ao aplicar).
+  distributeFillItems(slots, recipes, ingredients, availability, proteinGap, calorieGap);
 
   return {
     dayPlan: { ...base, meals: filledMeals },
@@ -496,61 +499,92 @@ function toFillItem(c: Candidate, mealType: MealType): AutoFillItem {
 }
 
 /**
- * Distribui candidatos pelos horários, respeitando as etiquetas de horário.
- * Espalha em vez de empilhar: percorre os slots em rodadas (round-robin),
- * adicionando 1 item por slot a cada rodada até cobrir a lacuna do dia
- * (proteína/calorias). Enquanto falta proteína, prioriza âncoras; depois,
- * acompanhamentos para as calorias. `orderedSlots` vem com os vazios primeiro,
- * então eles têm prioridade, mas os preenchidos também podem receber
- * complementos. Sem cap fixo por horário. As quantidades são equilibradas
- * depois, ao aplicar (otimizador).
+ * Preenche os horários com receitas/ingredientes da dispensa, na hierarquia
+ * **receita > ingrediente** (as refeições já foram posicionadas antes). Garante
+ * que nenhum horário fique vazio e complementa para aproximar da meta, espalhando
+ * pelos horários. A mesma receita/ingrediente entra no máx. `MAX_REPEAT`× nas
+ * fases normais (relaxado só para não deixar horário vazio). As quantidades são
+ * equilibradas depois, ao aplicar (otimizador).
  */
 function distributeFillItems(
-  orderedSlots: AutoPlanSlot[],
+  slots: AutoPlanSlot[],
   recipes: Recipe[],
   ingredients: Ingredient[],
   availability: Map<string, number | null>,
   proteinGap: number,
   calorieGap: number,
 ): void {
-  const candidates = collectCandidates(recipes, ingredients, availability);
-  if (candidates.length === 0 || orderedSlots.length === 0) return;
+  const all = collectCandidates(recipes, ingredients, availability);
+  if (all.length === 0 || slots.length === 0) return;
+  const recipeC = all.filter((c) => c.kind === 'recipe');
+  const ingC = all.filter((c) => c.kind === 'ingredient');
 
-  const usedIds = new Set<string>();
+  const count = new Map<string, number>();
+  const cnt = (id: string) => count.get(id) ?? 0;
   const byExpiry = (a: Candidate, b: Candidate) =>
     (a.earliestDays ?? Number.POSITIVE_INFINITY) - (b.earliestDays ?? Number.POSITIVE_INFINITY);
 
   let remProtein = proteinGap;
   let remCal = calorieGap;
-  let progressed = true;
 
+  /** Candidatos de um tipo elegíveis ao horário e abaixo do limite (cap null = sem limite). */
+  const pool = (list: Candidate[], mt: MealType, cap: number | null) =>
+    list.filter((c) => eligibleForSlot(c.slots, mt) && (cap == null || cnt(c.id) < cap));
+
+  /** Melhor da lista: proteína quando ainda falta; senão caloria. Validade e
+   *  menor uso desempatam. */
+  const best = (list: Candidate[], wantProtein: boolean): Candidate | undefined => {
+    if (list.length === 0) return undefined;
+    const arr = [...list];
+    if (wantProtein) {
+      const anchors = arr.filter((c) => c.isAnchor);
+      const base = anchors.length ? anchors : arr;
+      return base.sort(
+        (a, b) => b.macros.protein - a.macros.protein || byExpiry(a, b) || cnt(a.id) - cnt(b.id),
+      )[0];
+    }
+    return arr.sort(
+      (a, b) => b.macros.calories - a.macros.calories || byExpiry(a, b) || cnt(a.id) - cnt(b.id),
+    )[0];
+  };
+
+  /** Escolhe respeitando a hierarquia receita > ingrediente. */
+  const pickFor = (mt: MealType, cap: number | null): Candidate | undefined => {
+    const wantP = remProtein > 0.5;
+    return best(pool(recipeC, mt, cap), wantP) ?? best(pool(ingC, mt, cap), wantP);
+  };
+
+  const place = (slot: AutoPlanSlot, c: Candidate) => {
+    count.set(c.id, cnt(c.id) + 1);
+    slot.fillItems.push(toFillItem(c, slot.mealType));
+    remProtein -= c.macros.protein;
+    remCal -= c.macros.calories;
+  };
+
+  // Fase 1 — item principal para cada horário sem refeição (receita > ingrediente).
+  for (const slot of slots) {
+    if (slot.meal || slot.fillItems.length > 0) continue;
+    const pick = pickFor(slot.mealType, MAX_REPEAT);
+    if (pick) place(slot, pick);
+  }
+
+  // Fase 2 — complemento para a meta, espalhando entre os horários (round-robin).
+  let progressed = true;
   while ((remProtein > 0.5 || remCal > 5) && progressed) {
     progressed = false;
-    for (const slot of orderedSlots) {
+    for (const slot of slots) {
       if (remProtein <= 0.5 && remCal <= 5) break;
-      const mt = slot.mealType;
-      const pool = candidates.filter(
-        (c) => !usedIds.has(c.id) && eligibleForSlot(c.slots, mt),
-      );
-      if (pool.length === 0) continue;
-
-      let pick: Candidate;
-      if (remProtein > 0.5) {
-        // Prioriza âncoras (maior proteína); se não houver, o melhor proteico.
-        const anchors = pool.filter((c) => c.isAnchor);
-        pick = (anchors.length ? anchors : pool).sort(
-          (a, b) => b.macros.protein - a.macros.protein || byExpiry(a, b),
-        )[0];
-      } else {
-        // Só calorias: acompanhamentos (maior caloria; validade desempata).
-        pick = pool.sort((a, b) => b.macros.calories - a.macros.calories || byExpiry(a, b))[0];
-      }
-
-      usedIds.add(pick.id);
-      slot.fillItems.push(toFillItem(pick, mt));
-      remProtein -= pick.macros.protein;
-      remCal -= pick.macros.calories;
+      const pick = pickFor(slot.mealType, MAX_REPEAT);
+      if (!pick) continue;
+      place(slot, pick);
       progressed = true;
     }
+  }
+
+  // Garantia — nenhum horário vazio (relaxa o limite se preciso).
+  for (const slot of slots) {
+    if (slot.meal || slot.fillItems.length > 0) continue;
+    const pick = pickFor(slot.mealType, null);
+    if (pick) place(slot, pick);
   }
 }
