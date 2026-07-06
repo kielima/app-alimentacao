@@ -86,13 +86,17 @@ function saveDone(day: DayOfWeek, planType: PlanType, done: Set<MealType>) {
 }
 
 // ── Quantity-baseline helpers (para "Restaurar quantidades padrão") ────────
-// Guarda a quantidade de cada item de ANTES do primeiro "Ajustar quantidades"
-// aplicado no dia, para permitir desfazer os ajustes do otimizador.
+// Guarda a quantidade de cada item de ANTES do primeiro ajuste automático
+// aplicado no plano, para permitir desfazer os ajustes do otimizador. O plano
+// (day_of_week + plan_type) é um modelo recorrente, não uma instância por data
+// — por isso a chave usa só esses dois campos, como o próprio plano, e não a
+// data do calendário (que é exclusiva do tracking de "feito", que sim reinicia
+// toda semana).
 
 type QuantityBaseline = Record<string, number | null>;
 
 function baselineKey(day: DayOfWeek, planType: PlanType) {
-  return `app-alimentacao:qty-baseline:${viewedDate(day)}:${planType}`;
+  return `app-alimentacao:qty-baseline:${day}:${planType}`;
 }
 
 function loadBaseline(day: DayOfWeek, planType: PlanType): QuantityBaseline | null {
@@ -268,8 +272,14 @@ export default function Plano() {
           return extras.length > 0 ? { ...m, items: [...m.items, ...extras] } : m;
         }),
       };
-      const optimized = optimizeDayPlan(withFills.meals, allMeals, dayTarget);
+      const optimized = optimizeDayPlan(withFills.meals, allMeals, dayTarget, doneMealTypes);
       const newQty = new Map(optimized.changed.map((i) => [i.itemId, i.suggestedQuantity]));
+      if (newQty.size > 0 && !qtyBaseline) {
+        const snapshot: QuantityBaseline = {};
+        for (const item of withFills.meals.flatMap((m) => m.items)) snapshot[item.id] = item.quantity;
+        saveBaseline(day, planType, snapshot);
+        setQtyBaseline(snapshot);
+      }
       const balanced =
         newQty.size > 0
           ? {
