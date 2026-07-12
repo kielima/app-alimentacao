@@ -6,6 +6,7 @@ import TrashIcon from '../components/TrashIcon';
 import Icon from '../components/Icon';
 import { useMarkets, upsertMarket, deleteMarket } from '../data/markets';
 import { useShoppingItems } from '../data/shoppingList';
+import { itemStores } from '../types/shoppingList';
 import { useAllIngredients } from '../data/ingredients';
 import { useLongPress } from '../hooks/useLongPress';
 import { createUIStore } from '../utils/persistentUIState';
@@ -32,7 +33,9 @@ export default function Mercados() {
   const shoppingByStore = useMemo(() => {
     const map = new Map<string, number>();
     for (const item of shoppingItems) {
-      if (item.store) map.set(item.store, (map.get(item.store) ?? 0) + 1);
+      for (const store of itemStores(item)) {
+        map.set(store, (map.get(store) ?? 0) + 1);
+      }
     }
     return map;
   }, [shoppingItems]);
