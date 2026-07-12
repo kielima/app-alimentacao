@@ -5,6 +5,7 @@ import TrashIcon from '../components/TrashIcon';
 import Icon from '../components/Icon';
 import { getMarket, upsertMarket, deleteMarket } from '../data/markets';
 import { useShoppingItems } from '../data/shoppingList';
+import { itemStores } from '../types/shoppingList';
 import { useAllIngredients } from '../data/ingredients';
 import { resolveItemName } from '../utils/itemName';
 import type { Market } from '../types/market';
@@ -43,7 +44,7 @@ export default function MercadoForm() {
   const matchingShoppingItems = useMemo(() => {
     const n = name.trim().toLowerCase();
     if (!n) return [];
-    return shoppingItems.filter((i) => i.store?.toLowerCase() === n);
+    return shoppingItems.filter((i) => itemStores(i).some((s) => s.toLowerCase() === n));
   }, [shoppingItems, name]);
 
   if (editing && !original) {

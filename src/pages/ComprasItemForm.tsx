@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import TrashIcon from '../components/TrashIcon';
@@ -21,7 +21,7 @@ import { UNIT_OPTIONS } from '../utils/units';
 import { uniqueSlug } from '../utils/slug';
 import NutritionTable from '../components/NutritionTable';
 import { resolveItemName } from '../utils/itemName';
-import type { ShoppingItem } from '../types/shoppingList';
+import { itemStores, type ShoppingItem } from '../types/shoppingList';
 import type { Unit } from '../types/ingredient';
 
 const INGREDIENT_SEPARATOR = ' — ';
@@ -84,9 +84,7 @@ export default function ComprasItemForm() {
   const recipeCategories = useRecipeCategories();
   const allMeals = useAllMeals();
   const knownStores = useMemo(() => {
-    const fromItems = [...pantryItems, ...shoppingItems]
-      .map((i) => i.store)
-      .filter((s): s is string => !!s && s.trim() !== '');
+    const fromItems = [...pantryItems, ...shoppingItems].flatMap((i) => itemStores(i));
     const fromMarkets = markets.map((m) => m.name);
     return [...new Set([...fromMarkets, ...fromItems])].sort((a, b) =>
       a.localeCompare(b, 'pt-BR'),
@@ -121,16 +119,24 @@ export default function ComprasItemForm() {
     original?.kind === 'household' ? 'household' : 'food',
   );
 
-  // Store state
-  const [storeSelect, setStoreSelect] = useState<string>(() => original?.store ?? '');
-  const [storeCustom, setStoreCustom] = useState('');
+  // Store state — um item pode ser comprado em mais de um mercado.
+  const [selectedStores, setSelectedStores] = useState<string[]>(() =>
+    itemStores(original ?? {}),
+  );
+  const [customStore, setCustomStore] = useState('');
 
-  useEffect(() => {
-    if (storeSelect !== '' && storeSelect !== '__outro__' && !knownStores.includes(storeSelect)) {
-      setStoreCustom(storeSelect);
-      setStoreSelect('__outro__');
-    }
-  }, [knownStores]); // intentionally only runs when knownStores changes (first load)
+  const toggleStore = (name: string) => {
+    setSelectedStores((prev) =>
+      prev.includes(name) ? prev.filter((s) => s !== name) : [...prev, name],
+    );
+  };
+
+  const addCustomStore = () => {
+    const trimmed = customStore.trim();
+    if (!trimmed) return;
+    setSelectedStores((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed]));
+    setCustomStore('');
+  };
 
   const recipesUsingIngredient = useMemo(() => {
     if (!state.ingredient_id) return [];
@@ -212,15 +218,14 @@ export default function ComprasItemForm() {
       }
     }
 
-    const storeValue =
-      storeSelect === '__outro__' ? storeCustom.trim() || null : storeSelect || null;
     const item: ShoppingItem = {
       id: original?.id ?? `shopping-${Date.now()}`,
       ingredient_id: ingredientId,
       raw_text: display,
       quantity: state.quantity ? Number(state.quantity) : null,
       unit: state.unit || null,
-      store: storeValue,
+      store: selectedStores[0] ?? null,
+      stores: selectedStores,
       price: state.price ? Number(state.price) : null,
       checked: original?.checked ?? false,
       source: original?.source ?? 'manual',
@@ -239,11 +244,6 @@ export default function ComprasItemForm() {
     deleteShoppingItem(original.id);
     navigate('/compras');
   };
-
-  const selectDisplayValue =
-    storeSelect === '__outro__' || (!knownStores.includes(storeSelect) && storeSelect !== '')
-      ? '__outro__'
-      : storeSelect;
 
   return (
     <form id="compras-form" onSubmit={handleSubmit} className="mx-auto max-w-6xl px-4 pt-2 pb-28">
@@ -337,34 +337,72 @@ export default function ComprasItemForm() {
         </Field>
       </div>
 
-      <Field label="Mercado / loja (opcional)">
-        <select
-          value={selectDisplayValue}
-          onChange={(e) => {
-            setStoreSelect(e.target.value);
-            if (e.target.value !== '__outro__') setStoreCustom('');
-          }}
-          className={inputClass}
-        >
-          <option value="">— Sem mercado</option>
-          {knownStores.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-          <option value="__outro__">Outro...</option>
-        </select>
-        {storeSelect === '__outro__' && (
+      <Field label="Mercados / lojas (opcional)">
+        <div className="max-h-56 space-y-0.5 overflow-y-auto rounded-lg border border-zinc-300 p-1.5 dark:border-zinc-700">
+          {knownStores.length === 0 ? (
+            <p className="px-2 py-1.5 text-sm text-zinc-400 dark:text-zinc-500">
+              Nenhum mercado cadastrado ainda.
+            </p>
+          ) : (
+            knownStores.map((s) => (
+              <label
+                key={s}
+                className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedStores.includes(s)}
+                  onChange={() => toggleStore(s)}
+                  className="h-4 w-4 rounded accent-brand-500"
+                />
+                <span className="text-sm">{s}</span>
+              </label>
+            ))
+          )}
+        </div>
+        <div className="mt-2 flex gap-2">
           <input
             type="text"
-            value={storeCustom}
-            onChange={(e) => {
-              setStoreCustom(e.target.value);
+            value={customStore}
+            onChange={(e) => setCustomStore(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                addCustomStore();
+              }
             }}
-            className={`${inputClass} mt-2`}
-            placeholder='Ex.: "Pão de Açúcar"'
-            autoFocus
+            className={inputClass}
+            placeholder='Adicionar outro mercado…'
           />
+          <button
+            type="button"
+            onClick={addCustomStore}
+            className="shrink-0 rounded-lg bg-zinc-100 px-3 text-sm font-medium text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+          >
+            Adicionar
+          </button>
+        </div>
+        {selectedStores.filter((s) => !knownStores.includes(s)).length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {selectedStores
+              .filter((s) => !knownStores.includes(s))
+              .map((s) => (
+                <span
+                  key={s}
+                  className="inline-flex items-center gap-1 rounded-full bg-brand-100 px-2 py-0.5 text-xs text-brand-700 dark:bg-brand-900/30 dark:text-brand-300"
+                >
+                  {s}
+                  <button
+                    type="button"
+                    onClick={() => toggleStore(s)}
+                    aria-label={`Remover ${s}`}
+                    className="hover:text-brand-900 dark:hover:text-brand-100"
+                  >
+                    <Icon name="x" className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+          </div>
         )}
       </Field>
 

@@ -15,7 +15,10 @@ export interface ShoppingItem {
   raw_text: string;
   quantity: number | null;
   unit: string | null;
-  store: string | null;
+  /** @deprecated usar `stores`. Mantido para compatibilidade com itens antigos. */
+  store?: string | null;
+  /** Mercados/lojas onde o item pode ser comprado (um item pode estar em vários). */
+  stores?: string[];
   price: number | null;
   checked: boolean;
   source: ShoppingSource;
@@ -23,4 +26,10 @@ export interface ShoppingItem {
   added_at: string;
   expiry_date?: string | null;
   kind?: ItemKind;
+}
+
+/** Lê os mercados de um item, com fallback para o campo legado `store`. */
+export function itemStores(item: { store?: string | null; stores?: string[] }): string[] {
+  if (item.stores && item.stores.length > 0) return item.stores;
+  return item.store ? [item.store] : [];
 }

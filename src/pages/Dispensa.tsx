@@ -57,6 +57,7 @@ export default function Dispensa() {
       quantity: item.quantity,
       unit: item.unit,
       store: item.store,
+      stores: item.store ? [item.store] : [],
       price: null,
       checked: false,
       source: 'from_pantry',

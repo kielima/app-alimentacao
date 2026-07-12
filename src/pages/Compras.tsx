@@ -21,7 +21,7 @@ import { handleScanForShoppingList } from '../lib/scanActions';
 import { UNIT_OPTIONS, unitLabel } from '../utils/units';
 import { createUIStore } from '../utils/persistentUIState';
 import { resolveItemName } from '../utils/itemName';
-import type { ShoppingItem } from '../types/shoppingList';
+import { itemStores, type ShoppingItem } from '../types/shoppingList';
 import type { Ingredient } from '../types/ingredient';
 
 const UNGROUPED = '__sem-mercado__';
@@ -66,9 +66,7 @@ export default function Compras() {
   );
 
   const knownStores = useMemo(() => {
-    const fromItems = [...pantryItems, ...items]
-      .map((i) => i.store)
-      .filter((s): s is string => !!s && s.trim() !== '');
+    const fromItems = [...pantryItems, ...items].flatMap((i) => itemStores(i));
     const fromMarkets = markets.map((m) => m.name);
     return [...new Set([...fromMarkets, ...fromItems])].sort((a, b) =>
       a.localeCompare(b, 'pt-BR'),
@@ -90,12 +88,17 @@ export default function Compras() {
     return items.filter((i) => itemKind(i) === kindFilter);
   }, [items, kindFilter]);
 
+  // Um item pode pertencer a vários mercados ao mesmo tempo, então ele conta
+  // em cada grupo/mercado em que foi marcado (para os chips de filtro).
   const allGrouped = useMemo(() => {
     const map = new Map<string, ShoppingItem[]>();
     for (const item of kindFilteredItems) {
-      const key = item.store ?? UNGROUPED;
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(item);
+      const stores = itemStores(item);
+      const keys = stores.length > 0 ? stores : [UNGROUPED];
+      for (const key of keys) {
+        if (!map.has(key)) map.set(key, []);
+        map.get(key)!.push(item);
+      }
     }
     return Array.from(map.entries()).sort(([a], [b]) => {
       if (a === UNGROUPED) return 1;
@@ -109,15 +112,22 @@ export default function Compras() {
     [allGrouped],
   );
 
-  const grouped = useMemo(() => {
-    if (storeFilter === ALL_STORES) return allGrouped;
-    return allGrouped.filter(([store]) => store === storeFilter);
-  }, [allGrouped, storeFilter]);
+  // Com o filtro "Todos" cada item aparece uma única vez; com um mercado
+  // específico selecionado, mostra os itens marcados para aquele mercado.
+  const filteredItems = useMemo(() => {
+    if (storeFilter === ALL_STORES) return kindFilteredItems;
+    return allGrouped.find(([store]) => store === storeFilter)?.[1] ?? [];
+  }, [storeFilter, allGrouped, kindFilteredItems]);
 
-  const filteredItems = useMemo(
-    () => grouped.flatMap(([, list]) => list),
-    [grouped],
-  );
+  const distinctStoreCount = useMemo(() => {
+    const set = new Set<string>();
+    for (const item of filteredItems) {
+      const stores = itemStores(item);
+      if (stores.length === 0) set.add(UNGROUPED);
+      else stores.forEach((s) => set.add(s));
+    }
+    return set.size;
+  }, [filteredItems]);
 
   const hasActiveFilters = storeFilter !== ALL_STORES || kindFilter !== 'all';
   const isFiltering = hasActiveFilters;
@@ -140,7 +150,7 @@ export default function Compras() {
         quantity: item.quantity,
         unit: item.unit,
         expiry_date: item.expiry_date ?? null,
-        store: item.store,
+        store: itemStores(item).join(', ') || null,
         added_at: new Date().toISOString(),
         kind: item.kind,
       });
@@ -271,8 +281,8 @@ export default function Compras() {
           <span className="font-semibold">
             {totalEstimated.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
           </span>
-          {grouped.length > 1 && (
-            <span className="ml-2 text-zinc-500 dark:text-zinc-400">· {grouped.length} mercados</span>
+          {distinctStoreCount > 1 && (
+            <span className="ml-2 text-zinc-500 dark:text-zinc-400">· {distinctStoreCount} mercados</span>
           )}
         </div>
       )}
@@ -299,7 +309,7 @@ export default function Compras() {
             <Icon name="arrow-right" className="h-4 w-4" />
           </Link>
         </div>
-      ) : grouped.length === 0 ? (
+      ) : filteredItems.length === 0 ? (
         <p className="mt-12 text-center text-sm text-zinc-500 dark:text-zinc-400">
           Nenhum item nesse filtro.
         </p>
@@ -517,6 +527,7 @@ function QuickAdd({
       quantity: quantity ? Number(quantity) : null,
       unit: unit || null,
       store: store || null,
+      stores: store ? [store] : [],
       price: price ? Number(price) : null,
       checked: false,
       source: 'manual',
