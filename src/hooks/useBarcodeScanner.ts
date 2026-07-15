@@ -16,7 +16,7 @@ interface NativeBarcodeDetectorConstructor {
   getSupportedFormats?: () => Promise<string[]>;
 }
 
-const SUPPORTED_FORMATS = ['ean_13', 'ean_8', 'upc_a', 'upc_e'];
+export const DEFAULT_FORMATS = ['ean_13', 'ean_8', 'upc_a', 'upc_e'];
 
 function hasNativeDetector(): boolean {
   return typeof window !== 'undefined' && 'BarcodeDetector' in window;
@@ -25,9 +25,11 @@ function hasNativeDetector(): boolean {
 export interface UseBarcodeScannerOptions {
   onDetected: (code: string, format?: string) => void;
   enabled: boolean;
+  /** Formatos a detectar (valores do BarcodeDetector). Padrão: só EAN/UPC de produto. */
+  formats?: string[];
 }
 
-export function useBarcodeScanner({ onDetected, enabled }: UseBarcodeScannerOptions) {
+export function useBarcodeScanner({ onDetected, enabled, formats }: UseBarcodeScannerOptions) {
   const [state, setState] = useState<ScanState>('idle');
   const [error, setError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -125,17 +127,18 @@ export function useBarcodeScanner({ onDetected, enabled }: UseBarcodeScannerOpti
     async function runNativeLoop(video: HTMLVideoElement) {
       const Ctor = (window as unknown as { BarcodeDetector: NativeBarcodeDetectorConstructor })
         .BarcodeDetector;
-      let formats = SUPPORTED_FORMATS;
+      const wanted = formats && formats.length > 0 ? formats : DEFAULT_FORMATS;
+      let activeFormats = wanted;
       try {
         if (Ctor.getSupportedFormats) {
           const supported = await Ctor.getSupportedFormats();
-          formats = SUPPORTED_FORMATS.filter((f) => supported.includes(f));
-          if (!formats.length) formats = SUPPORTED_FORMATS;
+          activeFormats = wanted.filter((f) => supported.includes(f));
+          if (!activeFormats.length) activeFormats = wanted;
         }
       } catch {
         // usa default
       }
-      const detector = new Ctor({ formats });
+      const detector = new Ctor({ formats: activeFormats });
 
       const tick = async () => {
         if (cancelled) return;
@@ -180,7 +183,8 @@ export function useBarcodeScanner({ onDetected, enabled }: UseBarcodeScannerOpti
       cancelled = true;
       stop();
     };
-  }, [enabled, stop]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, stop, formats?.join(',')]);
 
   return { videoRef, state, error, stop };
 }
