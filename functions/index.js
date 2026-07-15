@@ -1082,58 +1082,71 @@ async function geminiExtractNfce(apiKey, pageText) {
 exports.fetchNfce = onCall(
   {
     secrets: [GEMINI_API_KEY],
-    timeoutSeconds: 60,
-    memory: '256MiB',
+    // Igual a extractRecipeFromUrl: também faz busca de página + chamada ao Gemini em
+    // sequência (até 20 s + 45 s), então precisa da mesma folga de tempo/memória — com
+    // timeoutSeconds mais justo (ex.: 60) a function pode ser encerrada à força pela
+    // plataforma no meio da execução, e o cliente recebe um "internal" sem mensagem.
+    timeoutSeconds: 120,
+    memory: '512MiB',
     maxInstances: 3,
   },
   async (request) => {
-    // 1) Exige login e restringe ao dono do app.
-    if (!request.auth) {
-      throw new HttpsError('unauthenticated', 'Faça login para usar este recurso.');
-    }
-    const email = request.auth.token && request.auth.token.email;
-    if (!email || email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
-      throw new HttpsError('permission-denied', 'Sem permissão para usar este recurso.');
-    }
-
-    // 2) Valida a entrada: precisa ser uma URL http(s) (o conteúdo cru do QR).
-    const data = request.data || {};
-    const url = typeof data.url === 'string' ? data.url.trim() : '';
-    if (!url || !/^https?:\/\//i.test(url)) {
-      throw new HttpsError('invalid-argument', 'QR code não contém uma URL válida de nota fiscal.');
-    }
-
-    // 3) Busca a página de consulta no servidor (bypass de CORS). Portais de SEFAZ costumam
-    // bloquear User-Agent de bot, então usamos um UA de navegador comum.
-    let html = '';
     try {
-      const res = await fetchWithTimeout(
-        url,
-        {
-          headers: {
-            'User-Agent':
-              'Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36',
-            Accept: 'text/html,application/xhtml+xml',
-          },
-        },
-        20000,
-      );
-      if (!res.ok) {
-        throw new HttpsError('unavailable', `Não consegui abrir a nota (HTTP ${res.status}).`);
+      // 1) Exige login e restringe ao dono do app.
+      if (!request.auth) {
+        throw new HttpsError('unauthenticated', 'Faça login para usar este recurso.');
       }
-      html = await res.text();
+      const email = request.auth.token && request.auth.token.email;
+      if (!email || email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+        throw new HttpsError('permission-denied', 'Sem permissão para usar este recurso.');
+      }
+
+      // 2) Valida a entrada: precisa ser uma URL http(s) (o conteúdo cru do QR).
+      const data = request.data || {};
+      const url = typeof data.url === 'string' ? data.url.trim() : '';
+      if (!url || !/^https?:\/\//i.test(url)) {
+        throw new HttpsError('invalid-argument', 'QR code não contém uma URL válida de nota fiscal.');
+      }
+
+      // 3) Busca a página de consulta no servidor (bypass de CORS). Portais de SEFAZ
+      // costumam bloquear User-Agent de bot, então usamos um UA de navegador comum.
+      let html = '';
+      try {
+        const res = await fetchWithTimeout(
+          url,
+          {
+            headers: {
+              'User-Agent':
+                'Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36',
+              Accept: 'text/html,application/xhtml+xml',
+            },
+          },
+          20000,
+        );
+        if (!res.ok) {
+          throw new HttpsError('unavailable', `Não consegui abrir a nota (HTTP ${res.status}).`);
+        }
+        html = await res.text();
+      } catch (err) {
+        if (err instanceof HttpsError) throw err;
+        logger.error('Falha ao buscar a página da NFC-e', err);
+        throw new HttpsError('unavailable', 'Falha ao abrir o link da nota. Verifique a conexão.');
+      }
+
+      const pageText = htmlToText(html);
+      if (!pageText) {
+        throw new HttpsError('not-found', 'A página da nota não tinha texto legível.');
+      }
+
+      const geminiKey = GEMINI_API_KEY.value();
+      return await geminiExtractNfce(geminiKey, pageText);
     } catch (err) {
+      // Rede de segurança: qualquer exceção que não seja um HttpsError (já com mensagem
+      // amigável) vira um erro genérico só aqui — mas com log detalhado, em vez de deixar
+      // o runtime mascarar tudo como "internal" sem nenhuma pista no Console.
       if (err instanceof HttpsError) throw err;
-      logger.error('Falha ao buscar a página da NFC-e', err);
-      throw new HttpsError('unavailable', 'Falha ao abrir o link da nota. Verifique a conexão.');
+      logger.error('Erro inesperado em fetchNfce', err);
+      throw new HttpsError('internal', 'Falha inesperada ao ler a nota fiscal. Tente novamente.');
     }
-
-    const pageText = htmlToText(html);
-    if (!pageText) {
-      throw new HttpsError('not-found', 'A página da nota não tinha texto legível.');
-    }
-
-    const geminiKey = GEMINI_API_KEY.value();
-    return geminiExtractNfce(geminiKey, pageText);
   },
 );
