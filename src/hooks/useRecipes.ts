@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useAllRecipes } from '../data/recipes';
-import { matches } from '../utils/search';
+import { useRecipeCategories } from '../data/recipeCategories';
+import { matches, normalize } from '../utils/search';
 import { createUIStore } from '../utils/persistentUIState';
 import { recipeCategoryIds, type Recipe, type Rating } from '../types/recipe';
 
@@ -23,20 +24,38 @@ interface UseRecipesResult {
   total: number;
 }
 
-/** Categorias ocultas por padrão até o usuário ativá-las manualmente. */
-const DEFAULT_EXCLUDED_CATEGORIES = ['bebidas'];
+/** Nome (normalizado) da categoria oculta por padrão até o usuário ativá-la manualmente. */
+const DEFAULT_EXCLUDED_CATEGORY_NAME = 'bebidas';
 
 const ui = createUIStore({
   query: '',
-  excludedCategories: DEFAULT_EXCLUDED_CATEGORIES as string[],
+  // Vazio até as categorias reais carregarem — o effect abaixo preenche com o(s)
+  // id(s) que correspondem a "Bebidas" por nome (não por id fixo, pois pode haver
+  // mais de uma categoria com esse nome, ex.: duplicatas de uma migração antiga).
+  excludedCategories: [] as string[],
   completeness: 'todas' as CompletenessFilter,
   minRating: 0 as RatingFilter,
   showFilters: false,
 });
 
+let defaultExclusionApplied = false;
+
 export function useRecipes(): UseRecipesResult {
   const { query, excludedCategories, completeness, minRating, showFilters } = ui.useStore();
   const allRecipes = useAllRecipes();
+  const recipeCategories = useRecipeCategories();
+
+  useEffect(() => {
+    if (defaultExclusionApplied || recipeCategories.length === 0) return;
+    defaultExclusionApplied = true;
+    const bebidaIds = recipeCategories
+      .filter((c) => normalize(c.name) === DEFAULT_EXCLUDED_CATEGORY_NAME)
+      .map((c) => c.id)
+      .filter((id) => !excludedCategories.includes(id));
+    if (bebidaIds.length > 0) {
+      ui.set('excludedCategories', [...excludedCategories, ...bebidaIds]);
+    }
+  }, [recipeCategories, excludedCategories]);
 
   const list = useMemo(() => {
     return allRecipes
