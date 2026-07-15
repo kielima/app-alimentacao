@@ -43,7 +43,7 @@ export default function Receitas() {
     list,
     query,
     setQuery,
-    categories,
+    excludedCategories,
     toggleCategory,
     completeness,
     setCompleteness,
@@ -86,7 +86,7 @@ export default function Receitas() {
   };
 
   const hasActiveFilters =
-    categories.length > 0 || completeness !== 'todas' || minRating !== 0;
+    excludedCategories.length > 0 || completeness !== 'todas' || minRating !== 0;
   const isFiltering = hasActiveFilters || !!query;
 
   return (
@@ -157,7 +157,7 @@ export default function Receitas() {
               {cats.map((c) => (
                 <Chip
                   key={c.id}
-                  active={categories.includes(c.id)}
+                  active={!excludedCategories.includes(c.id)}
                   onClick={() => toggleCategory(c.id)}
                 >
                   <Icon name={c.icon} className="h-3.5 w-3.5" /> {c.name}
