@@ -11,8 +11,8 @@ interface UseRecipesResult {
   list: Recipe[];
   query: string;
   setQuery: (q: string) => void;
-  /** IDs das categorias selecionadas. Vazio = todas as categorias. */
-  categories: string[];
+  /** IDs das categorias desmarcadas (ocultas). Vazio = todas as categorias visíveis. */
+  excludedCategories: string[];
   toggleCategory: (id: string) => void;
   completeness: CompletenessFilter;
   setCompleteness: (c: CompletenessFilter) => void;
@@ -23,25 +23,27 @@ interface UseRecipesResult {
   total: number;
 }
 
+/** Categorias ocultas por padrão até o usuário ativá-las manualmente. */
+const DEFAULT_EXCLUDED_CATEGORIES = ['bebidas'];
+
 const ui = createUIStore({
   query: '',
-  categories: [] as string[],
+  excludedCategories: DEFAULT_EXCLUDED_CATEGORIES as string[],
   completeness: 'todas' as CompletenessFilter,
   minRating: 0 as RatingFilter,
   showFilters: false,
 });
 
 export function useRecipes(): UseRecipesResult {
-  const { query, categories, completeness, minRating, showFilters } = ui.useStore();
+  const { query, excludedCategories, completeness, minRating, showFilters } = ui.useStore();
   const allRecipes = useAllRecipes();
 
   const list = useMemo(() => {
     return allRecipes
-      .filter(
-        (r) =>
-          categories.length === 0 ||
-          recipeCategoryIds(r).some((id) => categories.includes(id)),
-      )
+      .filter((r) => {
+        const catIds = recipeCategoryIds(r);
+        return catIds.length === 0 || catIds.some((id) => !excludedCategories.includes(id));
+      })
       .filter((r) => {
         if (completeness === 'completas') return !r.needs_review;
         if (completeness === 'revisao') return r.needs_review === true;
@@ -58,17 +60,19 @@ export function useRecipes(): UseRecipesResult {
         if (rDiff !== 0) return rDiff;
         return a.name.localeCompare(b.name, 'pt-BR');
       });
-  }, [query, categories, completeness, minRating, allRecipes]);
+  }, [query, excludedCategories, completeness, minRating, allRecipes]);
 
   return {
     list,
     query,
     setQuery: (q) => ui.set('query', q),
-    categories,
+    excludedCategories,
     toggleCategory: (id) =>
       ui.set(
-        'categories',
-        categories.includes(id) ? categories.filter((c) => c !== id) : [...categories, id],
+        'excludedCategories',
+        excludedCategories.includes(id)
+          ? excludedCategories.filter((c) => c !== id)
+          : [...excludedCategories, id],
       ),
     completeness,
     setCompleteness: (c) => ui.set('completeness', c),
