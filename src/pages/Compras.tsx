@@ -180,6 +180,8 @@ export default function Compras() {
         open={scanOpen}
         onClose={() => setScanOpen(false)}
         actions={['add-shopping', 'manual-not-found']}
+        enableNfce
+        shoppingItems={items}
         onPick={(result, action) => {
           setScanOpen(false);
           handleScanForShoppingList(result, action, allIng, navigate);

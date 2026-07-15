@@ -946,3 +946,194 @@ exports.extractRecipeFromUrl = onCall(
     return { ...raw, source_platform: 'web', source_url: url };
   },
 );
+
+// ---------------------------------------------------------------------------
+// Ler os itens de uma nota fiscal (NFC-e) a partir da URL do QR code.
+// O QR de uma NFC-e não carrega os itens — só uma URL de consulta no portal
+// da SEFAZ do estado emissor, cada um com layout de página diferente. Em vez
+// de escrever um parser de HTML por estado, buscamos a página no servidor
+// (o navegador não consegue por CORS) e mandamos o texto pro Gemini com um
+// JSON Schema forçando a saída estruturada — mesma ideia de
+// extractRecipeFromUrl acima.
+// ---------------------------------------------------------------------------
+
+const NFCE_RESPONSE_SCHEMA = {
+  type: 'object',
+  properties: {
+    found: { type: 'boolean' },
+    market: {
+      type: 'object',
+      nullable: true,
+      properties: {
+        name: { type: 'string', nullable: true },
+        cnpj: { type: 'string', nullable: true },
+        address: { type: 'string', nullable: true },
+      },
+    },
+    items: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          description: { type: 'string' },
+          quantity: { type: 'number', nullable: true },
+          unit: { type: 'string', nullable: true },
+          total_price: { type: 'number', nullable: true },
+        },
+        required: ['description'],
+      },
+    },
+  },
+  required: ['found'],
+};
+
+const NFCE_PROMPT = `Você é um assistente que lê o texto de uma página de consulta de Nota Fiscal
+de Consumidor Eletrônica (NFC-e) brasileira, extraída do portal da SEFAZ do estado emissor, e
+responde APENAS com o JSON definido pelo schema.
+
+Regras importantes:
+- "market": nome, CNPJ e endereço do estabelecimento emissor (o comércio que vendeu, não o
+  consumidor). Deixe null o que não encontrar.
+- "items": um item por produto/linha da nota, na ordem em que aparecem. Para cada um:
+  - "description": o nome/descrição do produto como aparece na nota (pode vir abreviado, ex.:
+    "FILE PEITO FRG CONG KG").
+  - "quantity": a quantidade comprada (número).
+  - "unit": a unidade como aparece na nota (ex.: KG, G, UN, CX, L, ML, PCT, DZ) — não converta,
+    devolva como está escrito.
+  - "total_price": o valor TOTAL pago naquela linha (quantidade × preço unitário), não o preço
+    unitário sozinho.
+- Use ponto como separador decimal (a nota pode usar vírgula — converta).
+- Se o texto não for de uma consulta de NFC-e reconhecível ou não tiver itens legíveis, retorne
+  found = false e items = [].`;
+
+/** Chama o Gemini (texto) e devolve o objeto JSON já parseado, usando o schema/prompt da NFC-e. */
+async function geminiExtractNfce(apiKey, pageText) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(
+    apiKey,
+  )}`;
+  const body = {
+    contents: [
+      {
+        role: 'user',
+        parts: [{ text: NFCE_PROMPT }, { text: `Conteúdo da página de consulta:\n${pageText}` }],
+      },
+    ],
+    generationConfig: {
+      temperature: 0,
+      responseMimeType: 'application/json',
+      responseSchema: NFCE_RESPONSE_SCHEMA,
+    },
+  };
+
+  let res;
+  try {
+    res = await fetchWithTimeout(
+      url,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      },
+      45000,
+    );
+  } catch (err) {
+    logger.error('Falha de rede ao chamar o Gemini (NFC-e)', err);
+    throw new HttpsError('unavailable', 'Falha ao consultar o Gemini. Tente novamente.');
+  }
+
+  if (!res.ok) {
+    let detail = '';
+    try {
+      const errJson = await res.json();
+      detail = errJson && errJson.error && errJson.error.message ? errJson.error.message : '';
+    } catch (_) {
+      // sem corpo legível
+    }
+    logger.error('Gemini retornou erro (NFC-e)', { status: res.status, detail });
+    if (res.status === 429) {
+      throw new HttpsError(
+        'resource-exhausted',
+        'Limite de uso do Gemini atingido. Tente novamente em alguns minutos.',
+      );
+    }
+    if (res.status === 400 || res.status === 403) {
+      throw new HttpsError('failed-precondition', 'Chave do Gemini inválida ou sem permissão.');
+    }
+    throw new HttpsError('internal', `Gemini: HTTP ${res.status}`);
+  }
+
+  const json = await res.json();
+  if (json.promptFeedback && json.promptFeedback.blockReason) {
+    throw new HttpsError('invalid-argument', 'O Gemini bloqueou o conteúdo.');
+  }
+  const cand = json.candidates && json.candidates[0];
+  const parts = cand && cand.content && cand.content.parts;
+  const text = Array.isArray(parts) ? parts.map((p) => p.text || '').join('') : '';
+  if (!text.trim()) {
+    throw new HttpsError('internal', 'O Gemini não retornou dados. Tente novamente.');
+  }
+  try {
+    return JSON.parse(text);
+  } catch (_) {
+    throw new HttpsError('internal', 'Resposta do Gemini em formato inesperado.');
+  }
+}
+
+exports.fetchNfce = onCall(
+  {
+    secrets: [GEMINI_API_KEY],
+    timeoutSeconds: 60,
+    memory: '256MiB',
+    maxInstances: 3,
+  },
+  async (request) => {
+    // 1) Exige login e restringe ao dono do app.
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'Faça login para usar este recurso.');
+    }
+    const email = request.auth.token && request.auth.token.email;
+    if (!email || email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+      throw new HttpsError('permission-denied', 'Sem permissão para usar este recurso.');
+    }
+
+    // 2) Valida a entrada: precisa ser uma URL http(s) (o conteúdo cru do QR).
+    const data = request.data || {};
+    const url = typeof data.url === 'string' ? data.url.trim() : '';
+    if (!url || !/^https?:\/\//i.test(url)) {
+      throw new HttpsError('invalid-argument', 'QR code não contém uma URL válida de nota fiscal.');
+    }
+
+    // 3) Busca a página de consulta no servidor (bypass de CORS). Portais de SEFAZ costumam
+    // bloquear User-Agent de bot, então usamos um UA de navegador comum.
+    let html = '';
+    try {
+      const res = await fetchWithTimeout(
+        url,
+        {
+          headers: {
+            'User-Agent':
+              'Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36',
+            Accept: 'text/html,application/xhtml+xml',
+          },
+        },
+        20000,
+      );
+      if (!res.ok) {
+        throw new HttpsError('unavailable', `Não consegui abrir a nota (HTTP ${res.status}).`);
+      }
+      html = await res.text();
+    } catch (err) {
+      if (err instanceof HttpsError) throw err;
+      logger.error('Falha ao buscar a página da NFC-e', err);
+      throw new HttpsError('unavailable', 'Falha ao abrir o link da nota. Verifique a conexão.');
+    }
+
+    const pageText = htmlToText(html);
+    if (!pageText) {
+      throw new HttpsError('not-found', 'A página da nota não tinha texto legível.');
+    }
+
+    const geminiKey = GEMINI_API_KEY.value();
+    return geminiExtractNfce(geminiKey, pageText);
+  },
+);

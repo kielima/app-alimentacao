@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useBarcodeScanner } from '../hooks/useBarcodeScanner';
+import { useBarcodeScanner, DEFAULT_FORMATS } from '../hooks/useBarcodeScanner';
 import { isValidEan, lookupBarcode, type OffLookupResult } from '../lib/openFoodFacts';
+import { isNfceQrPayload, fetchNfce, type ExtractedNfce } from '../lib/nfce';
 import ScannedProductCard from './ScannedProductCard';
 import type { ScanAction } from './ScannedProductCard';
+import NfceReceiptReview from './NfceReceiptReview';
 import Icon from './Icon';
+import type { ShoppingItem } from '../types/shoppingList';
 
 export interface BarcodeScanResult {
   barcode: string;
@@ -15,15 +18,31 @@ interface Props {
   onClose: () => void;
   onPick: (result: BarcodeScanResult, action: ScanAction) => void;
   actions: ScanAction[];
+  /** Além de código de barras de produto, também reconhece QR de nota fiscal (NFC-e). */
+  enableNfce?: boolean;
+  /** Lista de compras atual, usada para sugerir matches na revisão da nota fiscal. */
+  shoppingItems?: ShoppingItem[];
 }
 
 type Stage =
   | { kind: 'scanning' }
   | { kind: 'looking-up'; barcode: string }
   | { kind: 'result'; barcode: string; lookup: OffLookupResult }
-  | { kind: 'manual'; barcode: string };
+  | { kind: 'manual'; barcode: string }
+  | { kind: 'nfce-loading' }
+  | { kind: 'nfce-review'; data: ExtractedNfce }
+  | { kind: 'nfce-error'; message: string };
 
-export default function BarcodeScannerModal({ open, onClose, onPick, actions }: Props) {
+const NFCE_FORMATS = [...DEFAULT_FORMATS, 'qr_code'];
+
+export default function BarcodeScannerModal({
+  open,
+  onClose,
+  onPick,
+  actions,
+  enableNfce = false,
+  shoppingItems = [],
+}: Props) {
   const [stage, setStage] = useState<Stage>({ kind: 'scanning' });
   const [manualCode, setManualCode] = useState('');
   const [lookupError, setLookupError] = useState<string | null>(null);
@@ -39,8 +58,6 @@ export default function BarcodeScannerModal({ open, onClose, onPick, actions }: 
   const handleDetected = useCallback(
     async (code: string) => {
       if (stage.kind !== 'scanning') return;
-      setStage({ kind: 'looking-up', barcode: code });
-      setLookupError(null);
       if (typeof navigator.vibrate === 'function') {
         try {
           navigator.vibrate(50);
@@ -48,6 +65,23 @@ export default function BarcodeScannerModal({ open, onClose, onPick, actions }: 
           // ignore
         }
       }
+
+      if (enableNfce && isNfceQrPayload(code)) {
+        setStage({ kind: 'nfce-loading' });
+        try {
+          const data = await fetchNfce(code);
+          setStage({ kind: 'nfce-review', data });
+        } catch (err) {
+          setStage({
+            kind: 'nfce-error',
+            message: err instanceof Error ? err.message : 'Falha ao ler a nota fiscal.',
+          });
+        }
+        return;
+      }
+
+      setStage({ kind: 'looking-up', barcode: code });
+      setLookupError(null);
       try {
         const lookup = await lookupBarcode(code);
         setStage({ kind: 'result', barcode: code, lookup });
@@ -56,13 +90,14 @@ export default function BarcodeScannerModal({ open, onClose, onPick, actions }: 
         setStage({ kind: 'result', barcode: code, lookup: { found: false } });
       }
     },
-    [stage.kind],
+    [stage.kind, enableNfce],
   );
 
   const scannerActive = open && stage.kind === 'scanning';
   const { videoRef, state, error } = useBarcodeScanner({
     onDetected: handleDetected,
     enabled: scannerActive,
+    formats: enableNfce ? NFCE_FORMATS : undefined,
   });
 
   if (!open) return null;
@@ -95,7 +130,9 @@ export default function BarcodeScannerModal({ open, onClose, onPick, actions }: 
         >
           <Icon name="x" className="h-5 w-5" />
         </button>
-        <h2 className="flex-1 text-base font-semibold text-zinc-100">Escanear código de barras</h2>
+        <h2 className="flex-1 text-base font-semibold text-zinc-100">
+          {enableNfce ? 'Escanear código de barras ou nota fiscal' : 'Escanear código de barras'}
+        </h2>
       </div>
 
       <div className="mx-auto mt-4 w-full max-w-md flex-1 overflow-y-auto px-4 pb-4">
@@ -104,6 +141,11 @@ export default function BarcodeScannerModal({ open, onClose, onPick, actions }: 
             videoRef={videoRef}
             state={state}
             error={error}
+            hint={
+              enableNfce
+                ? 'Aponte para o código de barras do produto ou o QR da nota fiscal.'
+                : undefined
+            }
             onManual={() => setStage({ kind: 'manual', barcode: '' })}
           />
         )}
@@ -124,6 +166,32 @@ export default function BarcodeScannerModal({ open, onClose, onPick, actions }: 
             onAction={(action) => onPick({ barcode: stage.barcode, lookup: stage.lookup }, action)}
             onScanAgain={() => setStage({ kind: 'scanning' })}
           />
+        )}
+
+        {stage.kind === 'nfce-loading' && (
+          <div className="mt-12 text-center text-sm text-zinc-300">Lendo itens da nota fiscal…</div>
+        )}
+
+        {stage.kind === 'nfce-review' && (
+          <NfceReceiptReview
+            data={stage.data}
+            shoppingItems={shoppingItems}
+            onApply={onClose}
+            onCancel={() => setStage({ kind: 'scanning' })}
+          />
+        )}
+
+        {stage.kind === 'nfce-error' && (
+          <div className="mx-auto mt-4 max-w-sm rounded-2xl bg-zinc-900 p-4 text-center text-zinc-100">
+            <p className="mb-3 text-sm text-red-400">{stage.message}</p>
+            <button
+              type="button"
+              onClick={() => setStage({ kind: 'scanning' })}
+              className="w-full rounded-full bg-zinc-800 px-4 py-2 text-sm text-zinc-200 hover:bg-zinc-700"
+            >
+              Escanear de novo
+            </button>
+          </div>
         )}
 
         {stage.kind === 'manual' && (
@@ -169,11 +237,13 @@ function ScannerSurface({
   videoRef,
   state,
   error,
+  hint,
   onManual,
 }: {
   videoRef: React.RefObject<HTMLVideoElement>;
   state: ReturnType<typeof useBarcodeScanner>['state'];
   error: string | null;
+  hint?: string;
   onManual: () => void;
 }) {
   return (
@@ -203,7 +273,7 @@ function ScannerSurface({
         )}
       </div>
       <p className="mt-3 text-center text-xs text-zinc-400">
-        Aponte para o código de barras do produto.
+        {hint || 'Aponte para o código de barras do produto.'}
       </p>
       <button
         type="button"
