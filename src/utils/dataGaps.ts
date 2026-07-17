@@ -1,8 +1,6 @@
-import { ingredientNutritionSource, type Ingredient } from '../types/ingredient';
+import { ingredientNutritionSource, ingredientStatus, type Ingredient } from '../types/ingredient';
 import type { Meal } from '../types/meal';
 import type { Recipe } from '../types/recipe';
-import type { PantryItem } from '../types/pantry';
-import { resolveItemName } from './itemName';
 
 /**
  * Detecta dados faltantes que atrapalham o plano:
@@ -38,8 +36,8 @@ export interface DataGaps {
   ingredientsNoServing: ServingGap[];
   recipeGaps: RecipeGap[];
   mealGaps: MealGap[];
-  /** Itens de comida na dispensa sem data de validade. */
-  pantryNoExpiry: PantryItem[];
+  /** Ingredientes com `status: 'dispensa'` sem data de validade. */
+  pantryNoExpiry: Ingredient[];
   /** Receitas sem horário marcado (e não excluídas das sugestões). */
   recipesNoSlots: Recipe[];
   /** Ingredientes sem horário marcado (e não excluídos das sugestões). */
@@ -70,7 +68,6 @@ export function collectDataGaps(
   ingredients: Ingredient[],
   recipes: Recipe[],
   meals: Meal[],
-  pantry: PantryItem[],
 ): DataGaps {
   // Quais ingredientes são usados com uma medida que exige porção padrão, e
   // com quais medidas (para dar contexto à estimativa da porção).
@@ -124,10 +121,10 @@ export function collectDataGaps(
   }
   mealGaps.sort((a, b) => byName(a.meal, b.meal));
 
-  // Itens de comida na dispensa sem data de validade (e não marcados como "sem validade").
-  const pantryNoExpiry = pantry
-    .filter((p) => p.kind !== 'household' && !p.expiry_date && !p.no_expiry)
-    .sort((a, b) => resolveItemName(a).localeCompare(resolveItemName(b), 'pt-BR'));
+  // Ingredientes na dispensa sem data de validade (e não marcados como "sem validade").
+  const pantryNoExpiry = ingredients
+    .filter((i) => ingredientStatus(i) === 'dispensa' && !i.expiry_date && !i.no_expiry)
+    .sort(byName);
 
   // Receitas/ingredientes sem horário marcado (e não excluídos das sugestões).
   const recipesNoSlots = recipes

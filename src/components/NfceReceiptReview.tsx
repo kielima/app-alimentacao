@@ -2,14 +2,13 @@ import { useState } from 'react';
 import Icon from './Icon';
 import SearchableSelect from './SearchableSelect';
 import { UNIT_OPTIONS } from '../utils/units';
-import { resolveItemName } from '../utils/itemName';
 import { buildNfceReviewRows, applyNfceReview, type NfceReviewRow } from '../lib/nfceActions';
+import { itemDisplayName, type DispensaItem } from '../hooks/useDispensa';
 import type { ExtractedNfce } from '../lib/nfce';
-import type { ShoppingItem } from '../types/shoppingList';
 
 interface Props {
   data: ExtractedNfce;
-  shoppingItems: ShoppingItem[];
+  comprarItems: DispensaItem[];
   onApply: () => void;
   onCancel: () => void;
 }
@@ -17,9 +16,9 @@ interface Props {
 const inputClass =
   'rounded-lg border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-sm text-zinc-100 focus:border-brand-500 focus:outline-none';
 
-export default function NfceReceiptReview({ data, shoppingItems, onApply, onCancel }: Props) {
+export default function NfceReceiptReview({ data, comprarItems, onApply, onCancel }: Props) {
   const [rows, setRows] = useState<NfceReviewRow[]>(() =>
-    buildNfceReviewRows(data, shoppingItems),
+    buildNfceReviewRows(data, comprarItems),
   );
 
   const updateRow = (key: string, patch: Partial<NfceReviewRow>) => {
@@ -28,13 +27,13 @@ export default function NfceReceiptReview({ data, shoppingItems, onApply, onCanc
 
   const targetOptions = [
     { value: '', label: '— Criar novo item —' },
-    ...shoppingItems.map((s) => ({ value: s.id, label: resolveItemName(s) })),
+    ...comprarItems.map((i) => ({ value: `${i.kind}:${i.data.id}`, label: itemDisplayName(i) })),
   ];
 
   const includedCount = rows.filter((r) => r.include).length;
 
   const handleApply = () => {
-    applyNfceReview(rows, shoppingItems, data.market);
+    applyNfceReview(rows, comprarItems, data.market);
     onApply();
   };
 

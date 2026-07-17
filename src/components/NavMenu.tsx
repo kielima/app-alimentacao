@@ -22,7 +22,6 @@ const defaultTabs: Tab[] = [
   { to: '/plano', label: 'Plano Alimentar' },
   { to: '/refeicoes', label: 'Lista de Refeições' },
   { to: '/receitas', label: 'Livro de Receitas' },
-  { to: '/ingredientes', label: 'Lista de Ingredientes' },
   { to: '/dispensa', label: 'Lista da Dispensa' },
   { to: '/compras', label: 'Lista de Compras' },
   { to: '/mercados', label: 'Lista de Mercados' },

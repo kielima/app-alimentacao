@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import SearchableSelect from '../components/SearchableSelect';
 import ScanButton from '../components/ScanButton';
@@ -7,21 +7,14 @@ import FilterButton from '../components/FilterButton';
 import BarcodeScannerModal from '../components/BarcodeScannerModal';
 import TrashIcon from '../components/TrashIcon';
 import Icon from '../components/Icon';
-import {
-  upsertShoppingItem,
-  deleteShoppingItem,
-  useShoppingItems,
-  replaceShoppingList,
-} from '../data/shoppingList';
-import { upsertPantryItem, usePantryItems } from '../data/pantry';
 import { useAllIngredients } from '../data/ingredients';
+import { upsertUserIngredient } from '../data/userIngredients';
+import { useHouseholdItems, upsertHouseholdItem } from '../data/householdItems';
 import { useMarkets } from '../data/markets';
-import { findRecipeById } from '../data/recipes';
 import { handleScanForShoppingList } from '../lib/scanActions';
 import { UNIT_OPTIONS, unitLabel } from '../utils/units';
 import { createUIStore } from '../utils/persistentUIState';
-import { resolveItemName } from '../utils/itemName';
-import { itemStores, type ShoppingItem } from '../types/shoppingList';
+import { itemDisplayName, itemKindOf, itemUnit, type DispensaItem } from '../hooks/useDispensa';
 import type { Ingredient } from '../types/ingredient';
 
 const UNGROUPED = '__sem-mercado__';
@@ -40,16 +33,11 @@ function shortDate(iso: string): string {
   return `${d}/${m}`;
 }
 
-function itemKind(item: ShoppingItem): 'food' | 'household' {
-  return item.kind === 'household' ? 'household' : 'food';
-}
-
 export default function Compras() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const items = useShoppingItems();
-  const pantryItems = usePantryItems();
-  const allIng = useAllIngredients();
+  const allIngredients = useAllIngredients();
+  const householdItems = useHouseholdItems();
   const markets = useMarkets();
   const returnIngredientId = searchParams.get('ingredient') ?? undefined;
   const [adding, setAdding] = useState(() => Boolean(returnIngredientId));
@@ -60,24 +48,36 @@ export default function Compras() {
   const setShowFilters = (s: boolean | ((prev: boolean) => boolean)) =>
     ui.set('showFilters', s);
 
+  const items = useMemo<DispensaItem[]>(
+    () => [
+      ...allIngredients
+        .filter((i) => i.status === 'comprar')
+        .map((data): DispensaItem => ({ kind: 'ingredient', data })),
+      ...householdItems
+        .filter((i) => i.status === 'comprar')
+        .map((data): DispensaItem => ({ kind: 'household', data })),
+    ],
+    [allIngredients, householdItems],
+  );
+
   const sortedIngredients = useMemo(
-    () => [...allIng].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
-    [allIng],
+    () => [...allIngredients].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
+    [allIngredients],
   );
 
   const knownStores = useMemo(() => {
-    const fromItems = [...pantryItems, ...items].flatMap((i) => itemStores(i));
+    const fromItems = [...allIngredients, ...householdItems].flatMap((i) => i.stores ?? []);
     const fromMarkets = markets.map((m) => m.name);
     return [...new Set([...fromMarkets, ...fromItems])].sort((a, b) =>
       a.localeCompare(b, 'pt-BR'),
     );
-  }, [pantryItems, items, markets]);
+  }, [allIngredients, householdItems, markets]);
 
   const kindCounts = useMemo(() => {
     let food = 0;
     let household = 0;
     for (const item of items) {
-      if (itemKind(item) === 'household') household++;
+      if (itemKindOf(item) === 'household') household++;
       else food++;
     }
     return { food, household };
@@ -85,15 +85,15 @@ export default function Compras() {
 
   const kindFilteredItems = useMemo(() => {
     if (kindFilter === 'all') return items;
-    return items.filter((i) => itemKind(i) === kindFilter);
+    return items.filter((i) => itemKindOf(i) === kindFilter);
   }, [items, kindFilter]);
 
   // Um item pode pertencer a vários mercados ao mesmo tempo, então ele conta
   // em cada grupo/mercado em que foi marcado (para os chips de filtro).
   const allGrouped = useMemo(() => {
-    const map = new Map<string, ShoppingItem[]>();
+    const map = new Map<string, DispensaItem[]>();
     for (const item of kindFilteredItems) {
-      const stores = itemStores(item);
+      const stores = item.data.stores ?? [];
       const keys = stores.length > 0 ? stores : [UNGROUPED];
       for (const key of keys) {
         if (!map.has(key)) map.set(key, []);
@@ -122,7 +122,7 @@ export default function Compras() {
   const distinctStoreCount = useMemo(() => {
     const set = new Set<string>();
     for (const item of filteredItems) {
-      const stores = itemStores(item);
+      const stores = item.data.stores ?? [];
       if (stores.length === 0) set.add(UNGROUPED);
       else stores.forEach((s) => set.add(s));
     }
@@ -132,36 +132,56 @@ export default function Compras() {
   const hasActiveFilters = storeFilter !== ALL_STORES || kindFilter !== 'all';
   const isFiltering = hasActiveFilters;
 
-  const totalEstimated = filteredItems.reduce((sum, i) => sum + (i.price ?? 0), 0);
-  const totalChecked = filteredItems.filter((i) => i.checked).length;
+  const totalEstimated = filteredItems.reduce((sum, i) => sum + (i.data.price ?? 0), 0);
+  const totalChecked = filteredItems.filter((i) => i.data.checked).length;
 
-  const toggleChecked = (item: ShoppingItem) => {
-    upsertShoppingItem({ ...item, checked: !item.checked });
+  const toggleChecked = (item: DispensaItem) => {
+    if (item.kind === 'ingredient') {
+      upsertUserIngredient({ ...item.data, checked: !item.data.checked });
+    } else {
+      upsertHouseholdItem({ ...item.data, checked: !item.data.checked });
+    }
+  };
+
+  const setItemExpiry = (item: DispensaItem, expiry: string | null) => {
+    if (item.kind === 'ingredient') upsertUserIngredient({ ...item.data, expiry_date: expiry });
+    else upsertHouseholdItem({ ...item.data, expiry_date: expiry });
+  };
+
+  const removeFromList = (item: DispensaItem) => {
+    if (item.kind === 'ingredient') {
+      upsertUserIngredient({ ...item.data, status: 'backlog', checked: false });
+    } else {
+      upsertHouseholdItem({ ...item.data, status: 'backlog', checked: false });
+    }
+  };
+
+  const openItem = (item: DispensaItem) => {
+    if (item.kind === 'ingredient') navigate(`/ingredientes/${item.data.id}/editar`);
+    else navigate(`/dispensa/${item.data.id}/editar`);
   };
 
   const moveCheckedToPantry = () => {
-    const checked = items.filter((i) => i.checked);
+    const checked = items.filter((i) => i.data.checked);
     if (checked.length === 0) return;
     for (const item of checked) {
-      upsertPantryItem({
-        id: `pantry-${Date.now()}-${item.id}`,
-        ingredient_id: item.ingredient_id,
-        raw_text: resolveItemName(item),
-        quantity: item.quantity,
-        unit: item.unit,
-        expiry_date: item.expiry_date ?? null,
-        store: itemStores(item).join(', ') || null,
-        added_at: new Date().toISOString(),
-        kind: item.kind,
-      });
+      if (item.kind === 'ingredient') {
+        upsertUserIngredient({ ...item.data, status: 'dispensa', checked: false });
+      } else {
+        upsertHouseholdItem({ ...item.data, status: 'dispensa', checked: false });
+      }
     }
-    // Remove checked from shopping list
-    replaceShoppingList(items.filter((i) => !i.checked));
   };
 
   const clearAll = () => {
     if (!confirm('Limpar toda a lista de compras?')) return;
-    replaceShoppingList([]);
+    for (const item of items) {
+      if (item.kind === 'ingredient') {
+        upsertUserIngredient({ ...item.data, status: 'backlog', checked: false });
+      } else {
+        upsertHouseholdItem({ ...item.data, status: 'backlog', checked: false });
+      }
+    }
   };
 
   return (
@@ -181,21 +201,23 @@ export default function Compras() {
         onClose={() => setScanOpen(false)}
         actions={['add-shopping', 'manual-not-found']}
         enableNfce
-        shoppingItems={items}
+        comprarItems={items}
         onPick={(result, action) => {
           setScanOpen(false);
-          handleScanForShoppingList(result, action, allIng, navigate);
+          handleScanForShoppingList(result, action, allIngredients, navigate);
         }}
       />
 
       {showFilters && (
         <div className="sticky top-0 z-10 -mx-4 mb-3 space-y-1.5 bg-zinc-50/95 px-4 pb-2 pt-2 backdrop-blur supports-[backdrop-filter]:bg-zinc-50/80 dark:bg-zinc-950/95 dark:supports-[backdrop-filter]:bg-zinc-950/80">
           <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {([
-              { value: 'all', label: 'Tudo', icon: null, count: items.length },
-              { value: 'food', label: 'Comida', icon: 'utensils-crossed', count: kindCounts.food },
-              { value: 'household', label: 'Casa', icon: 'package', count: kindCounts.household },
-            ] as const).map((opt) => (
+            {(
+              [
+                { value: 'all', label: 'Tudo', icon: null, count: items.length },
+                { value: 'food', label: 'Comida', icon: 'utensils-crossed', count: kindCounts.food },
+                { value: 'household', label: 'Casa', icon: 'package', count: kindCounts.household },
+              ] as const
+            ).map((opt) => (
               <button
                 key={opt.value}
                 type="button"
@@ -303,13 +325,14 @@ export default function Compras() {
           <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">
             Sua lista de compras está vazia.
           </p>
-          <Link
-            to="/receitas"
+          <button
+            type="button"
+            onClick={() => navigate('/receitas')}
             className="inline-flex items-center gap-1 text-sm text-brand-600 hover:underline dark:text-brand-400"
           >
             Adicione itens a partir de uma receita{' '}
             <Icon name="arrow-right" className="h-4 w-4" />
-          </Link>
+          </button>
         </div>
       ) : filteredItems.length === 0 ? (
         <p className="mt-12 text-center text-sm text-zinc-500 dark:text-zinc-400">
@@ -319,125 +342,104 @@ export default function Compras() {
         <>
           <section className="mb-4 rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
             <ul className="space-y-1">
-              {filteredItems.map((item) => {
-                const recipe =
-                  item.source === 'from_recipe' && item.source_ref
-                    ? findRecipeById(item.source_ref)
-                    : undefined;
-                return (
-                  <li key={item.id} className="flex items-start gap-2 py-1">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleChecked(item);
-                        }}
-                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors ${
-                          item.checked
-                            ? 'border-brand-500 bg-brand-500 text-white dark:border-brand-400 dark:bg-brand-600'
-                            : 'border-zinc-300 dark:border-zinc-600'
-                        }`}
-                        aria-label={item.checked ? 'Desmarcar' : 'Marcar comprado'}
+              {filteredItems.map((item) => (
+                <li key={`${item.kind}-${item.data.id}`} className="flex items-start gap-2 py-1">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleChecked(item);
+                    }}
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors ${
+                      item.data.checked
+                        ? 'border-brand-500 bg-brand-500 text-white dark:border-brand-400 dark:bg-brand-600'
+                        : 'border-zinc-300 dark:border-zinc-600'
+                    }`}
+                    aria-label={item.data.checked ? 'Desmarcar' : 'Marcar comprado'}
+                  >
+                    {item.data.checked && <Icon name="check" className="h-3.5 w-3.5" />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openItem(item)}
+                    className="min-w-0 flex-1 text-left"
+                  >
+                    <p
+                      className={`text-sm ${
+                        item.data.checked
+                          ? 'text-zinc-400 line-through dark:text-zinc-500'
+                          : 'text-zinc-900 dark:text-zinc-100'
+                      }`}
+                    >
+                      {itemDisplayName(item)}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-x-2 text-[11px] text-zinc-500 dark:text-zinc-400">
+                      {itemKindOf(item) === 'household' && (
+                        <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                          <Icon name="package" className="h-3.5 w-3.5" /> Casa
+                        </span>
+                      )}
+                      {item.data.quantity != null && itemUnit(item) && (
+                        <span>
+                          {item.data.quantity} {unitLabel(itemUnit(item))}
+                        </span>
+                      )}
+                      {item.data.price != null && (
+                        <span>
+                          {item.data.price.toLocaleString('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL',
+                          })}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                  <label
+                    className="flex h-5 shrink-0 cursor-pointer items-center rounded-md px-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    onClick={(e) => e.stopPropagation()}
+                    aria-label="Definir validade"
+                  >
+                    <input
+                      type="date"
+                      value={item.data.expiry_date ?? ''}
+                      onChange={(e) => setItemExpiry(item, e.target.value || null)}
+                      className="sr-only"
+                    />
+                    {item.data.expiry_date ? (
+                      <span className="text-[11px] font-medium text-brand-600 dark:text-brand-400">
+                        {shortDate(item.data.expiry_date)}
+                      </span>
+                    ) : (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="h-4 w-4 text-zinc-400"
+                        aria-hidden
                       >
-                        {item.checked && <Icon name="check" className="h-3.5 w-3.5" />}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => navigate(`/compras/${item.id}`)}
-                        className="min-w-0 flex-1 text-left"
-                      >
-                        <p
-                          className={`text-sm ${
-                            item.checked
-                              ? 'text-zinc-400 line-through dark:text-zinc-500'
-                              : 'text-zinc-900 dark:text-zinc-100'
-                          }`}
-                        >
-                          {resolveItemName(item)}
-                        </p>
-                        <div className="flex flex-wrap items-center gap-x-2 text-[11px] text-zinc-500 dark:text-zinc-400">
-                          {itemKind(item) === 'household' && (
-                            <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
-                              <Icon name="package" className="h-3.5 w-3.5" /> Casa
-                            </span>
-                          )}
-                          {item.quantity != null && item.unit && (
-                            <span>
-                              {item.quantity} {unitLabel(item.unit)}
-                            </span>
-                          )}
-                          {item.price != null && (
-                            <span>
-                              {item.price.toLocaleString('pt-BR', {
-                                style: 'currency',
-                                currency: 'BRL',
-                              })}
-                            </span>
-                          )}
-                          {item.source === 'from_recipe' && (
-                            <span className="inline-flex items-center gap-1">
-                              <Icon name="arrow-left" className="h-3.5 w-3.5" />
-                              {recipe ? recipe.name : 'receita'}
-                            </span>
-                          )}
-                          {item.source === 'from_pantry' && (
-                            <span className="inline-flex items-center gap-1">
-                              <Icon name="arrow-left" className="h-3.5 w-3.5" /> vencido na dispensa
-                            </span>
-                          )}
-                        </div>
-                      </button>
-                      <label
-                        className="flex h-5 shrink-0 cursor-pointer items-center rounded-md px-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                        onClick={(e) => e.stopPropagation()}
-                        aria-label="Definir validade"
-                      >
-                        <input
-                          type="date"
-                          value={item.expiry_date ?? ''}
-                          onChange={(e) =>
-                            upsertShoppingItem({
-                              ...item,
-                              expiry_date: e.target.value || null,
-                            })
-                          }
-                          className="sr-only"
-                        />
-                        {item.expiry_date ? (
-                          <span className="text-[11px] font-medium text-brand-600 dark:text-brand-400">
-                            {shortDate(item.expiry_date)}
-                          </span>
-                        ) : (
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="h-4 w-4 text-zinc-400"
-                            aria-hidden
-                          >
-                            <path d="M8 2v4M16 2v4M3 10h18M21 14V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9" />
-                            <path d="m16 20 2 2 4-4" />
-                          </svg>
-                        )}
-                      </label>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteShoppingItem(item.id);
-                        }}
-                        className="flex h-5 shrink-0 items-center px-2 text-red-500 hover:text-red-700"
-                        aria-label="Remover"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
-                  </li>
-                );
-              })}
+                        <path d="M8 2v4M16 2v4M3 10h18M21 14V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9" />
+                        <path d="m16 20 2 2 4-4" />
+                      </svg>
+                    )}
+                  </label>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeFromList(item);
+                    }}
+                    className="flex h-5 shrink-0 items-center px-2 text-red-500 hover:text-red-700"
+                    aria-label="Remover"
+                    title="Remover da lista de compras (volta pra backlog)"
+                  >
+                    <TrashIcon className="h-4 w-4" />
+                  </button>
+                </li>
+              ))}
             </ul>
           </section>
 
@@ -492,14 +494,11 @@ function QuickAdd({
   const initIng = getInitialIngredient();
   const [mode, setMode] = useState<'food' | 'household'>('food');
   const [selectValue, setSelectValue] = useState(initialIngredientId ?? '');
-  const [rawText, setRawText] = useState(
-    initIng ? (initIng.brand ? `${initIng.brand} — ${initIng.name}` : initIng.name) : '',
-  );
+  const [rawText, setRawText] = useState('');
   const [ingredientId, setIngredientId] = useState(initialIngredientId ?? '');
   const [quantity, setQuantity] = useState('');
   const [unit, setUnit] = useState(initIng?.default_unit ?? '');
   const [price, setPrice] = useState('');
-
   const [store, setStore] = useState('');
 
   const handleIngredientSelect = (value: string) => {
@@ -509,33 +508,41 @@ function QuickAdd({
     } else {
       const matched = ingredients.find((i) => i.id === value);
       setIngredientId(value);
-      if (matched) {
-        setRawText(matched.brand ? `${matched.brand} — ${matched.name}` : matched.name);
-        if (!unit) setUnit(matched.default_unit);
-      }
+      if (matched && !unit) setUnit(matched.default_unit);
     }
   };
-
-  const effectiveRaw = rawText;
 
   const canAdd = mode === 'household' ? rawText.trim() !== '' : ingredientId !== '';
 
   const handleAdd = () => {
     if (!canAdd) return;
-    upsertShoppingItem({
-      id: `shopping-${Date.now()}`,
-      ingredient_id: mode === 'household' ? null : ingredientId || null,
-      raw_text: effectiveRaw || rawText.trim(),
-      quantity: quantity ? Number(quantity) : null,
-      unit: unit || null,
-      store: store || null,
-      stores: store ? [store] : [],
-      price: price ? Number(price) : null,
-      checked: false,
-      source: 'manual',
-      added_at: new Date().toISOString(),
-      kind: mode === 'household' ? 'household' : 'food',
-    });
+    if (mode === 'household') {
+      upsertHouseholdItem({
+        id: `household-${Date.now()}`,
+        raw_text: rawText.trim(),
+        quantity: quantity ? Number(quantity) : null,
+        unit: unit || null,
+        expiry_date: null,
+        stores: store ? [store] : [],
+        price: price ? Number(price) : null,
+        checked: false,
+        status: 'comprar',
+        added_at: new Date().toISOString(),
+        kind: 'household',
+      });
+    } else {
+      const matched = ingredients.find((i) => i.id === ingredientId);
+      if (!matched) return;
+      upsertUserIngredient({
+        ...matched,
+        status: 'comprar',
+        quantity: quantity ? Number(quantity) : null,
+        stock_unit: unit || null,
+        stores: store ? [store] : [],
+        price: price ? Number(price) : null,
+        checked: false,
+      });
+    }
     setSelectValue('');
     setRawText('');
     setIngredientId('');
@@ -552,10 +559,12 @@ function QuickAdd({
   return (
     <div className="mb-4 rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
       <div className="mb-2 grid grid-cols-2 gap-1.5">
-        {([
-          { value: 'food', label: 'Comida', icon: 'utensils-crossed' },
-          { value: 'household', label: 'Item de casa', icon: 'package' },
-        ] as const).map((opt) => (
+        {(
+          [
+            { value: 'food', label: 'Comida', icon: 'utensils-crossed' },
+            { value: 'household', label: 'Item de casa', icon: 'package' },
+          ] as const
+        ).map((opt) => (
           <button
             key={opt.value}
             type="button"
@@ -594,6 +603,7 @@ function QuickAdd({
             onCreate={(q) => {
               const params = new URLSearchParams();
               params.set('return', '/compras');
+              params.set('status', 'comprar');
               const trimmed = q?.trim();
               if (trimmed) params.set('name', trimmed);
               navigate(`/ingredientes/novo?${params.toString()}`);
@@ -632,7 +642,9 @@ function QuickAdd({
           options={knownStores.map((s) => ({ value: s, label: s }))}
           placeholder="— Sem mercado"
           createLabel="Outro mercado…"
-          onCreate={(q) => { if (q?.trim()) setStore(q.trim()); }}
+          onCreate={(q) => {
+            if (q?.trim()) setStore(q.trim());
+          }}
           className="text-sm"
         />
       </div>

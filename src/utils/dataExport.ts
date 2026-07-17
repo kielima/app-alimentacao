@@ -2,15 +2,14 @@ import { getUserProfile } from '../data/userProfile';
 import { getUserRecipes } from '../data/userRecipes';
 import { getUserMeals } from '../data/userMeals';
 import { getUserIngredients } from '../data/userIngredients';
-import { getPantry } from '../data/pantry';
+import { getHouseholdItems } from '../data/householdItems';
 import { getMarkets } from '../data/markets';
 import { getMealPlans } from '../data/mealPlan';
-import { getShoppingList } from '../data/shoppingList';
 import { getOffContributions } from '../data/offContributions';
 import { getHiddenIngredients } from '../data/hiddenIngredients';
 import { getHiddenRecipes } from '../data/hiddenRecipes';
 
-export const EXPORT_VERSION = 1;
+export const EXPORT_VERSION = 2;
 
 export interface ExportPayload {
   version: number;
@@ -21,10 +20,9 @@ export interface ExportPayload {
     userRecipes: ReturnType<typeof getUserRecipes>;
     userMeals: ReturnType<typeof getUserMeals>;
     userIngredients: ReturnType<typeof getUserIngredients>;
-    pantry: ReturnType<typeof getPantry>;
+    householdItems: ReturnType<typeof getHouseholdItems>;
     markets: ReturnType<typeof getMarkets>;
     mealPlans: ReturnType<typeof getMealPlans>;
-    shoppingList: ReturnType<typeof getShoppingList>;
     offContributions: ReturnType<typeof getOffContributions>;
     hiddenIngredients: ReturnType<typeof getHiddenIngredients>;
     hiddenRecipes: ReturnType<typeof getHiddenRecipes>;
@@ -41,10 +39,9 @@ export function buildExportPayload(): ExportPayload {
       userRecipes: getUserRecipes(),
       userMeals: getUserMeals(),
       userIngredients: getUserIngredients(),
-      pantry: getPantry(),
+      householdItems: getHouseholdItems(),
       markets: getMarkets(),
       mealPlans: getMealPlans(),
-      shoppingList: getShoppingList(),
       offContributions: getOffContributions(),
       hiddenIngredients: getHiddenIngredients(),
       hiddenRecipes: getHiddenRecipes(),
@@ -58,10 +55,9 @@ export function exportSummary(payload: ExportPayload): Record<string, number> {
     receitas: d.userRecipes.length,
     refeicoes: d.userMeals.length,
     ingredientes: d.userIngredients.length,
-    dispensa: d.pantry.length,
+    itensDeCasa: d.householdItems.length,
     mercados: d.markets.length,
     plano: d.mealPlans.length,
-    compras: d.shoppingList.length,
     contribuicoesOff: d.offContributions.length,
     receitasOcultas: d.hiddenRecipes.length,
     ingredientesOcultos: d.hiddenIngredients.length,

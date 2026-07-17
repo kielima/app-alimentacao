@@ -5,8 +5,7 @@ import CardActionSheet from '../components/CardActionSheet';
 import TrashIcon from '../components/TrashIcon';
 import Icon from '../components/Icon';
 import { useMarkets, upsertMarket, deleteMarket } from '../data/markets';
-import { useShoppingItems } from '../data/shoppingList';
-import { itemStores } from '../types/shoppingList';
+import { useHouseholdItems } from '../data/householdItems';
 import { useAllIngredients } from '../data/ingredients';
 import { useLongPress } from '../hooks/useLongPress';
 import { createUIStore } from '../utils/persistentUIState';
@@ -16,8 +15,8 @@ const ui = createUIStore({ query: '' });
 
 export default function Mercados() {
   const markets = useMarkets();
-  const shoppingItems = useShoppingItems();
   const allIng = useAllIngredients();
+  const householdItems = useHouseholdItems();
   const navigate = useNavigate();
   const { query } = ui.useStore();
   const setQuery = (q: string) => ui.set('query', q);
@@ -32,13 +31,17 @@ export default function Mercados() {
 
   const shoppingByStore = useMemo(() => {
     const map = new Map<string, number>();
-    for (const item of shoppingItems) {
-      for (const store of itemStores(item)) {
+    const comprarItems = [
+      ...allIng.filter((i) => i.status === 'comprar'),
+      ...householdItems.filter((i) => i.status === 'comprar'),
+    ];
+    for (const item of comprarItems) {
+      for (const store of item.stores ?? []) {
         map.set(store, (map.get(store) ?? 0) + 1);
       }
     }
     return map;
-  }, [shoppingItems]);
+  }, [allIng, householdItems]);
 
   const filtered = useMemo(() => {
     const sorted = [...markets].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));

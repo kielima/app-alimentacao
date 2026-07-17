@@ -3,27 +3,19 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import TrashIcon from '../components/TrashIcon';
 import Icon from '../components/Icon';
+import CardActionSheet from '../components/CardActionSheet';
 import NutritionFillActions from '../components/NutritionFillActions';
 import { isSeedIngredient, useAllIngredients } from '../data/ingredients';
-import { deleteUserIngredient, getUserIngredientById } from '../data/userIngredients';
+import { deleteUserIngredient, getUserIngredientById, upsertUserIngredient } from '../data/userIngredients';
 import { hideIngredient } from '../data/hiddenIngredients';
-import {
-  upsertShoppingItem,
-  deleteShoppingItem,
-  useShoppingItems,
-} from '../data/shoppingList';
-import {
-  upsertPantryItem,
-  deletePantryItem,
-  usePantryItems,
-} from '../data/pantry';
 import { useAllRecipes } from '../data/recipes';
 import { useRecipeCategories } from '../data/recipeCategories';
 import { useAllMeals } from '../data/meals';
 import { getMealSlots } from '../types/meal';
 import type { MealItemRef } from '../types/meal';
 import { MEAL_TYPES } from '../types/mealPlan';
-import { ingredientNutritionSource, type NutritionPer100 } from '../types/ingredient';
+import { DISPENSA_STATUSES, dispensaStatusLabel } from '../types/dispensaStatus';
+import { ingredientNutritionSource, ingredientStatus, type NutritionPer100 } from '../types/ingredient';
 
 const macroLabels: { key: keyof NutritionPer100; label: string; unit: string }[] = [
   { key: 'calories', label: 'Calorias', unit: 'kcal' },
@@ -64,8 +56,7 @@ export default function IngredienteDetalhe() {
 
   const [quantity, setQuantity] = useState(100);
   const [showExtras, setShowExtras] = useState(false);
-  const shoppingItems = useShoppingItems();
-  const pantryItems = usePantryItems();
+  const [statusSheetOpen, setStatusSheetOpen] = useState(false);
   const allRecipes = useAllRecipes();
   const recipeCategories = useRecipeCategories();
   const allMeals = useAllMeals();
@@ -80,63 +71,13 @@ export default function IngredienteDetalhe() {
     if (!confirm(msg)) return;
     if (isUser) deleteUserIngredient(id);
     if (isSeed) hideIngredient(id);
-    navigate('/ingredientes');
+    navigate('/dispensa');
   };
 
-  const cartMatches = useMemo(
-    () =>
-      ingredient
-        ? shoppingItems.filter((i) => i.ingredient_id === ingredient.id)
-        : [],
-    [shoppingItems, ingredient],
-  );
-  const pantryMatches = useMemo(
-    () =>
-      ingredient
-        ? pantryItems.filter((i) => i.ingredient_id === ingredient.id)
-        : [],
-    [pantryItems, ingredient],
-  );
-  const addedToCart = cartMatches.length > 0;
-  const addedToPantry = pantryMatches.length > 0;
-
-  const handleToggleCart = () => {
+  const changeStatus = (status: (typeof DISPENSA_STATUSES)[number]['value']) => {
     if (!ingredient) return;
-    if (addedToCart) {
-      cartMatches.forEach((i) => deleteShoppingItem(i.id));
-      return;
-    }
-    upsertShoppingItem({
-      id: `from-ingredient-${ingredient.id}-${Date.now()}`,
-      ingredient_id: ingredient.id,
-      raw_text: ingredient.name,
-      quantity: null,
-      unit: ingredient.default_unit ?? null,
-      store: null,
-      price: null,
-      checked: false,
-      source: 'manual',
-      source_ref: ingredient.id,
-      added_at: new Date().toISOString(),
-    });
-  };
-
-  const handleTogglePantry = () => {
-    if (!ingredient) return;
-    if (addedToPantry) {
-      pantryMatches.forEach((i) => deletePantryItem(i.id));
-      return;
-    }
-    upsertPantryItem({
-      id: `from-ingredient-${ingredient.id}-${Date.now()}`,
-      ingredient_id: ingredient.id,
-      raw_text: ingredient.name,
-      quantity: null,
-      unit: ingredient.default_unit ?? null,
-      expiry_date: null,
-      store: null,
-      added_at: new Date().toISOString(),
-    });
+    upsertUserIngredient({ ...ingredient, status });
+    setStatusSheetOpen(false);
   };
 
   const recipesUsingIngredient = useMemo(() => {
@@ -180,10 +121,7 @@ export default function IngredienteDetalhe() {
     return (
       <div className="mx-auto max-w-6xl px-4 pt-12 text-center">
         <p className="mb-4 text-zinc-500 dark:text-zinc-400">Ingrediente não encontrado.</p>
-        <Link
-          to="/ingredientes"
-          className="text-brand-600 underline dark:text-brand-400"
-        >
+        <Link to="/dispensa" className="text-brand-600 underline dark:text-brand-400">
           Voltar à lista
         </Link>
       </div>
@@ -192,6 +130,8 @@ export default function IngredienteDetalhe() {
 
   const unitSuffix = ingredient.default_unit === 'ml' ? 'ml' : 'g';
   const nutritionSource = ingredientNutritionSource(ingredient);
+  const status = ingredientStatus(ingredient);
+  const statusDef = DISPENSA_STATUSES.find((s) => s.value === status);
 
   return (
     <div className="mx-auto max-w-6xl px-4 pt-2 pb-6">
@@ -199,41 +139,12 @@ export default function IngredienteDetalhe() {
         <h1 className="min-w-0 flex-1 truncate text-lg font-semibold">{ingredient.name}</h1>
         <button
           type="button"
-          onClick={handleToggleCart}
-          className={`shrink-0 rounded-full px-3 py-1 text-base leading-none transition-colors ${
-            addedToCart
-              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-              : 'bg-zinc-100 text-zinc-700 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-brand-900/30 dark:hover:text-brand-400'
-          }`}
-          aria-label={addedToCart ? 'Remover da lista de compras' : 'Adicionar à lista de compras'}
-          title={addedToCart ? 'Remover da lista de compras' : 'Adicionar à lista de compras'}
+          onClick={() => setStatusSheetOpen(true)}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+          aria-label={`Status: ${dispensaStatusLabel(status)}. Toque para mudar.`}
         >
-          <span className="inline-flex items-center justify-center">
-            {addedToCart ? (
-              <Icon name="check" className="h-4 w-4" />
-            ) : (
-              <Icon name="shopping-cart" className="h-4 w-4" />
-            )}
-          </span>
-        </button>
-        <button
-          type="button"
-          onClick={handleTogglePantry}
-          className={`shrink-0 rounded-full px-3 py-1 text-base leading-none transition-colors ${
-            addedToPantry
-              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-              : 'bg-zinc-100 text-zinc-700 hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-brand-900/30 dark:hover:text-brand-400'
-          }`}
-          aria-label={addedToPantry ? 'Remover da dispensa' : 'Adicionar à dispensa'}
-          title={addedToPantry ? 'Remover da dispensa' : 'Adicionar à dispensa'}
-        >
-          <span className="inline-flex items-center justify-center">
-            {addedToPantry ? (
-              <Icon name="check" className="h-4 w-4" />
-            ) : (
-              <Icon name="can" className="h-4 w-4" />
-            )}
-          </span>
+          <Icon name={statusDef?.icon ?? 'archive'} className="h-4 w-4" />
+          {statusDef?.label ?? dispensaStatusLabel(status)}
         </button>
         <button
           type="button"
@@ -245,6 +156,19 @@ export default function IngredienteDetalhe() {
           <TrashIcon className="h-5 w-5" />
         </button>
       </HeaderSlot>
+
+      {statusSheetOpen && (
+        <CardActionSheet
+          category="Status na dispensa"
+          title={ingredient.brand ? `${ingredient.brand} — ${ingredient.name}` : ingredient.name}
+          onClose={() => setStatusSheetOpen(false)}
+          actions={DISPENSA_STATUSES.filter((s) => s.value !== status).map((s) => ({
+            label: `Mudar para ${s.label}`,
+            icon: <Icon name={s.icon} className="h-4 w-4" />,
+            onClick: () => changeStatus(s.value),
+          }))}
+        />
+      )}
 
       <div className="mb-4">
         {ingredient.brand && (

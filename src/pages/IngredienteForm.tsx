@@ -11,6 +11,9 @@ import { upsertUserIngredient } from '../data/userIngredients';
 import { allIngredientIds, findIngredientById, useAllIngredients } from '../data/ingredients';
 import { upsertOffContribution } from '../data/offContributions';
 import { useMarkets, upsertMarket } from '../data/markets';
+import { useHouseholdItems } from '../data/householdItems';
+import { UNIT_OPTIONS } from '../utils/units';
+import { DISPENSA_STATUSES, type DispensaStatus } from '../types/dispensaStatus';
 import type { Ingredient, IngredientCategory, Unit } from '../types/ingredient';
 import { INGREDIENT_CATEGORIES, getCategoryLabel } from '../types/ingredient';
 
@@ -29,7 +32,8 @@ export default function IngredienteForm() {
   const scannedBarcode = searchParams.get('barcode') ?? '';
   const returnPath =
     searchParams.get('return') ??
-    (editing && existing ? `/ingredientes/${existing.id}` : '/ingredientes');
+    (editing && existing ? `/ingredientes/${existing.id}` : '/dispensa');
+  const initialStatusParam = searchParams.get('status') as DispensaStatus | null;
 
   const initialName = searchParams.get('name') ?? '';
   const [name, setName] = useState(existing?.name ?? initialName);
@@ -40,6 +44,31 @@ export default function IngredienteForm() {
   const [noSuggest, setNoSuggest] = useState(existing?.no_suggest ?? false);
   const [contributeOff, setContributeOff] = useState(Boolean(scannedBarcode));
   const [error, setError] = useState<string | null>(null);
+
+  // ── Status na dispensa + campos de instância (quantidade/validade/loja/preço) ──
+  const [status, setStatus] = useState<DispensaStatus>(
+    existing?.status ?? initialStatusParam ?? 'backlog',
+  );
+  const [quantity, setQuantity] = useState(existing?.quantity?.toString() ?? '');
+  const [stockUnit, setStockUnit] = useState(existing?.stock_unit ?? '');
+  const [expiryDate, setExpiryDate] = useState(existing?.expiry_date ?? '');
+  const [noExpiry, setNoExpiry] = useState(existing?.no_expiry ?? false);
+  const [price, setPrice] = useState(existing?.price?.toString() ?? '');
+  const [notes, setNotes] = useState(existing?.notes ?? '');
+  const [selectedStores, setSelectedStores] = useState<string[]>(existing?.stores ?? []);
+  const [customStore, setCustomStore] = useState('');
+
+  const householdItems = useHouseholdItems();
+
+  const toggleStore = (s: string) => {
+    setSelectedStores((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
+  };
+  const addCustomStore = () => {
+    const trimmed = customStore.trim();
+    if (!trimmed) return;
+    setSelectedStores((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed]));
+    setCustomStore('');
+  };
 
   const markets = useMarkets();
   const initialMarketIds = useMemo(() => {
@@ -92,6 +121,17 @@ export default function IngredienteForm() {
     ];
   }, [allIngs]);
 
+  const knownStores = useMemo(() => {
+    const fromItems = [
+      ...allIngs.flatMap((i) => i.stores ?? []),
+      ...householdItems.flatMap((i) => i.stores ?? []),
+    ];
+    const fromMarkets = markets.map((m) => m.name);
+    return [...new Set([...fromMarkets, ...fromItems])].sort((a, b) =>
+      a.localeCompare(b, 'pt-BR'),
+    );
+  }, [allIngs, householdItems, markets]);
+
   // Ingrediente "ao vivo": mescla o salvo com o que está sendo editado no
   // formulário, para que buscas por nome/IA usem o que o usuário vê na tela.
   const liveIngredient = useMemo<Ingredient | null>(() => {
@@ -111,7 +151,7 @@ export default function IngredienteForm() {
     return (
       <div className="mx-auto max-w-6xl px-4 pt-12 text-center">
         <p className="mb-4 text-zinc-500 dark:text-zinc-400">Ingrediente não encontrado.</p>
-        <Link to="/ingredientes" className="text-brand-600 underline dark:text-brand-400">
+        <Link to="/dispensa" className="text-brand-600 underline dark:text-brand-400">
           Voltar à lista
         </Link>
       </div>
@@ -136,6 +176,16 @@ export default function IngredienteForm() {
       meal_types: mealTypes.length ? mealTypes : null,
       no_suggest: noSuggest,
       nutrition_per_100: existing?.nutrition_per_100 ?? null,
+      status,
+      quantity: quantity ? Number(quantity) : null,
+      stock_unit: stockUnit || null,
+      expiry_date:
+        status === 'dispensa' ? (noExpiry ? null : expiryDate || null) : existing?.expiry_date ?? null,
+      no_expiry: status === 'dispensa' ? noExpiry : existing?.no_expiry ?? false,
+      stores: selectedStores,
+      price: status === 'comprar' ? (price ? Number(price) : null) : existing?.price ?? null,
+      checked: existing?.checked ?? false,
+      notes: notes.trim() || undefined,
     };
     if (!editing && scannedBarcode) {
       payload.off_barcode = scannedBarcode;
@@ -266,6 +316,157 @@ export default function IngredienteForm() {
           Não recomendar nas sugestões do plano
         </label>
       </Field>
+
+      <section className="mb-4 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          Dispensa
+        </h2>
+
+        <div className="mb-3 grid grid-cols-2 gap-1.5">
+          {DISPENSA_STATUSES.map((s) => (
+            <button
+              key={s.value}
+              type="button"
+              onClick={() => setStatus(s.value)}
+              className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                status === s.value
+                  ? 'bg-brand-500 text-white dark:bg-brand-600'
+                  : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700'
+              }`}
+            >
+              <Icon name={s.icon} className="h-4 w-4" />
+              {s.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-[100px,1fr] gap-3">
+          <Field label="Quantidade">
+            <input
+              type="number"
+              min={0}
+              step="any"
+              inputMode="decimal"
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
+              className={inputClass}
+              placeholder="—"
+            />
+          </Field>
+          <Field label="Unidade">
+            <select
+              value={stockUnit}
+              onChange={(e) => setStockUnit(e.target.value)}
+              className={inputClass}
+            >
+              {UNIT_OPTIONS.map((u) => (
+                <option key={u.value} value={u.value}>
+                  {u.label}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
+
+        {status === 'dispensa' && (
+          <div className="mb-3">
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              Data de validade
+            </span>
+            <label className="mb-2 flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
+              <input
+                type="checkbox"
+                checked={noExpiry}
+                onChange={(e) => {
+                  setNoExpiry(e.target.checked);
+                  if (e.target.checked) setExpiryDate('');
+                }}
+                className="h-4 w-4 rounded accent-brand-500"
+              />
+              Sem validade
+            </label>
+            {!noExpiry && (
+              <input
+                type="date"
+                value={expiryDate}
+                onChange={(e) => setExpiryDate(e.target.value)}
+                className={inputClass}
+              />
+            )}
+          </div>
+        )}
+
+        <Field label="Mercados / lojas (opcional)">
+          <div className="max-h-56 space-y-0.5 overflow-y-auto rounded-lg border border-zinc-300 p-1.5 dark:border-zinc-700">
+            {knownStores.length === 0 ? (
+              <p className="px-2 py-1.5 text-sm text-zinc-400 dark:text-zinc-500">
+                Nenhum mercado cadastrado ainda.
+              </p>
+            ) : (
+              knownStores.map((s) => (
+                <label
+                  key={s}
+                  className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedStores.includes(s)}
+                    onChange={() => toggleStore(s)}
+                    className="h-4 w-4 rounded accent-brand-500"
+                  />
+                  <span className="text-sm">{s}</span>
+                </label>
+              ))
+            )}
+          </div>
+          <div className="mt-2 flex gap-2">
+            <input
+              type="text"
+              value={customStore}
+              onChange={(e) => setCustomStore(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  addCustomStore();
+                }
+              }}
+              className={inputClass}
+              placeholder="Adicionar outro mercado…"
+            />
+            <button
+              type="button"
+              onClick={addCustomStore}
+              className="shrink-0 rounded-lg bg-zinc-100 px-3 text-sm font-medium text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+            >
+              Adicionar
+            </button>
+          </div>
+        </Field>
+
+        {status === 'comprar' && (
+          <Field label="Preço (opcional)">
+            <input
+              type="number"
+              min={0}
+              step="0.01"
+              inputMode="decimal"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              className={inputClass}
+              placeholder="R$ —"
+            />
+          </Field>
+        )}
+
+        <Field label="Notas (opcional)">
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={2}
+            className={inputClass}
+          />
+        </Field>
+      </section>
 
       {editing && liveIngredient && (
         <section className="mb-4">

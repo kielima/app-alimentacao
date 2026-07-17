@@ -1,16 +1,11 @@
 import type { OffLookupResult } from '../lib/openFoodFacts';
 import Icon from './Icon';
 
-export type ScanAction =
-  | 'add-shopping'
-  | 'add-pantry'
-  | 'create-ingredient'
-  | 'manual-not-found';
+export type ScanAction = 'add-shopping' | 'add-pantry' | 'manual-not-found';
 
 const ACTION_LABELS: Record<ScanAction, { label: string; icon: string }> = {
   'add-shopping': { label: 'Adicionar à lista de compras', icon: 'shopping-cart' },
   'add-pantry': { label: 'Adicionar à dispensa', icon: 'can' },
-  'create-ingredient': { label: 'Salvar como ingrediente', icon: 'plus' },
   'manual-not-found': { label: 'Cadastrar manualmente', icon: 'pencil' },
 };
 

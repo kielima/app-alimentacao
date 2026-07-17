@@ -10,14 +10,13 @@ import {
   upsertUserIngredient,
   replaceUserIngredients,
 } from '../data/userIngredients';
-import { getPantry, upsertPantryItem, replacePantry } from '../data/pantry';
+import {
+  getHouseholdItems,
+  upsertHouseholdItem,
+  replaceHouseholdItems,
+} from '../data/householdItems';
 import { getMarkets, upsertMarket, replaceMarkets } from '../data/markets';
 import { getMealPlans, upsertMealPlan, replaceMealPlans } from '../data/mealPlan';
-import {
-  getShoppingList,
-  upsertShoppingItem,
-  replaceShoppingList,
-} from '../data/shoppingList';
 import {
   getOffContributions,
   upsertOffContribution,
@@ -34,6 +33,13 @@ import {
   replaceHiddenRecipes,
 } from '../data/hiddenRecipes';
 import { EXPORT_VERSION, type ExportPayload } from './dataExport';
+import {
+  migrateLegacyDispensaData,
+  type LegacyPantryItem,
+  type LegacyShoppingItem,
+} from '../lib/dispensaMigration';
+import type { Ingredient } from '../types/ingredient';
+import type { HouseholdItem } from '../types/household';
 
 export type ImportStrategy = 'replace' | 'upsert' | 'skip-existing';
 
@@ -48,10 +54,9 @@ const COLLECTION_KEYS = [
   'userRecipes',
   'userMeals',
   'userIngredients',
-  'pantry',
+  'householdItems',
   'markets',
   'mealPlans',
-  'shoppingList',
   'offContributions',
   'hiddenIngredients',
   'hiddenRecipes',
@@ -86,16 +91,47 @@ export async function parseImportFile(file: File): Promise<ExportPayload> {
   return parsed as ExportPayload;
 }
 
+/**
+ * Backups antigos (versão 1) ainda trazem `pantry`/`shoppingList` em vez de
+ * `householdItems`, e os `userIngredients` deles não têm `status`. Faz o mesmo
+ * papel de `dispensaMigration.ts`, mas sobre o payload do backup em vez das
+ * coleções ao vivo do Firestore — mescla o resultado de volta em `payload.data`
+ * antes de rodar os adapters normais.
+ */
+function migrateLegacyPayload(payload: ExportPayload): void {
+  const raw = payload.data as unknown as Record<string, unknown>;
+  const legacyPantry = raw.pantry as LegacyPantryItem[] | undefined;
+  const legacyShopping = raw.shoppingList as LegacyShoppingItem[] | undefined;
+  if ((!legacyPantry || legacyPantry.length === 0) && (!legacyShopping || legacyShopping.length === 0)) {
+    return;
+  }
+  const ingredients = payload.data.userIngredients ?? [];
+  const { updatedIngredients, householdItems } = migrateLegacyDispensaData(
+    ingredients,
+    legacyPantry ?? [],
+    legacyShopping ?? [],
+  );
+  const byId = new Map<string, Ingredient>(ingredients.map((i) => [i.id, i]));
+  for (const updated of updatedIngredients) byId.set(updated.id, updated);
+  payload.data.userIngredients = [...byId.values()];
+
+  const householdById = new Map<string, HouseholdItem>(
+    (payload.data.householdItems ?? []).map((i) => [i.id, i]),
+  );
+  for (const item of householdItems) householdById.set(item.id, item);
+  payload.data.householdItems = [...householdById.values()];
+}
+
 export function importSummary(payload: ExportPayload): Record<string, number> {
+  migrateLegacyPayload(payload);
   const d = payload.data;
   return {
     receitas: d.userRecipes?.length ?? 0,
     refeicoes: d.userMeals?.length ?? 0,
     ingredientes: d.userIngredients?.length ?? 0,
-    dispensa: d.pantry?.length ?? 0,
+    itensDeCasa: d.householdItems?.length ?? 0,
     mercados: d.markets?.length ?? 0,
     plano: d.mealPlans?.length ?? 0,
-    compras: d.shoppingList?.length ?? 0,
     contribuicoesOff: d.offContributions?.length ?? 0,
     receitasOcultas: d.hiddenRecipes?.length ?? 0,
     ingredientesOcultos: d.hiddenIngredients?.length ?? 0,
@@ -131,10 +167,10 @@ function adapters(): CollectionAdapter<{ id: string }>[] {
       replace: replaceUserIngredients as (items: { id: string }[]) => void,
     },
     {
-      key: 'pantry',
-      getAll: getPantry,
-      upsert: upsertPantryItem as (item: { id: string }) => void,
-      replace: replacePantry as (items: { id: string }[]) => void,
+      key: 'householdItems',
+      getAll: getHouseholdItems,
+      upsert: upsertHouseholdItem as (item: { id: string }) => void,
+      replace: replaceHouseholdItems as (items: { id: string }[]) => void,
     },
     {
       key: 'markets',
@@ -147,12 +183,6 @@ function adapters(): CollectionAdapter<{ id: string }>[] {
       getAll: getMealPlans,
       upsert: upsertMealPlan as (item: { id: string }) => void,
       replace: replaceMealPlans as (items: { id: string }[]) => void,
-    },
-    {
-      key: 'shoppingList',
-      getAll: getShoppingList,
-      upsert: upsertShoppingItem as (item: { id: string }) => void,
-      replace: replaceShoppingList as (items: { id: string }[]) => void,
     },
     {
       key: 'offContributions',
@@ -182,6 +212,8 @@ export function importData(
   payload: ExportPayload,
   strategy: ImportStrategy,
 ): ImportResult {
+  migrateLegacyPayload(payload);
+
   const result: ImportResult = {
     added: {},
     skipped: {},

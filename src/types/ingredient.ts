@@ -1,4 +1,5 @@
 import type { MealType } from './mealPlan';
+import type { DispensaStatus } from './dispensaStatus';
 
 export type Unit = 'g' | 'ml' | 'unit';
 
@@ -57,6 +58,32 @@ export interface Ingredient {
   off_barcode?: string;
   /** Origem registada da tabela nutricional (foto/IA além de TACO/TBCA/OFF). */
   nutrition_source?: NutritionSource;
+  /** Status na dispensa/lista de compras. Ausente = tratado como 'backlog'. */
+  status?: DispensaStatus;
+  /** Quantidade atualmente em posse (dispensa) ou a comprar. */
+  quantity?: number | null;
+  /** Unidade da quantidade em posse. Cai para `default_unit` quando ausente.
+   *  Separado de `default_unit` porque a compra pode usar uma unidade diferente
+   *  da unidade padrão do ingrediente no catálogo (ex.: comprado em pacote). */
+  stock_unit?: string | null;
+  expiry_date?: string | null;
+  /** Marcado explicitamente como um item que não vence. */
+  no_expiry?: boolean;
+  /** Mercados/lojas onde o item pode ser comprado (um item pode estar em vários). */
+  stores?: string[];
+  price?: number | null;
+  /** Só relevante com `status: 'comprar'`: já foi comprado, pronto pra mover pra dispensa. */
+  checked?: boolean;
+}
+
+/** Status efetivo do ingrediente (ausente = 'backlog', dado legado). */
+export function ingredientStatus(i: Ingredient): DispensaStatus {
+  return i.status ?? 'backlog';
+}
+
+/** Unidade da quantidade em posse, com fallback para a unidade padrão do catálogo. */
+export function ingredientStockUnit(i: Ingredient): string {
+  return i.stock_unit || i.default_unit;
 }
 
 /**
