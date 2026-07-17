@@ -14,9 +14,7 @@ import Plano from './pages/Plano';
 import ReceitaDetalhe from './pages/ReceitaDetalhe';
 import ReceitaForm from './pages/ReceitaForm';
 import ReceitaImportar from './pages/ReceitaImportar';
-import DispensaForm from './pages/DispensaForm';
-import ComprasItemForm from './pages/ComprasItemForm';
-import Ingredientes from './pages/Ingredientes';
+import HouseholdItemForm from './pages/HouseholdItemForm';
 import IngredienteDetalhe from './pages/IngredienteDetalhe';
 import IngredienteForm from './pages/IngredienteForm';
 import OffContribuicoes from './pages/OffContribuicoes';
@@ -29,6 +27,7 @@ import Perfil from './pages/Perfil';
 import Pendencias from './pages/Pendencias';
 import { useTheme } from './hooks/useTheme';
 import { useAuth } from './hooks/useAuth';
+import { useDispensaMigration } from './lib/dispensaMigration';
 import { PlanoProvider, usePlano } from './contexts/PlanoContext';
 import { DAYS_OF_WEEK, todayDayOfWeek, type DayOfWeek, type PlanType } from './types/mealPlan';
 import { setPlanTypeForDay, useTiposTreino } from './data/treino';
@@ -130,6 +129,7 @@ const BACK_ROUTE_PATTERN = /^\/(ingredientes|receitas|refeicoes)\/[^/]+/;
 export default function App() {
   useTheme();
   const { state, signIn, signOut, signInError, signingIn } = useAuth();
+  useDispensaMigration();
   const location = useLocation();
   const isPlano = location.pathname === '/plano';
   const showBack = BACK_ROUTE_PATTERN.test(location.pathname);
@@ -194,16 +194,14 @@ export default function App() {
             <Route path="/receitas/:id/editar" element={<ReceitaForm />} />
             <Route path="/receitas/:id" element={<ReceitaDetalhe />} />
             <Route path="/dispensa" element={<Dispensa />} />
-            <Route path="/dispensa/novo" element={<DispensaForm />} />
-            <Route path="/dispensa/:id/editar" element={<DispensaForm />} />
+            <Route path="/dispensa/novo" element={<HouseholdItemForm />} />
+            <Route path="/dispensa/:id/editar" element={<HouseholdItemForm />} />
             <Route path="/compras" element={<Compras />} />
-            <Route path="/compras/:id" element={<ComprasItemForm />} />
             <Route path="/plano" element={<Plano />} />
             <Route path="/refeicoes" element={<Refeicoes />} />
             <Route path="/refeicoes/nova" element={<RefeicaoForm />} />
             <Route path="/refeicoes/:id/editar" element={<RefeicaoForm />} />
             <Route path="/refeicoes/:id" element={<RefeicaoDetalhe />} />
-            <Route path="/ingredientes" element={<Ingredientes />} />
             <Route path="/ingredientes/novo" element={<IngredienteForm />} />
             <Route path="/ingredientes/:id/editar" element={<IngredienteForm />} />
             <Route path="/ingredientes/:id" element={<IngredienteDetalhe />} />

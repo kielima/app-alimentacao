@@ -4,10 +4,9 @@ import HeaderSlot from '../components/HeaderSlot';
 import TrashIcon from '../components/TrashIcon';
 import Icon from '../components/Icon';
 import { getMarket, upsertMarket, deleteMarket } from '../data/markets';
-import { useShoppingItems } from '../data/shoppingList';
-import { itemStores } from '../types/shoppingList';
+import { useHouseholdItems } from '../data/householdItems';
 import { useAllIngredients } from '../data/ingredients';
-import { resolveItemName } from '../utils/itemName';
+import { itemDisplayName, type DispensaItem } from '../hooks/useDispensa';
 import type { Market } from '../types/market';
 
 export default function MercadoForm() {
@@ -17,7 +16,7 @@ export default function MercadoForm() {
   const original = editing ? getMarket(id) : undefined;
 
   const allIng = useAllIngredients();
-  const shoppingItems = useShoppingItems();
+  const householdItems = useHouseholdItems();
 
   const sortedIng = useMemo(
     () => [...allIng].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')),
@@ -44,8 +43,16 @@ export default function MercadoForm() {
   const matchingShoppingItems = useMemo(() => {
     const n = name.trim().toLowerCase();
     if (!n) return [];
-    return shoppingItems.filter((i) => itemStores(i).some((s) => s.toLowerCase() === n));
-  }, [shoppingItems, name]);
+    const items: DispensaItem[] = [
+      ...allIng
+        .filter((i) => i.status === 'comprar')
+        .map((data): DispensaItem => ({ kind: 'ingredient', data })),
+      ...householdItems
+        .filter((i) => i.status === 'comprar')
+        .map((data): DispensaItem => ({ kind: 'household', data })),
+    ];
+    return items.filter((i) => (i.data.stores ?? []).some((s) => s.toLowerCase() === n));
+  }, [allIng, householdItems, name]);
 
   if (editing && !original) {
     return (
@@ -218,20 +225,20 @@ export default function MercadoForm() {
           </h2>
           <ul className="space-y-1">
             {matchingShoppingItems.map((item) => (
-              <li key={item.id} className="flex items-center gap-2">
-                {item.checked && <Icon name="check" className="h-3.5 w-3.5 text-zinc-400" />}
+              <li key={`${item.kind}-${item.data.id}`} className="flex items-center gap-2">
+                {item.data.checked && <Icon name="check" className="h-3.5 w-3.5 text-zinc-400" />}
                 <span
                   className={`text-sm ${
-                    item.checked
+                    item.data.checked
                       ? 'text-zinc-400 line-through'
                       : 'text-brand-900 dark:text-brand-100'
                   }`}
                 >
-                  {resolveItemName(item)}
+                  {itemDisplayName(item)}
                 </span>
-                {item.price != null && (
+                {item.data.price != null && (
                   <span className="ml-auto text-xs text-zinc-500">
-                    {item.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    {item.data.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                   </span>
                 )}
               </li>

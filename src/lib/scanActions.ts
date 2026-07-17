@@ -3,8 +3,6 @@ import type { ScanAction } from '../components/ScannedProductCard';
 import type { BarcodeScanResult } from '../components/BarcodeScannerModal';
 import type { Ingredient, NutritionPer100 } from '../types/ingredient';
 import { upsertUserIngredient } from '../data/userIngredients';
-import { upsertShoppingItem } from '../data/shoppingList';
-import { upsertPantryItem } from '../data/pantry';
 import { uniqueSlug } from '../utils/slug';
 import { allIngredientIds } from '../data/ingredients';
 
@@ -13,21 +11,6 @@ export function findIngredientByBarcode(
   ingredients: Ingredient[],
 ): Ingredient | undefined {
   return ingredients.find((i) => i.off_barcode === barcode);
-}
-
-function defaultDisplayName(result: BarcodeScanResult): string {
-  const product = result.lookup.product;
-  if (product?.name) return product.name;
-  return `Produto ${result.barcode}`;
-}
-
-function defaultRawText(result: BarcodeScanResult, existing?: Ingredient): string {
-  if (existing) {
-    return existing.brand ? `${existing.brand} — ${existing.name}` : existing.name;
-  }
-  const product = result.lookup.product;
-  if (product?.name && product?.brands) return `${product.brands} — ${product.name}`;
-  return defaultDisplayName(result);
 }
 
 function ensureIngredientFromScan(
@@ -65,25 +48,13 @@ export function handleScanForShoppingList(
 ) {
   if (action === 'manual-not-found') {
     navigate(
-      `/ingredientes/novo?return=%2Fcompras&barcode=${encodeURIComponent(result.barcode)}`,
+      `/ingredientes/novo?return=%2Fcompras&status=comprar&barcode=${encodeURIComponent(result.barcode)}`,
     );
     return;
   }
   if (action !== 'add-shopping') return;
   const ing = ensureIngredientFromScan(result, ingredients);
-  upsertShoppingItem({
-    id: `scan-${Date.now()}-${ing.id}`,
-    ingredient_id: ing.id,
-    raw_text: defaultRawText(result, ing),
-    quantity: null,
-    unit: ing.default_unit ?? null,
-    store: null,
-    price: null,
-    checked: false,
-    source: 'manual',
-    source_ref: ing.id,
-    added_at: new Date().toISOString(),
-  });
+  upsertUserIngredient({ ...ing, status: 'comprar' });
 }
 
 export function handleScanForPantry(
@@ -94,38 +65,11 @@ export function handleScanForPantry(
 ) {
   if (action === 'manual-not-found') {
     navigate(
-      `/ingredientes/novo?return=%2Fdispensa&barcode=${encodeURIComponent(result.barcode)}`,
+      `/ingredientes/novo?return=%2Fdispensa&status=dispensa&barcode=${encodeURIComponent(result.barcode)}`,
     );
     return;
   }
   if (action !== 'add-pantry') return;
   const ing = ensureIngredientFromScan(result, ingredients);
-  upsertPantryItem({
-    id: `scan-${Date.now()}-${ing.id}`,
-    ingredient_id: ing.id,
-    raw_text: defaultRawText(result, ing),
-    quantity: null,
-    unit: ing.default_unit ?? null,
-    expiry_date: null,
-    store: null,
-    added_at: new Date().toISOString(),
-  });
+  upsertUserIngredient({ ...ing, status: 'dispensa' });
 }
-
-export function handleScanForIngredientsList(
-  result: BarcodeScanResult,
-  action: ScanAction,
-  ingredients: Ingredient[],
-  navigate: NavigateFunction,
-) {
-  if (action === 'manual-not-found') {
-    navigate(
-      `/ingredientes/novo?barcode=${encodeURIComponent(result.barcode)}`,
-    );
-    return;
-  }
-  if (action !== 'create-ingredient') return;
-  const ing = ensureIngredientFromScan(result, ingredients);
-  navigate(`/ingredientes/${ing.id}`);
-}
-

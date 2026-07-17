@@ -39,7 +39,6 @@ import {
 } from '../utils/autoPlan';
 import OptimizePlanModal from '../components/OptimizePlanModal';
 import AutoPlanModal from '../components/AutoPlanModal';
-import { usePantryItems } from '../data/pantry';
 import { getMealSlots, type Meal } from '../types/meal';
 import { unitLabel } from '../utils/units';
 import type { Recipe } from '../types/recipe';
@@ -189,10 +188,9 @@ export default function Plano() {
   // Disponibilidade da dispensa para montar o plano: casa por ingredient_id
   // (como a tela de receita) e aplica a validade — itens vencidos não contam.
   // `available` alimenta a montagem/priorização; `expiredOnly` é só informativo.
-  const pantryItems = usePantryItems();
   const { available: pantryExpiryById, expiredOnly: expiredIgnoredCount } = useMemo(
-    () => pantryAvailability(pantryItems),
-    [pantryItems],
+    () => pantryAvailability(allIngredients),
+    [allIngredients],
   );
 
   const dayPlan = useMemo(() => {

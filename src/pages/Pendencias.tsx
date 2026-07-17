@@ -16,9 +16,7 @@ import {
   type ExtractedNutrition,
 } from '../lib/gemini';
 import type { Ingredient } from '../types/ingredient';
-import type { PantryItem } from '../types/pantry';
 import type { ServingGap } from '../utils/dataGaps';
-import { resolveItemName } from '../utils/itemName';
 import { unitLabel } from '../utils/units';
 
 export default function Pendencias() {
@@ -158,7 +156,7 @@ function GapSection({
   );
 }
 
-function PantryNoExpirySection({ items }: { items: PantryItem[] }) {
+function PantryNoExpirySection({ items }: { items: Ingredient[] }) {
   if (items.length === 0) return null;
   return (
     <section>
@@ -183,11 +181,11 @@ function PantryNoExpirySection({ items }: { items: PantryItem[] }) {
   );
 }
 
-function PantryGapCard({ item }: { item: PantryItem }) {
+function PantryGapCard({ item }: { item: Ingredient }) {
   return (
     <li>
       <Link
-        to={`/dispensa/${item.id}/editar`}
+        to={`/ingredientes/${item.id}/editar`}
         className="group flex h-full select-none flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white transition-colors hover:border-brand-500 [-webkit-touch-callout:none] dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-400"
       >
         <div className="relative aspect-[4/3] w-full overflow-hidden bg-zinc-100 dark:bg-zinc-800">
@@ -199,7 +197,9 @@ function PantryGapCard({ item }: { item: PantryItem }) {
           </span>
         </div>
         <div className="flex min-w-0 flex-1 flex-col p-2.5">
-          <p className="line-clamp-2 text-sm font-medium leading-tight">{resolveItemName(item)}</p>
+          <p className="line-clamp-2 text-sm font-medium leading-tight">
+            {item.brand ? `${item.brand} — ${item.name}` : item.name}
+          </p>
         </div>
       </Link>
     </li>

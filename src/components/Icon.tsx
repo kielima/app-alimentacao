@@ -183,6 +183,24 @@ const ICONS: Record<string, IconDef> = {
       </>
     ),
   },
+  archive: {
+    body: (
+      <>
+        <rect width="20" height="5" x="2" y="3" rx="1" />
+        <path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" />
+        <path d="M10 12h4" />
+      </>
+    ),
+  },
+  'help-circle': {
+    body: (
+      <>
+        <circle cx="12" cy="12" r="10" />
+        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+        <path d="M12 17h.01" />
+      </>
+    ),
+  },
 
   // ── Tema ─────────────────────────────────────────────────────────────
   sun: {

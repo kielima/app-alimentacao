@@ -6,8 +6,7 @@ import { KCAL_TOLERANCE, type PlanDayTargets } from './profileTargets';
 import type { Macros } from './planOptimizer';
 import { getMealSlots, type Meal, type MealItem, type MealItemRef } from '../types/meal';
 import type { Recipe, RecipeIngredient } from '../types/recipe';
-import type { Ingredient } from '../types/ingredient';
-import type { PantryItem } from '../types/pantry';
+import { ingredientStatus, type Ingredient } from '../types/ingredient';
 import type { DayOfWeek, DayPlan, MealType, PlanMealItem, PlanType } from '../types/mealPlan';
 
 /** Dias para uma validade contar como "vencendo" (espelha SOON_DAYS de expiry.ts). */
@@ -30,19 +29,18 @@ export interface PantryAvailability {
  * Itens sem data e futuros contam. Guarda a menor validade não vencida por
  * ingrediente para alimentar a priorização por vencimento de `buildAutoDayPlan`.
  *
- * Só considera comida (`kind !== 'household'`) com `ingredient_id`, seguindo o
- * casamento por id usado no resto do app.
+ * Considera os ingredientes com `status === 'dispensa'`.
  */
-export function pantryAvailability(items: PantryItem[]): PantryAvailability {
+export function pantryAvailability(ingredients: Ingredient[]): PantryAvailability {
   const available = new Map<string, number | null>();
   // Ingredientes vistos (para saber quais só têm itens vencidos).
   const seen = new Set<string>();
-  for (const item of items) {
-    if (item.kind === 'household' || !item.ingredient_id) continue;
-    seen.add(item.ingredient_id);
-    const d = daysUntil(item.expiry_date);
+  for (const ing of ingredients) {
+    if (ingredientStatus(ing) !== 'dispensa') continue;
+    seen.add(ing.id);
+    const d = daysUntil(ing.expiry_date);
     if (d !== null && d < 0) continue; // vencido → não conta como disponível
-    const id = item.ingredient_id;
+    const id = ing.id;
     if (!available.has(id)) available.set(id, d);
     else {
       const prev = available.get(id) ?? null;

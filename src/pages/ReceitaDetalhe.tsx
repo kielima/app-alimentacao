@@ -6,19 +6,46 @@ import NutritionEstimate from '../components/NutritionEstimate';
 import TrashIcon from '../components/TrashIcon';
 import { isSeedRecipe } from '../data/recipes';
 import { useRecipeCategories } from '../data/recipeCategories';
-import { findIngredientById } from '../data/ingredients';
+import { findIngredientById, useAllIngredients } from '../data/ingredients';
 import { useRecipeNutrition } from '../hooks/useRecipeNutrition';
 import { activeIngredient, recipeTotalWeightG } from '../utils/nutrition';
 import { deleteUserRecipe, getUserRecipeById, upsertUserRecipe, useUserRecipes } from '../data/userRecipes';
 import { hideRecipe } from '../data/hiddenRecipes';
-import { upsertShoppingItem } from '../data/shoppingList';
-import { usePantryItems } from '../data/pantry';
+import { upsertUserIngredient } from '../data/userIngredients';
+import { allIngredientIds } from '../data/ingredients';
 import { useAllMeals } from '../data/meals';
 import { getMealSlots } from '../types/meal';
 import type { MealItemRef } from '../types/meal';
 import { MEAL_TYPES } from '../types/mealPlan';
 import { recipeCategoryIds, type Recipe, type RecipeIngredient } from '../types/recipe';
 import { ingredientDisplayName } from '../utils/itemName';
+import { ingredientStatus, type Ingredient } from '../types/ingredient';
+import { uniqueSlug } from '../utils/slug';
+
+/** Marca `status: 'comprar'` no ingrediente ligado ao item; se o item da
+ *  receita não tem `ingredient_id` (texto livre, comum em receitas importadas),
+ *  cria um ingrediente mínimo a partir do `raw_text` antes de marcar. */
+function addRecipeItemToShoppingList(item: RecipeIngredient): void {
+  const ing: Ingredient | undefined = item.ingredient_id
+    ? findIngredientById(item.ingredient_id)
+    : undefined;
+  if (ing) {
+    upsertUserIngredient({ ...ing, status: 'comprar' });
+    return;
+  }
+  if (item.ingredient_id) return; // referenciava um ingrediente que não existe mais
+  const name = item.raw_text.trim();
+  if (!name) return;
+  const id = uniqueSlug(name, allIngredientIds());
+  upsertUserIngredient({
+    id,
+    name,
+    default_unit: 'g',
+    nutrition_per_100: null,
+    needs_review: true,
+    status: 'comprar',
+  });
+}
 
 export default function ReceitaDetalhe() {
   const { id } = useParams<{ id: string }>();
@@ -32,10 +59,13 @@ export default function ReceitaDetalhe() {
   const nutrition = useRecipeNutrition(recipe);
   const totalWeightG = useMemo(() => (recipe ? recipeTotalWeightG(recipe) : 0), [recipe]);
   const categories = useRecipeCategories();
-  const pantryItems = usePantryItems();
+  const allIngredients = useAllIngredients();
   const pantryIngredientIds = useMemo(
-    () => new Set(pantryItems.filter((p) => p.ingredient_id).map((p) => p.ingredient_id as string)),
-    [pantryItems],
+    () =>
+      new Set(
+        allIngredients.filter((i) => ingredientStatus(i) === 'dispensa').map((i) => i.id),
+      ),
+    [allIngredients],
   );
   const allMeals = useAllMeals();
   const mealsUsingRecipe = useMemo(() => {
@@ -82,21 +112,7 @@ export default function ReceitaDetalhe() {
       alert('Você já tem todos os ingredientes desta receita na dispensa.');
       return;
     }
-    for (const item of toAdd) {
-      upsertShoppingItem({
-        id: `from-recipe-${recipe.id}-${Math.random().toString(36).slice(2, 9)}`,
-        ingredient_id: item.ingredient_id,
-        raw_text: item.raw_text,
-        quantity: item.quantity,
-        unit: item.unit,
-        store: null,
-        price: null,
-        checked: false,
-        source: 'from_recipe',
-        source_ref: recipe.id,
-        added_at: new Date().toISOString(),
-      });
-    }
+    for (const item of toAdd) addRecipeItemToShoppingList(item);
     if (confirm(`${toAdd.length} item(ns) adicionado(s) à Lista de Compras. Ir para a lista agora?`)) {
       navigate('/compras');
     }
@@ -117,20 +133,7 @@ export default function ReceitaDetalhe() {
   };
 
   const handleAddSingleToCart = (item: RecipeIngredient) => {
-    if (!recipe) return;
-    upsertShoppingItem({
-      id: `from-recipe-${recipe.id}-${Math.random().toString(36).slice(2, 9)}`,
-      ingredient_id: item.ingredient_id,
-      raw_text: item.raw_text,
-      quantity: item.quantity,
-      unit: item.unit,
-      store: null,
-      price: null,
-      checked: false,
-      source: 'from_recipe',
-      source_ref: recipe.id,
-      added_at: new Date().toISOString(),
-    });
+    addRecipeItemToShoppingList(item);
   };
 
   if (!recipe) {

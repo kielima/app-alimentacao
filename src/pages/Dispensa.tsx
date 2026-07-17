@@ -1,24 +1,33 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import HeaderSlot from '../components/HeaderSlot';
 import ScanButton from '../components/ScanButton';
 import FilterButton from '../components/FilterButton';
 import BarcodeScannerModal from '../components/BarcodeScannerModal';
 import CardActionSheet from '../components/CardActionSheet';
 import TrashIcon from '../components/TrashIcon';
-import { usePantry, type PantryFilter } from '../hooks/usePantry';
+import Icon from '../components/Icon';
+import {
+  useDispensa,
+  itemStatus,
+  itemDisplayName,
+  itemExpiry,
+  itemUnit,
+  type DispensaItem,
+  type DispensaKindFilter,
+  type ExpiryFilter,
+} from '../hooks/useDispensa';
 import { useLongPress } from '../hooks/useLongPress';
 import { expiryStatus, expiryLabel, statusColor, statusIcon } from '../utils/expiry';
-import Icon from '../components/Icon';
 import { unitLabel } from '../utils/units';
-import { upsertShoppingItem } from '../data/shoppingList';
-import { upsertPantryItem, deletePantryItem } from '../data/pantry';
-import { useAllIngredients } from '../data/ingredients';
+import { useAllIngredients, allIngredientIds } from '../data/ingredients';
+import { upsertUserIngredient, deleteUserIngredient } from '../data/userIngredients';
+import { upsertHouseholdItem, deleteHouseholdItem } from '../data/householdItems';
 import { handleScanForPantry } from '../lib/scanActions';
-import { resolveItemName } from '../utils/itemName';
-import type { PantryItem } from '../types/pantry';
+import { uniqueSlug } from '../utils/slug';
+import { DISPENSA_STATUSES, dispensaStatusLabel, type DispensaStatus } from '../types/dispensaStatus';
 
-const filterChips: { value: PantryFilter; label: string; icon: string | null }[] = [
+const expiryChips: { value: ExpiryFilter; label: string; icon: string | null }[] = [
   { value: 'todos', label: 'Todos', icon: null },
   { value: 'expired', label: 'Vencidos', icon: 'x-circle' },
   { value: 'soon', label: 'Vencendo', icon: 'alert-triangle' },
@@ -31,62 +40,66 @@ export default function Dispensa() {
   const navigate = useNavigate();
   const allIngredients = useAllIngredients();
   const [scanOpen, setScanOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
   const {
     list,
     query,
     setQuery,
-    filter,
-    setFilter,
+    statusFilter,
+    setStatusFilter,
     kindFilter,
     setKindFilter,
+    expiryFilter,
+    setExpiryFilter,
     showFilters,
     setShowFilters,
     total,
-    countsByStatus,
+    statusCounts,
     kindCounts,
-  } = usePantry();
+    expiryCounts,
+  } = useDispensa();
 
-  const hasActiveFilters = filter !== 'todos' || kindFilter !== 'all';
+  const showExpiryFilters = statusFilter === 'todos' || statusFilter === 'dispensa';
+  const hasActiveFilters =
+    statusFilter !== 'todos' || kindFilter !== 'all' || expiryFilter !== 'todos';
   const isFiltering = hasActiveFilters || !!query.trim();
 
-  const sendToList = (item: PantryItem) => {
-    upsertShoppingItem({
-      id: `from-pantry-${item.id}-${Date.now()}`,
-      ingredient_id: item.ingredient_id,
-      raw_text: resolveItemName(item),
-      quantity: item.quantity,
-      unit: item.unit,
-      store: item.store,
-      stores: item.store ? [item.store] : [],
-      price: null,
-      checked: false,
-      source: 'from_pantry',
-      source_ref: item.id,
-      added_at: new Date().toISOString(),
-      kind: item.kind,
-    });
-    deletePantryItem(item.id);
-  };
-
-  const [actionItemId, setActionItemId] = useState<string | null>(null);
-  const actionItem = actionItemId
-    ? list.find((i) => i.id === actionItemId) ?? null
+  const [actionItemKey, setActionItemKey] = useState<string | null>(null);
+  const actionItem = actionItemKey
+    ? list.find((i) => `${i.kind}-${i.data.id}` === actionItemKey) ?? null
     : null;
 
-  const duplicatePantryItem = (item: PantryItem) => {
-    const newId = `pantry-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    upsertPantryItem({
-      ...item,
-      id: newId,
-      added_at: new Date().toISOString(),
-    });
-    setActionItemId(null);
+  const changeStatus = (item: DispensaItem, status: DispensaStatus) => {
+    if (item.kind === 'ingredient') {
+      upsertUserIngredient({ ...item.data, status });
+    } else {
+      upsertHouseholdItem({ ...item.data, status });
+    }
+    setActionItemKey(null);
   };
 
-  const removePantryItem = (item: PantryItem) => {
-    if (!confirm(`Apagar "${resolveItemName(item)}" da dispensa? Esta ação não pode ser desfeita.`)) return;
-    deletePantryItem(item.id);
-    setActionItemId(null);
+  const duplicateItem = (item: DispensaItem) => {
+    if (item.kind === 'ingredient') {
+      const ing = item.data;
+      const newId = uniqueSlug(`${ing.name} (cópia)`, allIngredientIds());
+      upsertUserIngredient({ ...ing, id: newId, name: `${ing.name} (cópia)` });
+    } else {
+      const newId = `household-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      upsertHouseholdItem({ ...item.data, id: newId, added_at: new Date().toISOString() });
+    }
+    setActionItemKey(null);
+  };
+
+  const removeItem = (item: DispensaItem) => {
+    if (!confirm(`Apagar "${itemDisplayName(item)}"? Esta ação não pode ser desfeita.`)) return;
+    if (item.kind === 'ingredient') deleteUserIngredient(item.data.id);
+    else deleteHouseholdItem(item.data.id);
+    setActionItemKey(null);
+  };
+
+  const openItem = (item: DispensaItem) => {
+    if (item.kind === 'ingredient') navigate(`/ingredientes/${item.data.id}/editar`);
+    else navigate(`/dispensa/${item.data.id}/editar`);
   };
 
   return (
@@ -126,11 +139,44 @@ export default function Dispensa() {
       {showFilters && (
         <div className="sticky top-0 z-10 -mx-4 mb-3 space-y-1.5 bg-zinc-50/95 px-4 pb-2 pt-2 backdrop-blur supports-[backdrop-filter]:bg-zinc-50/80 dark:bg-zinc-950/95 dark:supports-[backdrop-filter]:bg-zinc-950/80">
           <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {([
-              { value: 'all', label: 'Tudo', icon: null, count: total },
-              { value: 'food', label: 'Comida', icon: 'utensils-crossed', count: kindCounts.food },
-              { value: 'household', label: 'Casa', icon: 'package', count: kindCounts.household },
-            ] as const).map((c) => (
+            <button
+              type="button"
+              onClick={() => setStatusFilter('todos')}
+              className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                statusFilter === 'todos'
+                  ? 'bg-brand-500 text-white dark:bg-brand-600'
+                  : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700'
+              }`}
+            >
+              Todos {total > 0 && <span className="opacity-70">({total})</span>}
+            </button>
+            {DISPENSA_STATUSES.map((s) => (
+              <button
+                key={s.value}
+                type="button"
+                onClick={() => setStatusFilter(s.value)}
+                className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                  statusFilter === s.value
+                    ? 'bg-brand-500 text-white dark:bg-brand-600'
+                    : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700'
+                }`}
+              >
+                <Icon name={s.icon} className="h-3.5 w-3.5" />
+                {s.label}{' '}
+                {statusCounts[s.value] > 0 && (
+                  <span className="opacity-70">({statusCounts[s.value]})</span>
+                )}
+              </button>
+            ))}
+          </div>
+          <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {(
+              [
+                { value: 'all', label: 'Tudo', icon: null, count: total },
+                { value: 'food', label: 'Comida', icon: 'utensils-crossed', count: kindCounts.food },
+                { value: 'household', label: 'Casa', icon: 'package', count: kindCounts.household },
+              ] as { value: DispensaKindFilter; label: string; icon: string | null; count: number }[]
+            ).map((c) => (
               <button
                 key={c.value}
                 type="button"
@@ -146,35 +192,35 @@ export default function Dispensa() {
               </button>
             ))}
           </div>
-          <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {filterChips.map((c) => {
-              const count =
-                c.value === 'todos'
-                  ? total
-                  : countsByStatus[c.value as Exclude<PantryFilter, 'todos'>];
-              return (
-                <button
-                  key={c.value}
-                  type="button"
-                  onClick={() => setFilter(c.value)}
-                  className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                    filter === c.value
-                      ? 'bg-brand-500 text-white dark:bg-brand-600'
-                      : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700'
-                  }`}
-                >
-                  {c.icon && <Icon name={c.icon} className="h-3.5 w-3.5" />}
-                  {c.label} {count > 0 && <span className="opacity-70">({count})</span>}
-                </button>
-              );
-            })}
-          </div>
+          {showExpiryFilters && (
+            <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {expiryChips.map((c) => {
+                const count = c.value === 'todos' ? undefined : expiryCounts[c.value];
+                return (
+                  <button
+                    key={c.value}
+                    type="button"
+                    onClick={() => setExpiryFilter(c.value)}
+                    className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                      expiryFilter === c.value
+                        ? 'bg-brand-500 text-white dark:bg-brand-600'
+                        : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700'
+                    }`}
+                  >
+                    {c.icon && <Icon name={c.icon} className="h-3.5 w-3.5" />}
+                    {c.label} {!!count && <span className="opacity-70">({count})</span>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
-      <Link
-        to="/dispensa/novo"
-        aria-label="Novo item na dispensa"
+      <button
+        type="button"
+        onClick={() => setAddOpen(true)}
+        aria-label="Novo item"
         className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-brand-cream text-brand-700 shadow-lg hover:bg-brand-100 dark:bg-brand-cream dark:text-brand-700 dark:hover:bg-brand-100"
       >
         <svg
@@ -189,19 +235,18 @@ export default function Dispensa() {
         >
           <path d="M12 5v14M5 12h14" />
         </svg>
-      </Link>
+      </button>
 
       {total === 0 ? (
         <div className="mt-12 text-center">
-          <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">
-            Sua dispensa está vazia.
-          </p>
-          <Link
-            to="/dispensa/novo"
+          <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">Sua dispensa está vazia.</p>
+          <button
+            type="button"
+            onClick={() => setAddOpen(true)}
             className="inline-block rounded-full bg-brand-500 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-500"
           >
             + Adicionar primeiro item
-          </Link>
+          </button>
         </div>
       ) : list.length === 0 ? (
         <p className="mt-12 text-center text-sm text-zinc-500 dark:text-zinc-400">
@@ -210,32 +255,62 @@ export default function Dispensa() {
       ) : (
         <ul className="grid grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))] gap-3">
           {list.map((item) => (
-            <PantryCard
-              key={item.id}
+            <DispensaCard
+              key={`${item.kind}-${item.data.id}`}
               item={item}
-              onOpen={() => navigate(`/dispensa/${item.id}/editar`)}
-              onSendToList={() => sendToList(item)}
-              onLongPress={() => setActionItemId(item.id)}
+              onOpen={() => openItem(item)}
+              onLongPress={() => setActionItemKey(`${item.kind}-${item.data.id}`)}
             />
           ))}
         </ul>
       )}
 
+      {addOpen && (
+        <CardActionSheet
+          category="Novo item"
+          title="O que você quer adicionar?"
+          onClose={() => setAddOpen(false)}
+          actions={[
+            {
+              label: 'Ingrediente (comida)',
+              icon: <Icon name="utensils-crossed" className="h-4 w-4" />,
+              onClick: () => {
+                setAddOpen(false);
+                navigate('/ingredientes/novo?return=%2Fdispensa&status=dispensa');
+              },
+            },
+            {
+              label: 'Item de casa',
+              icon: <Icon name="package" className="h-4 w-4" />,
+              onClick: () => {
+                setAddOpen(false);
+                navigate('/dispensa/novo');
+              },
+            },
+          ]}
+        />
+      )}
+
       {actionItem && (
         <CardActionSheet
-          category="Item da dispensa"
-          title={resolveItemName(actionItem)}
-          onClose={() => setActionItemId(null)}
+          category="Item"
+          title={itemDisplayName(actionItem)}
+          onClose={() => setActionItemKey(null)}
           actions={[
+            ...DISPENSA_STATUSES.filter((s) => s.value !== itemStatus(actionItem)).map((s) => ({
+              label: `Mudar para ${s.label}`,
+              icon: <Icon name={s.icon} className="h-4 w-4" />,
+              onClick: () => changeStatus(actionItem, s.value),
+            })),
             {
               label: 'Duplicar item',
               icon: <Icon name="clipboard" className="h-4 w-4" />,
-              onClick: () => duplicatePantryItem(actionItem),
+              onClick: () => duplicateItem(actionItem),
             },
             {
               label: 'Apagar item',
               icon: <TrashIcon className="h-4 w-4" />,
-              onClick: () => removePantryItem(actionItem),
+              onClick: () => removeItem(actionItem),
               destructive: true,
             },
           ]}
@@ -245,22 +320,29 @@ export default function Dispensa() {
   );
 }
 
-interface PantryCardProps {
-  item: PantryItem;
+interface DispensaCardProps {
+  item: DispensaItem;
   onOpen: () => void;
-  onSendToList: () => void;
   onLongPress: () => void;
 }
 
-function PantryCard({ item, onOpen, onSendToList, onLongPress }: PantryCardProps) {
+function DispensaCard({ item, onOpen, onLongPress }: DispensaCardProps) {
   const longPress = useLongPress(onLongPress, { delay: 450 });
-  const status = expiryStatus(item.expiry_date, item.no_expiry);
+  const status = itemStatus(item);
+  const isDispensa = status === 'dispensa';
+  const { expiry_date, no_expiry } = itemExpiry(item);
+  const expStatus = expiryStatus(expiry_date, no_expiry);
+  const unit = itemUnit(item);
+  const quantity = item.data.quantity;
   const subtitle =
-    item.quantity && item.unit
-      ? `${item.quantity} ${unitLabel(item.unit)}`
-      : item.quantity != null
-        ? String(item.quantity)
+    quantity && unit
+      ? `${quantity} ${unitLabel(unit)}`
+      : quantity != null
+        ? String(quantity)
         : '';
+  const store = item.data.stores?.[0];
+  const statusDef = DISPENSA_STATUSES.find((s) => s.value === status);
+
   return (
     <li>
       <div
@@ -275,10 +357,17 @@ function PantryCard({ item, onOpen, onSendToList, onLongPress }: PantryCardProps
       >
         <div className="relative aspect-[4/3] w-full overflow-hidden bg-zinc-100 dark:bg-zinc-800">
           <div className="flex h-full w-full items-center justify-center" aria-hidden>
-            {statusIcon(status) ? (
-              <Icon name={statusIcon(status)!} className={`h-10 w-10 ${statusColor(status)}`} />
+            {isDispensa ? (
+              statusIcon(expStatus) ? (
+                <Icon name={statusIcon(expStatus)!} className={`h-10 w-10 ${statusColor(expStatus)}`} />
+              ) : (
+                <span className={`text-3xl leading-none ${statusColor(expStatus)}`}>—</span>
+              )
             ) : (
-              <span className={`text-3xl leading-none ${statusColor(status)}`}>—</span>
+              <Icon
+                name={statusDef?.icon ?? 'package'}
+                className="h-10 w-10 text-zinc-300 dark:text-zinc-600"
+              />
             )}
           </div>
           {item.kind === 'household' && (
@@ -286,31 +375,25 @@ function PantryCard({ item, onOpen, onSendToList, onLongPress }: PantryCardProps
               Casa
             </span>
           )}
-          <button
-            type="button"
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              e.stopPropagation();
-              onSendToList();
-            }}
-            className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-zinc-500 shadow-sm hover:bg-brand-50 hover:text-brand-600 dark:bg-zinc-900/80 dark:text-zinc-300 dark:hover:bg-brand-900/40 dark:hover:text-brand-400"
-            aria-label="Adicionar à lista de compras"
-            title="Adicionar à lista de compras"
-          >
-            <Icon name="shopping-cart" className="h-3.5 w-3.5" />
-          </button>
+          {!isDispensa && (
+            <span className="absolute right-1.5 top-1.5 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-zinc-600 shadow-sm backdrop-blur-sm dark:bg-zinc-900/80 dark:text-zinc-300">
+              {statusDef?.label ?? dispensaStatusLabel(status)}
+            </span>
+          )}
         </div>
         <div className="flex min-w-0 flex-1 flex-col p-2.5">
-          <p className="line-clamp-2 text-sm font-medium leading-tight">{resolveItemName(item)}</p>
-          {(subtitle || item.store) && (
+          <p className="line-clamp-2 text-sm font-medium leading-tight">{itemDisplayName(item)}</p>
+          {(subtitle || store) && (
             <p className="mt-1 truncate text-xs text-zinc-500 dark:text-zinc-400">
               {subtitle}
-              {item.store && `${subtitle ? ' · ' : ''}${item.store}`}
+              {store && `${subtitle ? ' · ' : ''}${store}`}
             </p>
           )}
-          <p className={`mt-auto pt-1 text-xs font-medium ${statusColor(status)}`}>
-            {expiryLabel(item.expiry_date)}
-          </p>
+          {isDispensa && (
+            <p className={`mt-auto pt-1 text-xs font-medium ${statusColor(expStatus)}`}>
+              {expiryLabel(expiry_date)}
+            </p>
+          )}
         </div>
       </div>
     </li>

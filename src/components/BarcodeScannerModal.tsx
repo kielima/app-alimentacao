@@ -6,7 +6,7 @@ import ScannedProductCard from './ScannedProductCard';
 import type { ScanAction } from './ScannedProductCard';
 import NfceReceiptReview from './NfceReceiptReview';
 import Icon from './Icon';
-import type { ShoppingItem } from '../types/shoppingList';
+import type { DispensaItem } from '../hooks/useDispensa';
 
 export interface BarcodeScanResult {
   barcode: string;
@@ -20,8 +20,8 @@ interface Props {
   actions: ScanAction[];
   /** Além de código de barras de produto, também reconhece QR de nota fiscal (NFC-e). */
   enableNfce?: boolean;
-  /** Lista de compras atual, usada para sugerir matches na revisão da nota fiscal. */
-  shoppingItems?: ShoppingItem[];
+  /** Itens com `status: 'comprar'`, usados para sugerir matches na revisão da nota fiscal. */
+  comprarItems?: DispensaItem[];
 }
 
 type Stage =
@@ -41,7 +41,7 @@ export default function BarcodeScannerModal({
   onPick,
   actions,
   enableNfce = false,
-  shoppingItems = [],
+  comprarItems = [],
 }: Props) {
   const [stage, setStage] = useState<Stage>({ kind: 'scanning' });
   const [manualCode, setManualCode] = useState('');
@@ -175,7 +175,7 @@ export default function BarcodeScannerModal({
         {stage.kind === 'nfce-review' && (
           <NfceReceiptReview
             data={stage.data}
-            shoppingItems={shoppingItems}
+            comprarItems={comprarItems}
             onApply={onClose}
             onCancel={() => setStage({ kind: 'scanning' })}
           />
