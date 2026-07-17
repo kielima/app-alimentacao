@@ -7,6 +7,14 @@ on:
       - 'functions/**'
       - 'firebase.json'
       - '.github/workflows/functions-deploy.yml'
+  # PRs deste repositório são mescladas pelo workflow Auto-merge usando o GITHUB_TOKEN
+  # padrão, e o GitHub não dispara workflows "on: push" para pushes feitos com esse
+  # token (proteção contra loop infinito) — então o gatilho `push` acima nunca roda
+  # sozinho depois de um merge. Este `workflow_run` é o mesmo contorno já usado em
+  # firebase-deploy.yml para o deploy do Hosting.
+  workflow_run:
+    workflows: ["Auto-merge"]
+    types: [completed]
   workflow_dispatch:
 
 permissions:
@@ -15,6 +23,10 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # Em push: sempre roda. Em workflow_run (Auto-merge): só se concluiu com sucesso.
+    if: >
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
     steps:
       - uses: actions/checkout@v4
 
