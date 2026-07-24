@@ -18,6 +18,9 @@ export type StatusFilter = 'todos' | DispensaStatus;
 export type ExpiryFilter = 'todos' | ExpiryStatus;
 export type DispensaKindFilter = 'all' | 'food' | 'household';
 
+export const ALL_STORES = '__todos__';
+export const UNGROUPED_STORE = '__sem-mercado__';
+
 export function itemStatus(item: DispensaItem): DispensaStatus {
   return item.kind === 'ingredient' ? ingredientStatus(item.data) : item.data.status;
 }
@@ -65,12 +68,15 @@ interface UseDispensaResult {
   setKindFilter: (k: DispensaKindFilter) => void;
   expiryFilter: ExpiryFilter;
   setExpiryFilter: (f: ExpiryFilter) => void;
+  storeFilter: string;
+  setStoreFilter: (s: string) => void;
   showFilters: boolean;
   setShowFilters: (s: boolean | ((prev: boolean) => boolean)) => void;
   total: number;
   statusCounts: Record<DispensaStatus, number>;
   kindCounts: { food: number; household: number };
   expiryCounts: Record<ExpiryStatus, number>;
+  storeOptions: { value: string; count: number }[];
 }
 
 const ui = createUIStore({
@@ -78,13 +84,15 @@ const ui = createUIStore({
   statusFilter: 'todos' as StatusFilter,
   kindFilter: 'all' as DispensaKindFilter,
   expiryFilter: 'todos' as ExpiryFilter,
+  storeFilter: ALL_STORES as string,
   showFilters: false,
 });
 
 export function useDispensa(): UseDispensaResult {
   const ingredients = useAllIngredients();
   const householdItems = useHouseholdItems();
-  const { query, statusFilter, kindFilter, expiryFilter, showFilters } = ui.useStore();
+  const { query, statusFilter, kindFilter, expiryFilter, storeFilter, showFilters } =
+    ui.useStore();
 
   const allItems = useMemo<DispensaItem[]>(
     () => [
@@ -129,7 +137,7 @@ export function useDispensa(): UseDispensaResult {
     return c;
   }, [allItems]);
 
-  const list = useMemo(() => {
+  const preStoreItems = useMemo(() => {
     return allItems
       .filter((i) => (statusFilter === 'todos' ? true : itemStatus(i) === statusFilter))
       .filter((i) => (kindFilter === 'all' ? true : itemKindOf(i) === kindFilter))
@@ -139,7 +147,33 @@ export function useDispensa(): UseDispensaResult {
         const e = itemExpiry(i);
         return expiryStatus(e.expiry_date, e.no_expiry) === expiryFilter;
       })
-      .filter((i) => matches(itemDisplayName(i), query))
+      .filter((i) => matches(itemDisplayName(i), query));
+  }, [allItems, query, statusFilter, kindFilter, expiryFilter]);
+
+  const storeOptions = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const item of preStoreItems) {
+      const stores = item.data.stores ?? [];
+      const keys = stores.length > 0 ? stores : [UNGROUPED_STORE];
+      for (const key of keys) map.set(key, (map.get(key) ?? 0) + 1);
+    }
+    return Array.from(map.entries())
+      .map(([value, count]) => ({ value, count }))
+      .sort((a, b) => {
+        if (a.value === UNGROUPED_STORE) return 1;
+        if (b.value === UNGROUPED_STORE) return -1;
+        return a.value.localeCompare(b.value, 'pt-BR');
+      });
+  }, [preStoreItems]);
+
+  const list = useMemo(() => {
+    return preStoreItems
+      .filter((i) => {
+        if (storeFilter === ALL_STORES) return true;
+        const stores = i.data.stores ?? [];
+        if (storeFilter === UNGROUPED_STORE) return stores.length === 0;
+        return stores.includes(storeFilter);
+      })
       .sort((a, b) => {
         const sa = itemStatus(a);
         const sb = itemStatus(b);
@@ -156,7 +190,7 @@ export function useDispensa(): UseDispensaResult {
         }
         return itemDisplayName(a).localeCompare(itemDisplayName(b), 'pt-BR');
       });
-  }, [allItems, query, statusFilter, kindFilter, expiryFilter]);
+  }, [preStoreItems, storeFilter]);
 
   return {
     list,
@@ -168,11 +202,14 @@ export function useDispensa(): UseDispensaResult {
     setKindFilter: (k) => ui.set('kindFilter', k),
     expiryFilter,
     setExpiryFilter: (f) => ui.set('expiryFilter', f),
+    storeFilter,
+    setStoreFilter: (s) => ui.set('storeFilter', s),
     showFilters,
     setShowFilters: (s) => ui.set('showFilters', s),
     total: allItems.length,
     statusCounts,
     kindCounts,
     expiryCounts,
+    storeOptions,
   };
 }

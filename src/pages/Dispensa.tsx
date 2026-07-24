@@ -13,6 +13,8 @@ import {
   itemDisplayName,
   itemExpiry,
   itemUnit,
+  ALL_STORES,
+  UNGROUPED_STORE,
   type DispensaItem,
   type DispensaKindFilter,
   type ExpiryFilter,
@@ -51,17 +53,23 @@ export default function Dispensa() {
     setKindFilter,
     expiryFilter,
     setExpiryFilter,
+    storeFilter,
+    setStoreFilter,
     showFilters,
     setShowFilters,
     total,
     statusCounts,
     kindCounts,
     expiryCounts,
+    storeOptions,
   } = useDispensa();
 
   const showExpiryFilters = statusFilter === 'todos' || statusFilter === 'dispensa';
   const hasActiveFilters =
-    statusFilter !== 'todos' || kindFilter !== 'all' || expiryFilter !== 'todos';
+    statusFilter !== 'todos' ||
+    kindFilter !== 'all' ||
+    expiryFilter !== 'todos' ||
+    storeFilter !== ALL_STORES;
   const isFiltering = hasActiveFilters || !!query.trim();
 
   const [actionItemKey, setActionItemKey] = useState<string | null>(null);
@@ -192,6 +200,37 @@ export default function Dispensa() {
               </button>
             ))}
           </div>
+          {storeOptions.length > 0 && (
+            <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <button
+                type="button"
+                onClick={() => setStoreFilter(ALL_STORES)}
+                className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                  storeFilter === ALL_STORES
+                    ? 'bg-brand-500 text-white dark:bg-brand-600'
+                    : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700'
+                }`}
+              >
+                Todos os mercados
+              </button>
+              {storeOptions.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setStoreFilter(opt.value)}
+                  className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                    storeFilter === opt.value
+                      ? 'bg-brand-500 text-white dark:bg-brand-600'
+                      : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700'
+                  }`}
+                >
+                  <Icon name="store" className="h-3.5 w-3.5" />
+                  {opt.value === UNGROUPED_STORE ? 'Sem mercado' : opt.value}{' '}
+                  <span className="opacity-70">({opt.count})</span>
+                </button>
+              ))}
+            </div>
+          )}
           {showExpiryFilters && (
             <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {expiryChips.map((c) => {
