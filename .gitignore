@@ -22,3 +22,10 @@ firebase-debug.log
 firestore-debug.log
 firestore-debug.*.log
 .firebaserc.local
+
+# Conteúdo pessoal (fotos, planejamento, listas) — não deve viver no repo público.
+# Os dados reais do app ficam no Firebase; isto era só rascunho da fase de conteúdo.
+Lista_Compras_Semanal.md
+PLANEJAMENTO/
+TABELAS NUTRICIONAIS/
+livro de receitas.md

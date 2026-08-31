@@ -1,8 +1,0 @@
-- Criar um plano de projeto detalhado para?
-	- Criar um app do tipo ??? (Ver qual o nome no chat do método que fica hospedado no github com senha de login em toda abertura)
-	- Lista de compras
-	- Lista de receitas
-	- Tabela nutricional
-	- Guia alimentar
-- [ ] Preciso criar no Design cada aba que eu quero. 
-- [ ] O app precisa ter modo escuro e claro.
