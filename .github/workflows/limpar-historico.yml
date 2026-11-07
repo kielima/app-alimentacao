@@ -1,0 +1,128 @@
+name: Limpar histórico (conteúdo pessoal)
+
+# Reescreve o histórico removendo, de todos os branches, os arquivos pessoais
+# que já saíram do HEAD no PR #213. Execução manual, pela aba Actions.
+# Use primeiro "simular" (não envia nada); depois "executar" + confirmação LIMPAR.
+
+on:
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: 'simular = só testa; executar = reescreve o histórico no GitHub'
+        type: choice
+        options: [simular, executar]
+        default: simular
+      confirmacao:
+        description: 'Só para executar: digite LIMPAR'
+        type: string
+        required: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: limpar-historico
+  cancel-in-progress: false
+
+env:
+  # GITHUB_TOKEN não pode enviar commits que mexem em .github/workflows.
+  # Se o push falhar por isso, crie o secret LIMPEZA_TOKEN (PAT com Contents + Workflows RW).
+  TOKEN: ${{ secrets.LIMPEZA_TOKEN || secrets.GITHUB_TOKEN }}
+  USA_PAT: ${{ secrets.LIMPEZA_TOKEN != '' && 'sim' || 'nao' }}
+  MODO: ${{ inputs.modo }}
+  CONFIRMACAO: ${{ inputs.confirmacao }}
+
+jobs:
+  limpar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Conferir confirmação
+        run: |
+          set -euo pipefail
+          if [ "$MODO" = "executar" ] && [ "$CONFIRMACAO" != "LIMPAR" ]; then
+            echo "::error::Para executar, digite exatamente LIMPAR no campo confirmacao."
+            exit 1
+          fi
+          if [ "$USA_PAT" = "sim" ]; then echo "Token: LIMPEZA_TOKEN (PAT)"; else echo "Token: GITHUB_TOKEN (padrão)"; fi
+
+      - name: Instalar git-filter-repo
+        run: pip install git-filter-repo
+
+      - name: Clonar espelho e reescrever histórico
+        run: |
+          set -euo pipefail
+          git clone --quiet --mirror "https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git" repo.git
+          cd repo.git
+          CAMINHOS=("Lista_Compras_Semanal.md" "PLANEJAMENTO/" "TABELAS NUTRICIONAIS/" "livro de receitas.md")
+          ARGS=(); for c in "${CAMINHOS[@]}"; do ARGS+=(--path "$c"); done
+
+          {
+            echo "## Antes"
+            echo "Branches: $(git for-each-ref refs/heads/ | wc -l)"
+            echo
+            echo "| Caminho | Commits |"
+            echo "|---|---|"
+            for c in "${CAMINHOS[@]}"; do
+              echo "| \`$c\` | $(git log --branches --format=%H -- "$c" | wc -l) |"
+            done
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+          ANTES=$(git rev-parse 'main^{tree}')
+          git filter-repo --force --invert-paths "${ARGS[@]}"
+
+          RESTO=$(git log --branches --oneline -- "${CAMINHOS[@]}" | wc -l)
+          DEPOIS=$(git rev-parse 'main^{tree}')
+          if [ "$RESTO" != "0" ]; then echo "::error::Ainda há $RESTO commits tocando os caminhos."; exit 1; fi
+          if [ "$ANTES" != "$DEPOIS" ]; then echo "::error::A árvore do main mudou ($ANTES -> $DEPOIS)."; exit 1; fi
+          {
+            echo
+            echo "## Depois"
+            echo "Commits restantes tocando os caminhos: 0. Árvore do main idêntica (\`$DEPOIS\`)."
+            echo "Branches reescritos: $(git for-each-ref refs/heads/ | wc -l)"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+          if [ "$MODO" = "simular" ]; then
+            echo "**Simulação OK — nada foi enviado.**" | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Enviar branches reescritos
+        if: ${{ inputs.modo == 'executar' }}
+        run: |
+          set -euo pipefail
+          cd repo.git
+          git remote add origin "https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git"
+          OK=0; FALHAS=(); MAIN_OK=sim
+          OUTROS=$(git for-each-ref --format='%(refname:short)' refs/heads/ | grep -vx main | sort || true)
+          for b in main $OUTROS; do
+            if git push --force origin "refs/heads/$b:refs/heads/$b" 2>push.log; then
+              OK=$((OK+1))
+            else
+              FALHAS+=("$b")
+              if [ "$b" = "main" ]; then MAIN_OK=nao; fi
+              echo "::warning::Falhou: $b"
+              tail -3 push.log | sed 's#//[^@/]*@#//#'
+            fi
+          done
+          {
+            echo "## Resultado do envio"
+            echo "Branches reescritos com sucesso: $OK"
+            echo "Falhas: ${#FALHAS[@]}"
+            for f in "${FALHAS[@]}"; do echo "- \`$f\`"; done
+            if [ ${#FALHAS[@]} -gt 0 ]; then
+              echo
+              echo "### Dicas"
+              echo "- main falhou com GH006/protected: ative \"Allow force pushes\" em Settings → Branches → regra do main."
+              echo "- Erro citando permissão \"workflow\": crie o secret LIMPEZA_TOKEN (PAT fine-grained, só este repositório, Contents RW + Workflows RW, validade de 1 dia)."
+              echo "- Falhou em claude/*: o ruleset \"Claude\" bloqueia force push (Settings → Rules → Rulesets → Claude → desative temporariamente)."
+            fi
+            echo
+            echo "### Depois de terminar"
+            echo "1. Desative de novo \"Allow force pushes\" no main."
+            echo "2. Apague o secret LIMPEZA_TOKEN e revogue o PAT."
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+          if [ "$MAIN_OK" = "nao" ]; then echo "::error::Falha no main."; exit 1; fi
+          if [ ${#FALHAS[@]} -gt 0 ]; then echo "::warning::${#FALHAS[@]} branch(es) não foram reescritos."; fi
